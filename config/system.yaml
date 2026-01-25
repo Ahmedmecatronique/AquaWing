@@ -1,0 +1,52 @@
+# RPi High-Level Drone Control System - Configuration
+# This file contains system-level configuration for the drone control backend.
+
+# Server Configuration
+server:
+  host: "0.0.0.0"
+  port: 8000
+  workers: 1
+  reload: false
+
+# Authentication (TODO: implement real auth)
+auth:
+  enabled: false
+  jwt_secret: "TODO_CHANGE_THIS_SECRET"
+  token_expiry_hours: 24
+
+# Drone Hardware Configuration
+drone:
+  # UART/Serial connection
+  uart:
+    port: "/dev/ttyUSB0"
+    baudrate: 115200
+    timeout: 1.0
+  
+  # Telemetry update rate (Hz)
+  telemetry_rate: 10
+  
+  # Safety limits
+  max_altitude_m: 100
+  max_speed_mps: 15
+
+# Logging
+logging:
+  level: "INFO"
+  file: "logs/drone_system.log"
+  max_size_mb: 50
+
+# WebSocket Configuration
+websocket:
+  telemetry_interval_ms: 100
+  max_clients: 10
+
+# Camera Configuration
+cameras:
+  rgb:
+    enabled: false
+    resolution: "1920x1080"
+    fps: 30
+  thermal:
+    enabled: false
+    resolution: "640x512"
+    fps: 30

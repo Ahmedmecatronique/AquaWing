@@ -1,0 +1,9 @@
+{
+    "python.defaultInterpreterPath": "/home/ahmed/drone/rpi_high_level/.venv/bin/python",
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}"
+    ],
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.typeCheckingMode": "basic"
+}
+

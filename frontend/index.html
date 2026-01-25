@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RPi Drone Control Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div id="app" class="container">
+        <nav class="navbar">
+            <div class="navbar-left">
+                <h1>Drone Control Dashboard</h1>
+            </div>
+            <div class="navbar-right">
+                <span id="connectionStatus" class="status-indicator">Connecting...</span>
+            </div>
+        </nav>
+
+        <div class="dashboard-grid">
+            <!-- Status Panel -->
+            <div class="panel status-panel">
+                <h2>Drone Status</h2>
+                <div class="status-items">
+                    <div class="status-item">
+                        <span class="label">Armed:</span>
+                        <span id="statusArmed" class="value">No</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="label">Mode:</span>
+                        <span id="statusMode" class="value">STABILIZE</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="label">Battery:</span>
+                        <span id="statusBattery" class="value">85%</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="label">GPS Fix:</span>
+                        <span id="statusGPS" class="value">No</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Telemetry Panel -->
+            <div class="panel telemetry-panel">
+                <h2>Telemetry</h2>
+                <div class="telemetry-items">
+                    <div class="telemetry-item">
+                        <span class="label">Altitude:</span>
+                        <span id="telemetryAltitude" class="value">0.0 m</span>
+                    </div>
+                    <div class="telemetry-item">
+                        <span class="label">Velocity:</span>
+                        <span id="telemetryVelocity" class="value">0.0 m/s</span>
+                    </div>
+                    <div class="telemetry-item">
+                        <span class="label">Heading:</span>
+                        <span id="telemetryHeading" class="value">0°</span>
+                    </div>
+                    <div class="telemetry-item">
+                        <span class="label">Position:</span>
+                        <span id="telemetryPosition" class="value">0.00°, 0.00°</span>
+                    </div>
+                    <div class="telemetry-item">
+                        <span class="label">Roll:</span>
+                        <span id="telemetryRoll" class="value">0.0°</span>
+                    </div>
+                    <div class="telemetry-item">
+                        <span class="label">Pitch:</span>
+                        <span id="telemetryPitch" class="value">0.0°</span>
+                    </div>
+                    <div class="telemetry-item">
+                        <span class="label">Yaw:</span>
+                        <span id="telemetryYaw" class="value">0.0°</span>
+                    </div>
+                    <div class="telemetry-item">
+                        <span class="label">Battery Voltage:</span>
+                        <span id="telemetryBatteryVoltage" class="value">12.0 V</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Connection Status -->
+            <div class="panel connection-panel">
+                <h2>Connection Status</h2>
+                <div class="connection-info">
+                    <div class="status-item">
+                        <span class="label">REST API:</span>
+                        <span id="restStatus" class="value status-disconnected">Disconnected</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="label">WebSocket:</span>
+                        <span id="wsStatus" class="value status-disconnected">Disconnected</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="label">Last Update:</span>
+                        <span id="lastUpdate" class="value">Never</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Log Panel -->
+        <div class="panel log-panel">
+            <h2>Event Log</h2>
+            <div id="eventLog" class="log-content"></div>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
