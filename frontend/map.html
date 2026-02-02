@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drone Tracking Map</title>
+    
+    <!-- Leaflet CSS from CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    
+    <link rel="stylesheet" href="/static/map.css">
+</head>
+<body>
+    <div id="map"></div>
+    
+    <!-- HUD (Heads-Up Display) -->
+    <div id="hud" class="hud">
+        <div class="hud-top">
+            <div class="hud-section">
+                <span class="hud-label">WS Status:</span>
+                <span id="wsStatus" class="hud-value status-disconnected">Disconnected</span>
+            </div>
+            <div class="hud-section">
+                <button id="followBtn" class="hud-button">Follow: OFF</button>
+                <button id="logoutBtn" class="hud-button hud-button-logout">Logout</button>
+            </div>
+        </div>
+
+        <div class="hud-bottom">
+            <div class="hud-grid">
+                <div class="hud-item">
+                    <span class="hud-label">Latitude:</span>
+                    <span id="hudLat" class="hud-value">--</span>
+                </div>
+                <div class="hud-item">
+                    <span class="hud-label">Longitude:</span>
+                    <span id="hudLon" class="hud-value">--</span>
+                </div>
+                <div class="hud-item">
+                    <span class="hud-label">Altitude:</span>
+                    <span id="hudAlt" class="hud-value">-- m</span>
+                </div>
+                <div class="hud-item">
+                    <span class="hud-label">Heading:</span>
+                    <span id="hudHeading" class="hud-value">-- °</span>
+                </div>
+                <div class="hud-item">
+                    <span class="hud-label">Speed:</span>
+                    <span id="hudSpeed" class="hud-value">-- m/s</span>
+                </div>
+                <div class="hud-item">
+                    <span class="hud-label">Battery:</span>
+                    <span id="hudBattery" class="hud-value">-- %</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    
+    <!-- Custom map script -->
+    <script src="/static/map.js"></script>
+</body>
+</html>
+

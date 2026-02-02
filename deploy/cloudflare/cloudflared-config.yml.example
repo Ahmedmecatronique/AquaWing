@@ -1,0 +1,67 @@
+# Cloudflare Tunnel Configuration Example
+#
+# Copy this file to ~/.cloudflared/config.yml and customize with your tunnel details
+#
+# Usage:
+#   cp cloudflared-config.yml.example ~/.cloudflared/config.yml
+#   nano ~/.cloudflared/config.yml
+#   cloudflared tunnel --config ~/.cloudflared/config.yml run drone-control
+
+# Tunnel name created via: cloudflared tunnel create drone-control
+tunnel: <YOUR_TUNNEL_ID_HERE>
+
+# Path to tunnel credentials file (created during tunnel creation)
+# Find the actual file with: ls ~/.cloudflared/*.json
+credentials-file: /home/pi/.cloudflared/<YOUR_TUNNEL_ID>.json
+
+# Log level: debug, info, warn, error
+loglevel: info
+
+# Ingress rules - route traffic to your backend
+# The first matching rule wins, so order matters
+ingress:
+  # Route your domain to the local FastAPI backend
+  - hostname: drone.example.com
+    service: http://localhost:8000
+    # Optional: add websocket support
+    # websocket-tcp-converter:
+    #   enabled: true
+  
+  # Optional: add API subdomain if desired
+  - hostname: api.drone.example.com
+    service: http://localhost:8000
+  
+  # Catch-all for unmatched requests
+  - service: http_status:404
+
+# Optional: metrics configuration
+metrics: 127.0.0.1:22830
+
+# Optional: graceful shutdown timeout
+graceful-period: 30s
+
+# Optional: connection pool size (for high throughput)
+# max-fetch-size: 52428800  # 50MB
+
+# Optional: Keep-alive settings for stability
+keep-alive-connections: 32
+keep-alive-timeout: 30s
+
+# Optional: additional origins for multi-machine setups
+# origins:
+#   - http://localhost:8000
+#   - http://192.168.1.100:8000
+
+# Optional: TLS configuration for backend communication
+# tls-client-path: /path/to/client-cert.pem
+# tls-client-secret: /path/to/client-key.pem
+# origin-ca-pool: /path/to/ca.pem
+
+# Optional: custom headers to add to requests
+# no-chunked-encoding: false
+# disable-chunked-encoding: false
+
+# Optional: additional logging for debugging
+# debug-proxies:
+#   - hostname: debug.example.com
+#     service: http://localhost:9000
