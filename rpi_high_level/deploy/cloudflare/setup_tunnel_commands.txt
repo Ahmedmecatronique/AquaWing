@@ -1,0 +1,57 @@
+# Quick Cloudflare Tunnel Setup Commands
+#
+# Copy-paste these commands in order on your Raspberry Pi
+# Replace values in <brackets> with your actual values
+
+# === STEP 1: Install cloudflared ===
+bash deploy/cloudflare/install_cloudflared.sh
+
+# === STEP 2: Authenticate ===
+cloudflared tunnel login
+
+# === STEP 3: Create tunnel ===
+# Replace 'drone-control' with your preferred tunnel name
+cloudflared tunnel create drone-control
+
+# === STEP 4: Route domain ===
+# Replace values:
+#   - drone-control = your tunnel name from step 3
+#   - drone.example.com = your desired subdomain
+#   - example.com = your Cloudflare domain
+cloudflared tunnel route dns drone-control drone.example.com
+
+# === STEP 5: Copy and edit config ===
+cp deploy/cloudflare/cloudflared-config.yml.example ~/.cloudflared/config.yml
+nano ~/.cloudflared/config.yml
+
+# Edit the config file to replace:
+# - tunnel: <YOUR_TUNNEL_ID> (from step 3 output)
+# - credentials-file: /home/pi/.cloudflared/<YOUR_TUNNEL_ID>.json
+# - hostname: drone.example.com (must match your domain)
+
+# === STEP 6: Test the tunnel ===
+cloudflared tunnel --config ~/.cloudflared/config.yml run drone-control
+
+# Should show: "INF |You can now access your app at https://drone.example.com"
+
+# === STEP 7: Install as service (optional) ===
+sudo cp deploy/cloudflare/cloudflared.service.example /etc/systemd/system/cloudflared.service
+sudo systemctl daemon-reload
+sudo systemctl enable cloudflared
+sudo systemctl start cloudflared
+sudo systemctl status cloudflared
+
+# === VERIFY ===
+# Check that backend is running:
+curl http://localhost:8000/health
+
+# Check tunnel status:
+cloudflared tunnel list
+cloudflared tunnel info drone-control
+
+# View tunnel logs:
+sudo journalctl -u cloudflared -f
+
+# === ACCESS ===
+# Open browser and navigate to:
+# https://drone.example.com

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RPi Drone Control - Dashboard</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="/static/map.css?v=1">
+    <link rel="stylesheet" href="/static/hud.css?v=1">
+</head>
+
+<body>
+        <!-- removed legacy HUD overlays; using AQUA-WING HUD bar below -->
+
+    <div class="dashboard-grid">
+        <!-- TELEMETRY (left column) -->
+        <aside class="telemetry-panel">
+            <div class="telemetry-header">
+                <div class="telemetry-title">DRONE TELEMETRY</div>
+                <div class="telemetry-status">
+                    <div id="arm-status" class="status-chip">DISARMED</div>
+                    <div id="mode" class="mode-chip">MODE: -</div>
+                </div>
+            </div>
+
+            <div class="telemetry-main">
+                <div class="telemetry-row">
+                    <div class="telemetry-card battery-card">
+                        <div class="card-title">Battery</div>
+                        <div class="battery-gauge-wrap">
+                            <div id="battery-gauge" class="battery-gauge" style="--battery:0%">
+                                <div class="battery-center"><span id="battery-percent">0%</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="telemetry-card rssi-card">
+                        <div class="card-title">RSSI</div>
+                        <div class="rssi-bar">
+                            <div id="rssi-fill" class="rssi-fill" style="width:0%"></div>
+                        </div>
+                        <div class="rssi-value" id="rssi-value">0</div>
+                    </div>
+                </div>
+
+                <div class="telemetry-row values-row">
+                    <div class="value-item"><div class="label">Lat</div><div id="val-lat" class="value">0.0000</div></div>
+                    <div class="value-item"><div class="label">Lon</div><div id="val-lon" class="value">0.0000</div></div>
+                    <div class="value-item"><div class="label">Alt (m)</div><div id="val-alt" class="value">0.0</div></div>
+                    <div class="value-item"><div class="label">Speed (m/s)</div><div id="val-speed" class="value">0.0</div><div class="label small">Cmd: <span id="set-speed-value">-</span></div></div>
+                    <div class="value-item"><div class="label">Heading</div><div id="val-heading" class="value">0</div></div>
+                    <div class="value-item"><div class="label">Time</div><div id="val-time" class="value">-</div></div>
+                </div>
+
+                <div class="telemetry-row compass-row">
+                    <div class="hud-card">
+                        <div class="hud-title">Compass</div>
+                        <div class="compass-wrap">
+                            <div class="compass" id="compass">
+                                <div class="compass-face"></div>
+                                <div class="compass-label n">N</div>
+                                <div class="compass-label e">E</div>
+                                <div class="compass-label s">S</div>
+                                <div class="compass-label w">W</div>
+                                <div class="compass-needle" id="compass-needle"></div>
+                                <div class="compass-cap"></div>
+                            </div>
+                            <div class="compass-deg" id="compass-deg">000°</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="telemetry-footer">
+                <div class="speed-control">
+                    <label for="speed-control">Speed</label>
+                    <input id="speed-control" type="range" min="0" max="10" step="0.1" value="0">
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button id="follow-btn" class="btn-primary">Follow: OFF</button>
+                    <button id="logout-btn" class="btn-primary">Logout</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- RIGHT COLUMN: MAP (top) + VIDEO (bottom) -->
+        <section class="right-column">
+            <div class="map-panel card">
+                <div class="panel-header">
+                    <div class="panel-title">Map</div>
+                    <div class="panel-controls">
+                        <!-- follow control moved to top HUD -->
+                    </div>
+                </div>
+                <div id="map" class="map-canvas"></div>
+                <div class="map-actions">
+                    <button id="follow-toggle" class="ctrl-btn btn-primary">Follow: OFF</button>
+                    <button id="center-btn" class="ctrl-btn btn-ghost">Center</button>
+                    <button id="clear-btn" class="ctrl-btn btn-ghost">Clear Track</button>
+                    <button id="waypoints-toggle" class="ctrl-btn btn-ghost">Waypoints: OFF</button>
+                </div>
+            </div>
+
+            <div class="video-panel card">
+                <div class="panel-header">
+                    <div class="panel-title">Video Stream</div>
+                    <div class="panel-controls">
+                        <button id="video-toggle" class="btn-primary">Video: OFF</button>
+                        <div id="video-status" class="status-dot off">OFF</div>
+                    </div>
+                </div>
+                <div class="video-content">
+                    <img id="video-stream" class="video-stream" src="" alt="Video stream" />
+                    <div id="video-placeholder" class="video-placeholder">Video disabled</div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- CONTROL BAR removed -->
+
+    <!-- Toast HUD -->
+    <div id="toast" aria-live="polite" aria-atomic="true" class="toast-container" style="display:none;"></div>
+
+    <script defer src="/static/map.js"></script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual env
+.venv/
+
+# Secrets
+users.json
+credentials*
+.env
+
+# Editor
+.vscode/
+*.swp
+
+# Logs
+logs/*.log
+
+# OS
+.DS_Store
+

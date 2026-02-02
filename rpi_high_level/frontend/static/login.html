@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AquaWing — Login</title>
+
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Styles (versioned to force refresh on networked devices) -->
+    <link rel="stylesheet" href="/static/login.css?v=1">
+  </head>
+
+  <body>
+    <div class="bg"></div>
+
+    <main class="login-wrap">
+      <div class="login-box" role="main">
+        <div class="brand">AQUA-WING</div>
+
+        <form class="login-form" action="/login" method="POST" novalidate>
+          <div class="input-group">
+            <span class="icon"><i class="fa-solid fa-user"></i></span>
+            <input type="text" name="username" placeholder="Username" required autocomplete="username">
+          </div>
+
+          <div class="input-group">
+            <span class="icon"><i class="fa-solid fa-lock"></i></span>
+            <input type="password" name="password" placeholder="Password" required autocomplete="current-password">
+          </div>
+
+          <div class="row">
+            <label class="remember">
+              <input type="checkbox" name="remember">
+              <span>Remember me</span>
+            </label>
+          </div>
+
+          <button class="btn-login" type="submit">LOGIN</button>
+        </form>
+      </div>
+    </main>
+
+    <div class="message-bar" id="messageBar" aria-live="polite"></div>
+
+    <script src="/static/login.js"></script>
+  </body>
+</html>
