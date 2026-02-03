@@ -78,6 +78,7 @@ body{color:#fff;background:#000;overflow:hidden}
 .remember{display:flex;align-items:center;gap:8px;color:rgba(255,255,255,0.85);font-size:14px}
 .remember input{width:16px;height:16px;accent-color: var(--accent1)}
 
+
 /* CTA button — pill-shaped */
 .btn-login{
   margin-top:6px;background: linear-gradient(90deg,var(--accent1),var(--accent2));color:#fff;border:none;padding:12px 20px;font-weight:800;border-radius:999px;cursor:pointer;font-size:15px;letter-spacing:0.8px;text-transform:uppercase;box-shadow: 0 10px 28px rgba(255,122,24,0.12);

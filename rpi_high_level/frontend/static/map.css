@@ -42,16 +42,43 @@ body { overflow: visible; }
     color: var(--text);
 } 
 
-.right-column { display: flex; flex-direction: column; gap: 14px; }
+/* RIGHT COLUMN: vertical layout — MAP on top, cameras below */
+.right-column { display: flex; flex-direction: column; gap: 14px; align-items: stretch; }
 .card { background: linear-gradient(180deg, rgba(10,12,16,0.48), rgba(6,8,12,0.34)) !important; border: 1px solid var(--glass-border) !important; border-radius: 16px; padding: 12px; display:flex; flex-direction:column; backdrop-filter: blur(8px); box-shadow: 0 6px 26px rgba(0,0,0,0.6) inset; }
+
+/* Camera area (bottom): two equal squares under map */
+.cams-area { display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-top:6px; }
+.camera-panel { display:flex; flex-direction:column; gap:10px; padding:10px; border-radius:10px; overflow:hidden; }
+.camera-panel .panel-header { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.camera-panel .video-content { position:relative; display:flex; align-items:center; justify-content:center; width:100%; aspect-ratio:1/1; background:linear-gradient(180deg, rgba(2,6,12,0.38), rgba(6,8,10,0.18)); border-radius:8px; overflow:hidden; }
+.camera-panel img.video-stream, .camera-panel img.thermal-stream { width:100%; height:100%; object-fit:cover; display:block; }
+.camera-panel .video-placeholder { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--accent); font-weight:700; background:linear-gradient(180deg, rgba(0,0,0,0.36), rgba(0,0,0,0.6)); }
+.camera-panel .camera-stats { position: absolute; left: 10px; bottom: 8px; background: rgba(2,6,12,0.6); padding:6px 8px; border-radius:8px; font-weight:700; color:var(--muted); font-size:12px; border:1px solid rgba(255,255,255,0.03); }
+.camera-panel .small { font-size:12px; }
+
+/* Ensure map panel above cameras spans full width of right-column */
+.map-panel { width:100%; }
+
+/* Responsive: on small screens stack vertically */
+@media (max-width: 980px) {
+  .right-column { grid-template-columns: 1fr; }
+  .cams-area { grid-template-columns: 1fr; }
+  .camera-panel .video-content { aspect-ratio: 16/9; }
+}
+
 
 .panel-header { display:flex; align-items:center; justify-content:space-between; padding:6px 8px; border-bottom:1px solid rgba(255,255,255,0.03); }
  .panel-title { font-weight:700; font-size:14px; color:var(--white-70); }
 .panel-controls { display:flex; gap:8px; align-items:center; }
 .small-btn { background:transparent; border:1px solid rgba(0,255,200,0.08); color:#9fffe9; padding:6px 10px; border-radius:6px; cursor:pointer; }
 
-.map-canvas { height: calc(50vh - 64px); border-radius:6px; overflow:hidden; }
+.map-canvas { height: calc(55vh); border-radius:6px; overflow:hidden; }
 .map-canvas, #map { z-index: 1; }
+
+/* Reduce map height on small screens to keep cameras usable */
+@media (max-width: 900px) {
+  .map-canvas { height: 40vh; }
+}
 .video-panel .video-content { height: calc(50vh - 64px); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; }
 .video-stream { width:100%; height:100%; object-fit:cover; display:block; }
 .video-placeholder { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--accent); background:linear-gradient(180deg,#001 0%, rgba(0,0,0,0.6) 100%); font-weight:bold; }
@@ -84,9 +111,19 @@ body { overflow: visible; }
 .label { font-size:11px; opacity:0.7; }
 .value { font-weight:800; font-size:14px; color:#cffff4; }
 
-.compass-card { width:100%; display:flex; gap:12px; align-items:center; }
-.compass { width:100px; height:100px; border-radius:50%; background:radial-gradient(circle,#061112,#001); display:flex; align-items:center; justify-content:center; border:1px solid rgba(255,122,24,0.04); } 
-.compass-arrow { font-size:28px; color:var(--neon); transform-origin:center center; transition:transform 0.25s ease; }
+/* Artificial Horizon / ATTITUDE widget */
+.attitude-wrap { display:flex; gap:10px; align-items:center; }
+.attitude { width:100px; height:100px; border-radius:50%; overflow:hidden; position:relative; box-shadow: 0 6px 18px rgba(0,0,0,0.28), inset 0 2px 8px rgba(255,122,24,0.02); border:1px solid rgba(255,122,24,0.06); background:#031016 }
+.horizon { position:absolute; left:50%; top:50%; width:200%; height:200%; transform:translate(-50%,-50%) rotate(0deg) translateY(0px); transition:transform 180ms linear; display:block }
+.horizon .sky { position:absolute; left:0; right:0; top:0; height:50%; background:linear-gradient(180deg,#90d4ff, #3aa0ff); }
+.horizon .ground { position:absolute; left:0; right:0; bottom:0; height:50%; background:linear-gradient(180deg,#8a4b00,#3a1f00); }
+.horizon-line { position:absolute; left:0; right:0; top:50%; height:2px; background:linear-gradient(90deg, rgba(255,255,255,0.9), rgba(255,255,255,0.3)); box-shadow: 0 0 8px rgba(255,255,255,0.03); }
+.attitude-mask{ position:absolute; inset:0; border-radius:50%; pointer-events:none }
+.att-bird { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); color:var(--accent); font-size:14px; text-shadow: 0 2px 8px rgba(255,122,24,0.06); }
+.attitude-readouts { display:flex; flex-direction:column; gap:4px; color:var(--muted); font-weight:700 }
+
+/* small label tweaks */
+.label.small { font-size:12px; color:var(--muted) }
 
 .telemetry-footer { display:flex; gap:8px; justify-content:space-between; }
 .btn { padding:8px 12px; border-radius:6px; background:transparent; color:#9fffe9; border:1px solid rgba(0,255,200,0.06); cursor:pointer; }

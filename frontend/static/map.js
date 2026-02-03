@@ -17,6 +17,23 @@ let polyline = null;
 let followMode = false;
 let lastUpdate = 0;
 
+// Lightweight Toggle helper (integrated) to avoid external dependency
+(function(){ if (window.Toggles) return; const Toggles = {};
+  function isBtn(el){ return el && el.tagName === 'BUTTON' && el.classList && el.classList.contains('toggle-switch'); }
+  function isWrap(el){ return el && el.classList && el.classList.contains('ts-wrapper'); }
+  Toggles.init = function(el){ if(!el) return; if (isBtn(el)){
+      el.setAttribute('aria-pressed', String(el.classList.contains('on')));
+      if(!el.querySelector('.ts-control')){ const lbl=document.createElement('span'); lbl.className='ts-label'; lbl.textContent = el.dataset.label || el.getAttribute('data-label') || (el.textContent||'').split(':')[0] || ''; const ctrl=document.createElement('span'); ctrl.className='ts-control'; const knob=document.createElement('span'); knob.className='ts-knob'; ctrl.appendChild(knob); el.innerHTML=''; el.appendChild(lbl); el.appendChild(ctrl); }
+      el.addEventListener('click', ()=>{ const newState = !Toggles.getState(el); Toggles.setState(el,newState); el.dispatchEvent(new CustomEvent('togglechange',{detail:{on:newState}})); });
+    } else if (isWrap(el)){
+      const input = el.querySelector('input[type="checkbox"]'); if(!input) return; if(!el.querySelector('.ts-control')){ const ctrl=document.createElement('span'); ctrl.className='ts-control'; const knob=document.createElement('span'); knob.className='ts-knob'; ctrl.appendChild(knob); el.insertBefore(ctrl, input.nextSibling); }
+      el.addEventListener('click', (ev)=>{ if(ev.target && ev.target.tagName==='INPUT') return; input.checked = !input.checked; Toggles.setState(el, input.checked); input.dispatchEvent(new Event('change',{bubbles:true})); }); input.addEventListener('change', ()=> Toggles.setState(el, input.checked)); Toggles.setState(el, !!input.checked);
+    } };
+  Toggles.setState = function(el,on){ const truth=!!on; if (isBtn(el)){ el.classList.toggle('on',truth); el.classList.toggle('active',truth); el.dataset.state = truth? 'on':'off'; el.setAttribute('aria-pressed', String(truth)); } else if (isWrap(el)){ const input = el.querySelector('input[type="checkbox"]'); if(input) input.checked = truth; el.classList.toggle('on',truth); el.classList.toggle('active',truth); el.dataset.state = truth? 'on':'off'; } else if(el && el.tagName === 'INPUT' && el.type === 'checkbox'){ el.checked = truth; const wrap = el.closest('.ts-wrapper'); if(wrap) wrap.classList.toggle('on',truth); } };
+  Toggles.getState = function(el){ if(isBtn(el)) return el.classList.contains('on') || el.dataset.state === 'on'; if(isWrap(el)) return el.classList.contains('on') || el.dataset.state === 'on' || !!(el.querySelector && el.querySelector('input[type="checkbox"]') && el.querySelector('input[type="checkbox"]').checked); if(el && el.tagName === 'INPUT' && el.type === 'checkbox') return !!el.checked; return false; };
+  Toggles.initAll = function(){ document.querySelectorAll('button.toggle-switch').forEach(Toggles.init); document.querySelectorAll('.ts-wrapper').forEach(Toggles.init); };
+  window.Toggles = Toggles; if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', Toggles.initAll); else Toggles.initAll(); })();
+
 // ============================================================================
 // WEBSOCKET CONNECTION
 // ============================================================================
@@ -159,8 +176,7 @@ function updateWSStatus(status, isLive) {
 document.getElementById('follow-btn').addEventListener('click', () => {
     followMode = !followMode;
     const btn = document.getElementById('follow-btn');
-    btn.textContent = `Follow: ${followMode ? 'ON' : 'OFF'}`;
-    btn.classList.toggle('active', followMode);
+    if (window.Toggles) window.Toggles.setState(btn, followMode);
 });
 
 document.getElementById('logout-btn').addEventListener('click', () => {

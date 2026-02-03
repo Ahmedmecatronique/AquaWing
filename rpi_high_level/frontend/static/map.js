@@ -20,7 +20,32 @@ let polyline = null;
 let followMode = false;
 let lastUpdate = 0;
 let videoOn = false;
-let videoRefreshTimer = null;
+let rgbTimer = null;
+let thermalTimer = null;
+let rgbSamples = [];
+let thermalSamples = [];
+let lastRGBObjectURL = null;
+let lastThermalObjectURL = null;
+const RGB_INTERVAL = 900; // ms
+const THERMAL_INTERVAL = 1200; // ms
+const SAMPLE_WINDOW_MS = 5000; // sliding window for averages (ms)
+
+// Lightweight Toggle helper (integrated into existing files, no external JS)
+(function(){ if (window.Toggles) return; const Toggles = {};
+  function isBtn(el){ return el && el.tagName === 'BUTTON' && el.classList && el.classList.contains('toggle-switch'); }
+  function isWrap(el){ return el && el.classList && el.classList.contains('ts-wrapper'); }
+  Toggles.init = function(el){ if(!el) return; if (isBtn(el)){
+      el.setAttribute('aria-pressed', String(el.classList.contains('on')));
+      if(!el.querySelector('.ts-control')){ const lbl=document.createElement('span'); lbl.className='ts-label'; lbl.textContent = el.dataset.label || el.getAttribute('data-label') || (el.textContent||'').split(':')[0] || ''; const ctrl=document.createElement('span'); ctrl.className='ts-control'; const knob=document.createElement('span'); knob.className='ts-knob'; ctrl.appendChild(knob); el.innerHTML=''; el.appendChild(lbl); el.appendChild(ctrl); }
+      el.addEventListener('click', ()=>{ const newState = !Toggles.getState(el); Toggles.setState(el,newState); el.dispatchEvent(new CustomEvent('togglechange',{detail:{on:newState}})); });
+    } else if (isWrap(el)){
+      const input = el.querySelector('input[type="checkbox"]'); if(!input) return; if(!el.querySelector('.ts-control')){ const ctrl=document.createElement('span'); ctrl.className='ts-control'; const knob=document.createElement('span'); knob.className='ts-knob'; ctrl.appendChild(knob); el.insertBefore(ctrl, input.nextSibling); }
+      el.addEventListener('click', (ev)=>{ if(ev.target && ev.target.tagName==='INPUT') return; input.checked = !input.checked; Toggles.setState(el, input.checked); input.dispatchEvent(new Event('change',{bubbles:true})); }); input.addEventListener('change', ()=> Toggles.setState(el, input.checked)); Toggles.setState(el, !!input.checked);
+    } };
+  Toggles.setState = function(el,on){ const truth=!!on; if (isBtn(el)){ el.classList.toggle('on',truth); el.classList.toggle('active',truth); el.dataset.state = truth? 'on':'off'; el.setAttribute('aria-pressed', String(truth)); } else if (isWrap(el)){ const input = el.querySelector('input[type="checkbox"]'); if(input) input.checked = truth; el.classList.toggle('on',truth); el.classList.toggle('active',truth); el.dataset.state = truth? 'on':'off'; } else if(el && el.tagName === 'INPUT' && el.type === 'checkbox'){ el.checked = truth; const wrap = el.closest('.ts-wrapper'); if(wrap) wrap.classList.toggle('on',truth); } };
+  Toggles.getState = function(el){ if(isBtn(el)) return el.classList.contains('on') || el.dataset.state === 'on'; if(isWrap(el)) return el.classList.contains('on') || el.dataset.state === 'on' || !!(el.querySelector && el.querySelector('input[type="checkbox"]') && el.querySelector('input[type="checkbox"]').checked); if(el && el.tagName === 'INPUT' && el.type === 'checkbox') return !!el.checked; return false; };
+  Toggles.initAll = function(){ document.querySelectorAll('button.toggle-switch').forEach(Toggles.init); document.querySelectorAll('.ts-wrapper').forEach(Toggles.init); };
+  window.Toggles = Toggles; if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', Toggles.initAll); else Toggles.initAll(); })();
 
 // Waypoints state
 let waypointsEnabled = false;
@@ -225,8 +250,11 @@ function updateTelemetry(data) {
     const rssiFill = document.getElementById('rssi-fill'); if (rssiFill) { const r = Math.max(0, Math.min(100, rssi)); rssiFill.style.width = r + '%'; }
     const rssiVal = document.getElementById('rssi-value'); if (rssiVal) rssiVal.textContent = rssi;
 
-    // Update compass widget
-    if (typeof updateCompass === 'function') updateCompass(heading);
+    // Update attitude (Artificial Horizon) if IMU data present, fallback to heading display
+    try{
+        if (typeof updateAttitude === 'function') updateAttitude(data);
+        else if (typeof updateCompass === 'function') updateCompass(heading);
+    }catch(e){}
 
     // Update marker (position + heading) and path
     createDroneMarker(lat, lon, heading);
@@ -489,7 +517,7 @@ const followBtn = document.getElementById('follow-btn');
 const followToggle = document.getElementById('follow-toggle');
 // Support legacy/fallback ID followBtn (overlay)
 const followBtnOverlay = document.getElementById('followBtn');
-function setFollow(enabled){ followMode = !!enabled; if (followBtn) followBtn.textContent = `Follow: ${followMode ? 'ON':'OFF'}`; if (followToggle) followToggle.textContent = `Follow ${followMode? 'ON':'OFF'}`; }
+function setFollow(enabled){ followMode = !!enabled; if (followBtn && window.Toggles) window.Toggles.setState(followBtn, followMode); if (followToggle && window.Toggles) window.Toggles.setState(followToggle, followMode); }
 if (followBtn) followBtn.addEventListener('click', () => setFollow(!followMode));
 if (followToggle) followToggle.addEventListener('click', () => setFollow(!followMode));
 if (followBtnOverlay) followBtnOverlay.addEventListener('click', () => setFollow(!followMode));
@@ -498,7 +526,7 @@ if (followBtnOverlay) followBtnOverlay.addEventListener('click', () => setFollow
 const cbFollow = document.getElementById('follow-toggle');
 const cbCenter = document.getElementById('center-btn');
 const cbClear = document.getElementById('clear-btn');
-if (cbFollow) cbFollow.addEventListener('click', ()=> { setFollow(!followMode); cbFollow.classList.toggle('active', followMode); cbFollow.textContent = `Follow: ${followMode? 'ON':'OFF'}`; });
+if (cbFollow) cbFollow.addEventListener('click', ()=> { setFollow(!followMode); /* visuals handled by Toggles */ });
 if (cbCenter) cbCenter.addEventListener('click', ()=> { if (droneMarker) { const p = droneMarker.getLatLng(); map.setView(p, map.getZoom()); } });
 if (cbClear) cbClear.addEventListener('click', ()=> { if (polyline) polyline.setLatLngs([]); });
 
@@ -510,8 +538,7 @@ const clearRouteBtn = document.getElementById('clear-route-btn');
 if (waypointsToggleBtn) {
     waypointsToggleBtn.addEventListener('click', () => {
         waypointsEnabled = !waypointsEnabled;
-        waypointsToggleBtn.textContent = `Waypoints: ${waypointsEnabled ? 'ON' : 'OFF'}`;
-        waypointsToggleBtn.classList.toggle('active', waypointsEnabled);
+        if (window.Toggles) window.Toggles.setState(waypointsToggleBtn, waypointsEnabled);
         
         // Show/hide route control buttons
         if (sendRouteBtn) sendRouteBtn.style.display = waypointsEnabled ? 'block' : 'none';
@@ -547,39 +574,156 @@ function updateControlBar(lat, lon, alt, speed, battery){
     if (el('cb-bat')) el('cb-bat').textContent = s(battery);
 }
 
-/* Realistic compass update: rotate needle and update numeric display */
-function updateCompass(headingDeg) {
-    if (headingDeg === null || headingDeg === undefined) return;
-    const num = Number(headingDeg) || 0;
-    const h = ((num % 360) + 360) % 360;
-    const needle = document.getElementById("compass-needle");
-    const deg = document.getElementById("compass-deg");
-    if (needle) needle.style.transform = `translate(-50%, -50%) rotate(${h+180}deg)`;
-    if (deg) deg.textContent = String(Math.round(h)).padStart(3, "0") + "°";
+/* Artificial Horizon update: use IMU pitch & roll to move horizon */
+function updateAttitude(data){
+    // data may contain pitch, roll, yaw / heading
+    const pitchRaw = ('pitch' in data) ? Number(data.pitch) : (data.att_pitch? Number(data.att_pitch) : null);
+    const rollRaw = ('roll' in data) ? Number(data.roll) : (data.att_roll? Number(data.att_roll) : null);
+    const pitch = (pitchRaw===null || isNaN(pitchRaw))? 0 : pitchRaw;
+    const roll = (rollRaw===null || isNaN(rollRaw))? 0 : rollRaw;
+
+    // DOM elements
+    const horizon = document.getElementById('att-horizon');
+    const pitchEl = document.getElementById('att-pitch');
+    const rollEl = document.getElementById('att-roll');
+
+    if (pitchEl) pitchEl.textContent = `${Math.round(pitch)}°`;
+    if (rollEl) rollEl.textContent = `${Math.round(roll)}°`;
+
+    if (!horizon) return; // guard
+
+    // Clamp pitch to reasonable range and map to vertical translation
+    const maxPitch = 45; // degrees mapped to reasonable translation
+    const clampedPitch = Math.max(-maxPitch, Math.min(maxPitch, pitch));
+
+    // Pixel translate: use container size
+    const container = horizon.parentElement; // .attitude element
+    let px = 0;
+    try{
+        const h = container ? container.offsetHeight : 100;
+        // Scale factor so maxPitch moves horizon by ~h/4
+        px = (clampedPitch / maxPitch) * (h / 4);
+    }catch(e){ px = (clampedPitch/ maxPitch)*15; }
+
+    // Apply transform: translateY for pitch, rotate for roll
+    horizon.style.transform = `translate(-50%,-50%) translateY(${px}px) rotate(${roll}deg)`;
 }
+
+// Backwards-compatible: expose updateAttitude and call from telemetry
+if (typeof window.updateAttitude === 'undefined') window.updateAttitude = updateAttitude;
 
 const logoutBtn = document.getElementById('logout-btn');
 if (logoutBtn) logoutBtn.addEventListener('click', () => { if (ws) ws.close(); window.location.href='/logout'; });
 
-// Video toggle
+// Video / Camera controls
 const videoToggle = document.getElementById('video-toggle');
 const videoImg = document.getElementById('video-stream');
 const videoPlaceholder = document.getElementById('video-placeholder');
 const videoStatus = document.getElementById('video-status');
+const rgbResolutionSelect = document.getElementById('rgb-resolution');
+if (rgbResolutionSelect) {
+    rgbResolutionSelect.addEventListener('change', (ev)=>{
+        const res = ev.target.value;
+        // if streaming is active, restart loop with new resolution
+        if (videoOn) startRGBLoop(res);
+        else {
+            const elR = document.getElementById('rgb-res'); if (elR) elR.textContent = res;
+        }
+    });
+}
+
+async function fetchBlob(url){
+    try {
+        const r = await fetch(url, {cache:'no-store'});
+        if (!r.ok) return null;
+        const b = await r.blob();
+        return b;
+    } catch(e){
+        return null;
+    }
+}
+
+function updateSamples(samples, size){
+    const now = Date.now();
+    samples.push({ts: now, size});
+    const cutoff = now - SAMPLE_WINDOW_MS;
+    while(samples.length && samples[0].ts < cutoff) samples.shift();
+    const total = samples.reduce((s,x)=>s+x.size, 0);
+    const windowSec = Math.max(0.001, (now - (samples.length? samples[0].ts : now))/1000);
+    return total / windowSec; // bytes/sec
+}
+
+async function fetchAndDisplayRGB(res){
+    if (!videoImg) return;
+    const url = VIDEO_URL + '?res=' + encodeURIComponent(res) + '&_=' + Date.now();
+    const blob = await fetchBlob(url);
+    if (!blob) {
+        if (videoStatus) videoStatus.className = 'status-dot off';
+        return;
+    }
+    // set image
+    try { if (lastRGBObjectURL) URL.revokeObjectURL(lastRGBObjectURL); } catch(e){}
+    const obj = URL.createObjectURL(blob); lastRGBObjectURL = obj; videoImg.src = obj;
+
+    // update stats
+    const bps = updateSamples(rgbSamples, blob.size);
+    const kb = (bps/1024).toFixed(1);
+    const elB = document.getElementById('rgb-bitrate'); if (elB) elB.textContent = `${kb} kb/s`;
+    const elR = document.getElementById('rgb-res'); if (elR) elR.textContent = res;
+    if (videoStatus) videoStatus.className = 'status-dot on';
+}
+
+function startRGBLoop(res){
+    stopRGBLoop();
+    // initial fetch immediately
+    fetchAndDisplayRGB(res);
+    rgbTimer = setInterval(()=> fetchAndDisplayRGB(res), RGB_INTERVAL);
+}
+function stopRGBLoop(){ if (rgbTimer) { clearInterval(rgbTimer); rgbTimer = null; } try{ if (lastRGBObjectURL) { URL.revokeObjectURL(lastRGBObjectURL); lastRGBObjectURL = null; } }catch(e){} if (videoImg) videoImg.src = ''; const elB = document.getElementById('rgb-bitrate'); if (elB) elB.textContent = '0 kb/s'; const elR = document.getElementById('rgb-res'); if (elR) elR.textContent = '--'; if (videoStatus) videoStatus.className = 'status-dot off'; }
+
+// Thermal fetch (if backend exists)
+const thermalImg = document.getElementById('thermal-stream');
+const thermalPlaceholder = document.getElementById('thermal-placeholder');
+const thermalStatus = document.getElementById('thermal-status');
+
+async function fetchAndDisplayThermal(){
+    const panel = document.querySelector('.camera-panel.thermal');
+    const base = panel && panel.dataset && panel.dataset.url ? panel.dataset.url : '/thermal';
+    const url = base + '?_=' + Date.now();
+    const blob = await fetchBlob(url);
+    if (!blob) { if (thermalStatus) thermalStatus.className = 'status-dot off'; return; }
+    try { if (lastThermalObjectURL) URL.revokeObjectURL(lastThermalObjectURL); } catch(e){}
+    const obj = URL.createObjectURL(blob); lastThermalObjectURL = obj; if (thermalImg) thermalImg.src = obj;
+
+    // stats
+    const now = Date.now(); thermalSamples.push({ts:now});
+    const cutoff = now - SAMPLE_WINDOW_MS; while(thermalSamples.length && thermalSamples[0].ts < cutoff) thermalSamples.shift();
+    const windowSec = Math.max(0.001, (now - (thermalSamples.length? thermalSamples[0].ts : now))/1000);
+    const fps = (thermalSamples.length / windowSec).toFixed(1);
+    const elF = document.getElementById('thermal-fps'); if (elF) elF.textContent = `${fps} fps`;
+    const elR = document.getElementById('thermal-res'); if (elR && blob) elR.textContent = `${blob.size} bytes`;
+    if (thermalStatus) thermalStatus.className = 'status-dot on';
+}
+
+function startThermalLoop(){ stopThermalLoop(); fetchAndDisplayThermal(); thermalTimer = setInterval(()=> fetchAndDisplayThermal(), THERMAL_INTERVAL); }
+function stopThermalLoop(){ if (thermalTimer) { clearInterval(thermalTimer); thermalTimer = null; } try{ if (lastThermalObjectURL) { URL.revokeObjectURL(lastThermalObjectURL); lastThermalObjectURL = null; } }catch(e){} if (thermalImg) thermalImg.src = ''; const elF = document.getElementById('thermal-fps'); if (elF) elF.textContent = '0 fps'; const elR = document.getElementById('thermal-res'); if (elR) elR.textContent = '--'; if (thermalStatus) thermalStatus.className = 'status-dot off'; }
+
+// cleanup on unload
+window.addEventListener('beforeunload', ()=>{
+    stopRGBLoop(); stopThermalLoop(); if (rgbTimer) clearInterval(rgbTimer); if (thermalTimer) clearInterval(thermalTimer);
+});
 
 function setVideo(on){
     videoOn = !!on;
-    if (videoToggle) videoToggle.textContent = `Video: ${videoOn ? 'ON' : 'OFF'}`;
+    if (videoToggle && window.Toggles) window.Toggles.setState(videoToggle, videoOn);
     if (videoStatus) videoStatus.className = `status-dot ${videoOn? 'on':'off'}`;
     if (videoOn) {
         if (videoPlaceholder) videoPlaceholder.style.display = 'none';
-        if (videoImg) videoImg.src = VIDEO_URL + '?_=' + Date.now();
-        // start refresh loop for non-MJPEG fallback
-        if (!videoRefreshTimer) videoRefreshTimer = setInterval(()=>{ if(videoOn && videoImg) videoImg.src = VIDEO_URL + '?_=' + Date.now(); }, 1200);
+        const res = (rgbResolutionSelect && rgbResolutionSelect.value) ? rgbResolutionSelect.value : '1280x720';
+        startRGBLoop(res);
     } else {
         if (videoPlaceholder) videoPlaceholder.style.display = 'flex';
-        if (videoImg) videoImg.src = '';
-        if (videoRefreshTimer) { clearInterval(videoRefreshTimer); videoRefreshTimer = null; }
+        stopRGBLoop();
     }
 }
 
@@ -609,9 +753,19 @@ window.addEventListener('load', () => {
     //connectWebSocket();
     startDemo();
     setVideo(false);
+    // Start thermal monitoring (graceful if backend not available)
+    try{ startThermalLoop(); }catch(e){}
     // Ensure route controls initial state
     updateRouteControls();
+
+    // ensure leaflet map is correctly sized after layout changes
+    setTimeout(()=>{ try { if (map && typeof map.invalidateSize === 'function') map.invalidateSize(); } catch(e){} }, 250);
 });
+
+// keep map layout consistent on window resize
+window.addEventListener('resize', ()=>{ try { if (map && typeof map.invalidateSize === 'function') map.invalidateSize(); } catch(e){} });
+
+
 
 // Reconnect WebSocket on page visibility change
 document.addEventListener('visibilitychange', () => {

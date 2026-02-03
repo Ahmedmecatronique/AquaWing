@@ -1,0 +1,49 @@
+PROMPT POUR VS CODE / COPILOT / CURSOR
+
+Analyse mon front-end existant (HTML, CSS, JS) et refais entièrement l’interface LOGIN
+DU DÉBUT JUSQU’À LA FIN DU FRONT,
+SANS AJOUTER AUCUN NOUVEAU FICHIER.
+
+⚠️ CONTRAINTE CRITIQUE :
+- NE CRÉER AUCUN nouveau fichier
+- NE PAS ajouter de nouveaux .css, .js ou .html
+- MODIFIER UNIQUEMENT les fichiers EXISTANTS
+- réutiliser et adapter le code déjà présent
+
+DESIGN UNIQUE COMBINÉ :
+- style moderne ORANGE
+- glassmorphism (blur + transparence)
+- look tech / drone / dashboard
+- toggle switch ORANGE élégant (yes / no)
+- bouton Login ORANGE dégradé
+- micro-animations fluides
+- responsive desktop + mobile
+
+STRUCTURE :
+- conserver l’image de fond actuelle
+- conserver la structure générale du HTML
+- améliorer uniquement le style et l’UX
+- ne pas changer l’architecture du projet
+
+FONCTIONNALITÉS UI :
+- toggle Remember me
+- toggle User / Admin (UI seulement)
+- animation de chargement au login
+- message d’erreur animé
+- indicateur de statut sécurité
+
+CONTRAINTES TECHNIQUES :
+- ne pas casser le backend
+- conserver les champs username et password
+- conserver les routes, IDs, classes et events JS existants
+- JS minimal, propre, réutilisable
+- CSS organisé avec variables ORANGE
+
+LIVRABLE FINAL :
+- code HTML modifié (fichier existant)
+- code CSS modifié (fichier existant)
+- code JS modifié (fichier existant)
+- aucune création de fichier
+- aucune dépendance externe ajoutée
+
+Le résultat doit être professionnel, cohérent et adapté à un projet comme AquaWing.

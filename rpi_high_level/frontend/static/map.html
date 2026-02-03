@@ -12,7 +12,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="/static/map.css?v=1">
-    <link rel="stylesheet" href="/static/hud.css?v=1">
 </head>
 
 <body>
@@ -60,18 +59,22 @@
 
                 <div class="telemetry-row compass-row">
                     <div class="hud-card">
-                        <div class="hud-title">Compass</div>
-                        <div class="compass-wrap">
-                            <div class="compass" id="compass">
-                                <div class="compass-face"></div>
-                                <div class="compass-label n">N</div>
-                                <div class="compass-label e">E</div>
-                                <div class="compass-label s">S</div>
-                                <div class="compass-label w">W</div>
-                                <div class="compass-needle" id="compass-needle"></div>
-                                <div class="compass-cap"></div>
+                        <div class="hud-title">ATTITUDE</div>
+                        <div class="attitude-wrap">
+                            <div class="attitude" id="attitude">
+                                <div class="horizon" id="att-horizon">
+                                    <div class="sky"></div>
+                                    <div class="ground"></div>
+                                    <div class="horizon-line"></div>
+                                </div>
+                                <div class="attitude-mask"></div>
+                                <div class="att-bird" aria-hidden="true">▦</div>
                             </div>
-                            <div class="compass-deg" id="compass-deg">000°</div>
+
+                            <div class="attitude-readouts">
+                                <div class="label small">Pitch: <span id="att-pitch">0°</span></div>
+                                <div class="label small">Roll: <span id="att-roll">0°</span></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -107,17 +110,44 @@
                 </div>
             </div>
 
-            <div class="video-panel card">
-                <div class="panel-header">
-                    <div class="panel-title">Video Stream</div>
-                    <div class="panel-controls">
-                        <button id="video-toggle" class="btn-primary">Video: OFF</button>
-                        <div id="video-status" class="status-dot off">OFF</div>
+            <div class="cams-area">
+                <div class="camera-panel rgb card" data-url="/video">
+                    <div class="panel-header">
+                        <div class="panel-title">Camera — RGB</div>
+                        <div class="panel-controls">
+                            <label class="small" for="rgb-resolution">Res:</label>
+                            <select id="rgb-resolution" aria-label="RGB resolution">
+                                <option value="640x480">640×480</option>
+                                <option value="800x600">800×600</option>
+                                <option value="1280x720" selected>1280×720</option>
+                            </select>
+                            <button id="video-toggle" class="btn-primary">RGB: OFF</button>
+                            <div id="video-status" class="status-dot off">OFF</div>
+                        </div>
+                    </div>
+                    <div class="video-content">
+                        <img id="video-stream" class="video-stream" src="" alt="RGB stream" />
+                        <div id="video-placeholder" class="video-placeholder">RGB disabled</div>
+                        <div class="camera-stats small">
+                            <span id="rgb-res">1280×720</span> • <span id="rgb-bitrate">0 kb/s</span>
+                        </div>
                     </div>
                 </div>
-                <div class="video-content">
-                    <img id="video-stream" class="video-stream" src="" alt="Video stream" />
-                    <div id="video-placeholder" class="video-placeholder">Video disabled</div>
+
+                <div class="camera-panel thermal card" data-url="/thermal">
+                    <div class="panel-header">
+                        <div class="panel-title">Camera — Thermal</div>
+                        <div class="panel-controls">
+                            <div id="thermal-status" class="status-dot off">OFF</div>
+                        </div>
+                    </div>
+                    <div class="video-content">
+                        <img id="thermal-stream" class="thermal-stream" src="" alt="Thermal stream" />
+                        <div id="thermal-placeholder" class="video-placeholder">Thermal disabled</div>
+                        <div class="camera-stats small">
+                            <span id="thermal-res">--</span> • <span id="thermal-fps">0 fps</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
