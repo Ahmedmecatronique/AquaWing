@@ -435,16 +435,14 @@ body { overflow: visible; }
 .modal .sys-result.ok { background: linear-gradient(90deg,#dfffe8,#baf6d0); color:#021; }
 .modal .sys-result.fail { background: linear-gradient(90deg,#ffdfe6,#ffd1d6); color:#210; }
 
-/* System Test sequential log - floating console */
-.system-test-log[aria-hidden="true"]{ display:none; }
-.system-test-log[aria-hidden="false"]{ display:flex; }
-.system-test-log{ position:fixed; left:50%; bottom:18px; transform:translateX(-50%); width:420px; max-width:calc(100% - 36px); max-height:40vh; background: rgba(2,6,12,0.92); border:1px solid rgba(255,255,255,0.04); padding:10px; border-radius:8px; overflow:hidden; font-family: monospace; font-size:13px; color:var(--muted); z-index:100005; box-shadow: 0 12px 36px rgba(0,0,0,0.6); }
-.system-test-log .log-header{ display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px; color:var(--text); font-weight:800; }
-.system-test-log .log-body{ max-height:calc(40vh - 64px); overflow:auto; display:flex; flex-direction:column; gap:6px; padding-right:8px; }
-.log-line{ white-space:pre-wrap; padding:6px 8px; border-radius:6px; background: rgba(255,255,255,0.01); }
-.log-info{ color:var(--muted); }
-.log-ok{ color:var(--good); font-weight:900; }
-.log-fail{ color:var(--bad); font-weight:900; }
+/* System Test sequential log - floating console (override) */
+#system-test-log { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); width: 420px; max-height: 260px; background: rgba(6,10,18,0.95); border: 1px solid rgba(255,122,24,0.4); border-radius: 10px; padding: 10px; overflow-y: auto; z-index: 99999; display: none; font-family: monospace; font-size: 13px; }
+#system-test-log[aria-hidden="false"] { display: block; }
+#system-test-log .log-body { display:flex; flex-direction:column; gap:6px; }
+#system-test-log .log-line { white-space:pre-wrap; padding:6px 8px; border-radius:6px; background: rgba(255,255,255,0.01); color: var(--muted); }
+.log-info { color: #cfd8ff; }
+.log-ok { color: #3cff8f; }
+.log-fail { color: #ff4d4d; }
 
 /* Hide duplicate Follow button in telemetry (keep map follow) */
 #follow-btn{ display:none !important; }

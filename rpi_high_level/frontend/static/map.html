@@ -95,16 +95,12 @@
 
                 <div style="display:flex; gap:12px; align-items:center;">
                     <button id="follow-btn" class="btn-primary btn-follow" aria-pressed="false" aria-label="Toggle follow">Follow: OFF</button>
-                    <button id="system-test-btn" class="btn btn-system-test" aria-pressed="false">SYSTEM TEST</button>
+                    <button id="system-test-btn" class="btn blue">SYSTEM TEST</button>
                     <button id="logout-btn" class="btn-primary">Logout</button>
                 </div>
             </div>
 
-            <!-- System Test sequential log (collapsible / clearable) -->
-            <div id="system-test-log" class="system-test-log" aria-hidden="true">
-                <div class="log-header"><span>System Test Log</span><div><button id="system-test-clear" class="btn btn-ghost btn-small">Clear</button></div></div>
-                <div class="log-body" id="system-test-log-body" role="log" aria-live="polite"></div>
-            </div>
+
         </aside>
 
 
@@ -293,6 +289,23 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <!-- CONTROL BAR removed -->
+
+    <!-- Visible System Test log (floating) -->
+    <div id="system-test-log" style="
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 420px;
+      max-height: 240px;
+      background: #000;
+      color: #00ff88;
+      padding: 12px;
+      border-radius: 8px;
+      font-family: monospace;
+      display: none;
+      z-index: 99999;
+    " aria-hidden="true"></div>
 
     <!-- SYSTEM TEST Modal -->
     <div id="system-test-modal" class="modal" aria-hidden="true">

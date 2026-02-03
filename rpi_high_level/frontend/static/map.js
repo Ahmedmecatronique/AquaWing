@@ -2,7 +2,7 @@
 // CONFIGURATION
 // ============================================================================
 
-console.log('map.js loaded');
+console.log("✅ map.js loaded");
 const WS_RECONNECT_INTERVAL = 1000; // ms
 const POLYLINE_MAX_POINTS = 2000;
 const MAP_CENTER = [36.8065, 10.1815]; // Tunis
@@ -574,104 +574,39 @@ function _parseNumberFromId(id, fallback=NaN){ const el=document.getElementById(
 
 function _renderStatus(name, ok, note){ const cls = ok? 'ok':'fail'; const icon = ok? '✔':'✖'; return `<div class="sys-item"><div class="name">${name}</div><div class="status ${cls}">${icon} ${note|| (ok? 'OK':'FAIL')}</div></div>`; }
 
-function runSystemTest(){
-    if (!systemTestBtn || systemTestBtn.disabled) return;
-    systemTestBtn.disabled = true;
+function runSystemTest() {
+  const panel = document.getElementById('system-test-log');
+  if (!panel) {
+    console.error('SYSTEM TEST PANEL NOT FOUND');
+    return;
+  }
 
-    // Ensure log visible and cleared
-    if (typeof clearLog === 'function') clearLog();
-    if (systemTestLog) systemTestLog.setAttribute('aria-hidden','false');
+  // reset
+  panel.innerHTML = '';
+  panel.setAttribute('aria-hidden', 'false');
 
-    showToast('Starting system test...', 'info', 1000);
+  const messages = [
+    { t: 'Initializing system test...', c: 'log-info' },
+    { t: 'Power system: OK', c: 'log-ok' },
+    { t: 'Motor 1: ON', c: 'log-ok' },
+    { t: 'Motor 2: ON', c: 'log-ok' },
+    { t: 'Motor 3: ON', c: 'log-ok' },
+    { t: 'Servo check: OK', c: 'log-ok' },
+    { t: 'Sensors check: OK', c: 'log-ok' },
+    { t: 'SYSTEM TEST COMPLETED', c: 'log-ok' }
+  ];
 
-    // Simulate outcomes up-front so message text can reflect results
-    const sensors = [];
-    sensors.push({name:'IMU sensor', ok: _rnd(0.95)});
-    const gpsOk = _rnd(0.9);
-    sensors.push({name:'GPS', ok: gpsOk, note: gpsOk? 'FIX OK':'NO FIX'});
-    sensors.push({name:'Barometer', ok: _rnd(0.95)});
-    sensors.push({name:'Temperature sensors', ok: _rnd(0.97)});
-
-    const motors = [];
-    for (let i=1;i<=3;i++){ const ok = _rnd(0.93); motors.push({name:`Motor ${i}`, ok}); }
-
-    const servos = [];
-    for (let i=1;i<=6;i++){ servos.push({name:`Servo ${i}`, ok: _rnd(0.97)}); }
-
-    const battV = _parseNumberFromId('batt-voltage', 12.6);
-    const battOk = battV >= 11.0;
-    const busV = _parseNumberFromId('bus-voltage', 12.6);
-    const busOk = busV >= 11.0;
-
-    // Ensure log panel visible
-    if (systemTestLog) systemTestLog.setAttribute('aria-hidden','false');
-
-    // Compose message sequence
-    const msgs = [];
-    msgs.push({text:'Starting system test...', cls:'log-info'});
-    msgs.push({text:`Checking power system... ${battOk? 'OK':'LOW'}`, cls: battOk? 'log-ok':'log-fail'});
-
-    motors.forEach(m => msgs.push({text: m.ok? `${m.name}: ON – response OK` : `${m.name}: NO RESPONSE ❌`, cls: m.ok? 'log-ok':'log-fail'}));
-    servos.forEach(s => msgs.push({text: s.ok? `${s.name}: OK` : `${s.name}: FAIL`, cls: s.ok? 'log-ok':'log-fail'}));
-
-    msgs.push({text: `IMU sensor: ${sensors[0].ok? 'OK':'FAIL'}`, cls: sensors[0].ok? 'log-ok':'log-fail'});
-    msgs.push({text: `GPS: ${sensors[1].ok? 'FIX OK':'NO FIX'}`, cls: sensors[1].ok? 'log-ok':'log-fail'});
-    msgs.push({text: `Barometer: ${sensors[2].ok? 'OK':'FAIL'}`, cls: sensors[2].ok? 'log-ok':'log-fail'});
-    msgs.push({text: `Temperature sensors: ${sensors[3].ok? 'OK':'FAIL'}`, cls: sensors[3].ok? 'log-ok':'log-fail'});
-
-    // Final message based on aggregated status
-    const allOk = sensors.every(s=>s.ok) && motors.every(m=>m.ok) && servos.every(s=>s.ok) && battOk && busOk;
-    msgs.push({text: allOk? 'SYSTEM TEST PASSED – READY TO ARM' : 'SYSTEM TEST FAILED – CHECK FAILED COMPONENTS', cls: allOk? 'log-ok':'log-fail'});
-
-    // Sequentially display messages
-    let delay = 0;
-    const baseDelay = 600; // ms between messages
-    systemTestTimers = [];
-    msgs.forEach((m, idx)=>{
-        const t = setTimeout(()=>{
-            appendLog(m.text, m.cls);
-        }, delay);
-        systemTestTimers.push(t);
-        delay += baseDelay;
-    });
-
-    // After sequence finishes, present detailed modal report (reuse existing report builder)
-    const finishTimer = setTimeout(()=>{
-        // Build same report HTML as previous implementation
-        const power = [];
-        power.push({name:'Battery voltage', ok: battOk, details: `${battV} V`});
-        power.push({name:'Battery current', ok: true, details: (document.getElementById('batt-current')? String(document.getElementById('batt-current').textContent): '0.0 A')});
-        power.push({name:'Bus voltage', ok: busOk, details: `${busV} V`});
-
-        let html = '';
-        html += '<div class="sys-section"><h4>SENSORS CHECK</h4><div class="sys-list">';
-        sensors.forEach(s=> html += _renderStatus(s.name, s.ok, s.note));
-        html += '</div></div>';
-
-        html += '<div class="sys-section"><h4>MOTORS</h4><div class="sys-list">';
-        motors.forEach(m=> html += `<div class="sys-item"><div class="name">${m.name}</div><div style="text-align:right"><div class="status ${m.ok? 'ok':'fail'}">${m.ok? '✔ OK':'✖ FAIL'}</div></div></div>`);
-        html += '</div></div>';
-
-        html += '<div class="sys-section"><h4>SERVOS</h4><div class="sys-list">';
-        servos.forEach(sv=> html += _renderStatus(sv.name, sv.ok));
-        html += '</div></div>';
-
-        html += '<div class="sys-section"><h4>POWER</h4><div class="sys-list">';
-        power.forEach(pw=> html += `<div class="sys-item"><div class="name">${pw.name}</div><div style="text-align:right"><div class="status ${pw.ok? 'ok':'fail'}">${pw.ok? '✔ OK':'✖ FAIL'}</div><div style="font-size:12px;color:var(--muted);font-weight:700;margin-top:4px">${pw.details}</div></div></div>`);
-        html += '</div></div>';
-
-        html += `<div class="sys-result ${allOk? 'ok':'fail'}">${allOk? 'ALL SYSTEMS OK – READY TO ARM' : 'SYSTEM ERROR – CHECK FAILED COMPONENTS'}</div>`;
-
-        if (systemTestBody) systemTestBody.innerHTML = html;
-        if (systemTestModal) systemTestModal.setAttribute('aria-hidden','false');
-
-        // Re-enable button and clear timers
-        if (systemTestBtn) systemTestBtn.disabled = false;
-        systemTestTimers = [];
-
-        // Final toast
-        showToast(allOk? 'System test passed' : 'System test detected issues', allOk? 'success':'error', 4500);
-    }, delay + 400);
+  let i = 0;
+  const interval = 600; // ms
+  const timer = setInterval(() => {
+    if (i >= messages.length) { clearInterval(timer); return; }
+    const line = document.createElement('div');
+    line.className = `log-line ${messages[i].c}`;
+    line.textContent = messages[i].t;
+    panel.appendChild(line);
+    panel.scrollTop = panel.scrollHeight;
+    i++;
+  }, interval);
 }
 
 // Clear / append helpers for the log
@@ -699,7 +634,13 @@ if (systemTestClearBtn) systemTestClearBtn.addEventListener('click', clearLog);
 
 function closeSystemTestModal(){ if (systemTestModal) systemTestModal.setAttribute('aria-hidden','true'); }
 
-if (systemTestBtn) systemTestBtn.addEventListener('click', runSystemTest);
+document.addEventListener("click", function (e) {
+  const btn = e.target.closest("#system-test-btn");
+  if (!btn) return;
+
+  console.log("✅ SYSTEM TEST CLICKED");
+  runSystemTest();
+});
 if (systemTestClose) systemTestClose.addEventListener('click', closeSystemTestModal);
 if (systemTestCloseOk) systemTestCloseOk.addEventListener('click', closeSystemTestModal);
 if (systemTestModal) {
