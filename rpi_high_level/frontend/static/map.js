@@ -53,6 +53,13 @@ let waypoints = [];           // [{lat, lon, seq: 1,2,3...}]
 let waypointMarkers = [];     // [L.marker objects]
 let routeLine = null;         // L.polyline for route
 
+// Flight UI state (UI-only, simulated)
+let flightStarted = false;    // user clicked START FLIGHT
+let missionLocked = false;    // WAIT / MISSION END clicked
+let startFlightBtn = null;
+let waitBtn = null;
+let flightStatusEl = null;
+
 // ============================================================================
 // WEBSOCKET CONNECTION
 // ============================================================================
@@ -340,6 +347,8 @@ function updateRouteControls() {
     if (clearRouteBtn) {
         clearRouteBtn.disabled = waypoints.length === 0;
     }
+    // keep flight UI in sync
+    updateFlightControls && updateFlightControls();
 }
 
 /** Add a waypoint at given lat/lon */
@@ -471,6 +480,9 @@ async function sendRouteToBackend() {
         if (response.ok) {
             const count = waypoints.length;
             showToast(`Route saved: ${missionName} (${count} pts)`, 'success');
+            // Enable START FLIGHT (UI-only) when route saved successfully
+            if (startFlightBtn) { startFlightBtn.disabled = false; startFlightBtn.setAttribute('aria-disabled', 'false'); }
+            updateFlightControls();
         } else {
             const errText = await response.text();
             showToast(`Save failed: ${response.status} ${errText}`, 'error');
@@ -562,6 +574,80 @@ if (clearRouteBtn) {
         clearAllWaypoints();
     });
 }
+
+// ============================================================================
+// FLIGHT CONTROL (UI-only, simulated)
+// ============================================================================
+
+startFlightBtn = document.getElementById('start-flight-btn');
+waitBtn = document.getElementById('wait-btn');
+flightStatusEl = document.getElementById('flight-status');
+
+function updateFlightControls() {
+    if (missionLocked) {
+        if (startFlightBtn) { startFlightBtn.disabled = true; startFlightBtn.setAttribute('aria-disabled','true'); startFlightBtn.classList.add('locked'); }
+        if (waitBtn) { waitBtn.disabled = true; waitBtn.setAttribute('aria-disabled','true'); waitBtn.classList.add('locked'); }
+    } else {
+        if (startFlightBtn) {
+            startFlightBtn.disabled = !!flightStarted;
+            startFlightBtn.setAttribute('aria-disabled', String(!!flightStarted));
+            startFlightBtn.classList.remove('locked');
+        }
+        if (waitBtn) {
+            waitBtn.disabled = !flightStarted;
+            waitBtn.setAttribute('aria-disabled', String(!flightStarted));
+            waitBtn.classList.remove('locked');
+        }
+    }
+
+    // update status badge
+    if (flightStatusEl) {
+        flightStatusEl.classList.remove('started','waiting','locked');
+        if (missionLocked) {
+            flightStatusEl.textContent = 'Mission completed – waiting';
+            flightStatusEl.classList.add('locked');
+        } else if (flightStarted) {
+            flightStatusEl.textContent = 'Mission in progress';
+            flightStatusEl.classList.add('started');
+        } else {
+            flightStatusEl.textContent = 'Idle';
+        }
+    }
+}
+
+// START FLIGHT - UI only
+if (startFlightBtn) {
+    startFlightBtn.addEventListener('click', () => {
+        if (startFlightBtn.disabled) return;
+        flightStarted = true;
+        updateFlightControls();
+        showToast('Mission in progress (simulated)', 'success');
+    });
+}
+
+// WAIT / MISSION END - UI only
+if (waitBtn) {
+    waitBtn.addEventListener('click', () => {
+        if (waitBtn.disabled) return;
+        missionLocked = true;
+        // VISUAL ONLY: mark mission area locked and disable mission-related controls
+        const telemetryPanel = document.querySelector('.telemetry-panel');
+        if (telemetryPanel) telemetryPanel.classList.add('mission-locked');
+        if (waypointsToggleBtn) { waypointsToggleBtn.disabled = true; waypointsToggleBtn.classList.add('locked-ctrl'); }
+        if (sendRouteBtn) { sendRouteBtn.disabled = true; sendRouteBtn.classList.add('locked-ctrl'); }
+        if (clearRouteBtn) { clearRouteBtn.disabled = true; clearRouteBtn.classList.add('locked-ctrl'); }
+
+        // disable both action buttons
+        if (startFlightBtn) { startFlightBtn.disabled = true; startFlightBtn.setAttribute('aria-disabled','true'); }
+        if (waitBtn) { waitBtn.disabled = true; waitBtn.setAttribute('aria-disabled','true'); }
+
+        updateFlightControls();
+        showToast('Mission completed — mission UI locked', 'success');
+    });
+}
+
+// initial sync
+updateFlightControls();
 
 // Update small HUD values in control-bar
 function updateControlBar(lat, lon, alt, speed, battery){
@@ -764,6 +850,146 @@ window.addEventListener('load', () => {
 
 // keep map layout consistent on window resize
 window.addEventListener('resize', ()=>{ try { if (map && typeof map.invalidateSize === 'function') map.invalidateSize(); } catch(e){} });
+
+
+// ============================================================================
+// Power & Motors Panel: Tabs, visibility and simulated data (UI-only)
+// ============================================================================
+
+const tabTelemetry = document.getElementById('tab-telemetry');
+const tabPower = document.getElementById('tab-power');
+const powerPanel = document.querySelector('.power-panel');
+
+function showTelemetryPanel() {
+    const telemetry = document.querySelector('.telemetry-panel');
+    if (telemetry) telemetry.style.display = 'flex';
+    if (powerPanel) powerPanel.style.display = 'none';
+    if (tabTelemetry) { tabTelemetry.classList.add('active'); tabTelemetry.setAttribute('aria-selected','true'); }
+    if (tabPower) { tabPower.classList.remove('active'); tabPower.setAttribute('aria-selected','false'); }
+}
+
+function showPowerPanel() {
+    const telemetry = document.querySelector('.telemetry-panel');
+    if (telemetry) telemetry.style.display = 'none';
+    if (powerPanel) powerPanel.style.display = 'flex';
+    if (tabTelemetry) { tabTelemetry.classList.remove('active'); tabTelemetry.setAttribute('aria-selected','false'); }
+    if (tabPower) { tabPower.classList.add('active'); tabPower.setAttribute('aria-selected','true'); }
+}
+
+if (tabTelemetry) tabTelemetry.addEventListener('click', showTelemetryPanel);
+if (tabPower) tabPower.addEventListener('click', showPowerPanel);
+
+// Simulation state with smoothing helper
+const simState = {
+    motorSpeed: [20,20,20],
+    motorRPS: [5,5,5],
+    motorCurrent: [1.2,1.2,1.2],
+    motorVoltage: [12.6,12.6,12.6],
+    motorTemp: [30,30,30],
+    servoPos: [10,10,10,10,10,10],
+    battVolt: 12.6,
+    battCurrent: 0.8,
+    battTemp: 30.0,
+    busVolt: 12.6,
+    powerCons: 10,
+    imuOK: true,
+    gpsFix: true,
+    baro: 1013,
+    airTemp: 22,
+    humidity: 45,
+    compassOK: true
+};
+
+function smooth(val, target, alpha=0.15){ return val + (target - val) * alpha; }
+
+function randomDrift(v, range){ return v + (Math.random()*2-1) * range; }
+
+function updatePowerSim() {
+    // Random targets and smooth towards them
+    for (let i=0;i<3;i++){
+        const tSpeed = Math.max(0, Math.min(100, simState.motorSpeed[i] + (Math.random()*10-5)));
+        simState.motorSpeed[i] = smooth(simState.motorSpeed[i], tSpeed, 0.2);
+        const tCur = Math.max(0, simState.motorCurrent[i] + (Math.random()*0.4-0.2));
+        simState.motorCurrent[i] = smooth(simState.motorCurrent[i]||1,tCur,0.15);
+        const tTemp = Math.max(20, simState.motorTemp[i] + (Math.random()*4-2));
+        simState.motorTemp[i] = smooth(simState.motorTemp[i], tTemp, 0.12);
+    }
+    for (let i=0;i<6;i++){ const t = Math.max(0, Math.min(180, simState.servoPos[i] + (Math.random()*8-4))); simState.servoPos[i] = smooth(simState.servoPos[i], t, 0.18); }
+    simState.battVolt = smooth(simState.battVolt, Math.max(10.5, 12.6 + (Math.random()*0.2-0.1)), 0.06);
+    simState.battCurrent = smooth(simState.battCurrent, Math.max(0, simState.battCurrent + (Math.random()*0.6-0.3)), 0.08);
+    // battery temperature increases slightly with current draw and ambient temp
+    const targetBattTemp = Math.max(15, (simState.airTemp || 20) + simState.battCurrent * 6 + (Math.random()*2-1));
+    simState.battTemp = smooth(simState.battTemp, targetBattTemp, 0.06);
+
+    simState.powerCons = Math.max(0, simState.battVolt * simState.battCurrent);
+    simState.busVolt = smooth(simState.busVolt, simState.battVolt + (Math.random()*0.05-0.02), 0.08);
+    simState.baro = smooth(simState.baro, 1010 + Math.random()*6, 0.04);
+    simState.airTemp = smooth(simState.airTemp, 18 + Math.random()*12, 0.03);
+    simState.humidity = smooth(simState.humidity, 30 + Math.random()*50, 0.04);
+
+    // Status toggles occasionally
+    simState.imuOK = Math.random() > 0.02; simState.gpsFix = Math.random() > 0.05; simState.compassOK = Math.random() > 0.03;
+}
+
+function renderPowerPanel() {
+    // Motors: update slider, rps, current, voltage, temp
+    for (let i=0;i<3;i++){
+        const pct = Math.round(simState.motorSpeed[i]);
+        const slider = document.getElementById('motor'+(i+1)+'-power'); if (slider) { slider.value = pct; slider.style.background = `linear-gradient(90deg, var(--accent) ${pct}%, rgba(255,255,255,0.03) ${pct}%)`; }
+        const pval = document.getElementById('motor'+(i+1)+'-power-val'); if (pval) pval.textContent = pct + '%';
+
+        const rps = (simState.motorRPS[i]||0);
+        const rpsEl = document.getElementById('motor'+(i+1)+'-rps'); if (rpsEl) rpsEl.textContent = rps.toFixed(1) + ' tr/s';
+
+        const cur = document.getElementById('motor'+(i+1)+'-current'); if (cur) cur.textContent = simState.motorCurrent[i].toFixed(2) + ' A';
+        const volt = document.getElementById('motor'+(i+1)+'-voltage'); if (volt) volt.textContent = simState.motorVoltage[i].toFixed(2) + ' V';
+        const tmp = document.getElementById('motor'+(i+1)+'-temp'); if (tmp) tmp.textContent = Math.round(simState.motorTemp[i]) + '°C';
+
+        // color coding
+        const tmpVal = simState.motorTemp[i];
+        const curVal = simState.motorCurrent[i];
+        const tmpClassTarget = (tmpVal > 85) ? 'status-critical' : (tmpVal > 70) ? 'status-warn' : 'status-normal';
+        const curClassTarget = (curVal > 8) ? 'status-critical' : (curVal > 5) ? 'status-warn' : 'status-normal';
+        if (tmp) tmp.className = 'metric-val ' + tmpClassTarget;
+        if (cur) cur.className = 'metric-val ' + curClassTarget;
+    }
+
+    // Remove aggregated motor-temps display if present
+    const tempsEl = document.getElementById('motor-temps'); if (tempsEl) tempsEl.textContent = `M1: ${Math.round(simState.motorTemp[0])}°C • M2: ${Math.round(simState.motorTemp[1])}°C • M3: ${Math.round(simState.motorTemp[2])}°C`;
+
+    // Servos
+    for (let i=0;i<6;i++){ const pct = Math.max(0,Math.min(100, Math.round(simState.servoPos[i]/180*100))); const bar = document.getElementById('servo'+(i+1)+'-pos'); if (bar) bar.style.width = pct + '%'; const v = document.getElementById('servo'+(i+1)+'-val'); if (v) v.textContent = Math.round(simState.servoPos[i]) + '°'; }
+
+    // Power
+    const bv = document.getElementById('batt-voltage'); if (bv) bv.textContent = simState.battVolt.toFixed(2) + ' V';
+    const bc = document.getElementById('batt-current'); if (bc) bc.textContent = simState.battCurrent.toFixed(2) + ' A';
+    const pc = document.getElementById('power-cons'); if (pc) pc.textContent = Math.round(simState.powerCons) + ' W';
+    const bus = document.getElementById('bus-voltage'); if (bus) bus.textContent = simState.busVolt.toFixed(2) + ' V';
+    // Battery temperature
+    const bt = document.getElementById('batt-temp'); if (bt) bt.textContent = Math.round(simState.battTemp) + '°C';
+    // color coding: warn if > 50°C, critical if > 65°C
+    const btEl = document.getElementById('batt-temp'); if (btEl){ const t = simState.battTemp; if (t > 65) btEl.className = 'metric-val status-critical'; else if (t > 50) btEl.className = 'metric-val status-warn'; else btEl.className = 'metric-val status-normal'; }
+
+    // Sensors
+    const imu = document.getElementById('imu-status'); if (imu) { imu.textContent = simState.imuOK ? 'OK' : 'WARN'; imu.className = 'metric-val ' + (simState.imuOK ? 'status-normal' : 'status-warn'); }
+    const gps = document.getElementById('gps-status'); if (gps) { gps.textContent = simState.gpsFix ? 'FIX' : 'NO FIX'; gps.className = 'metric-val ' + (simState.gpsFix ? 'status-normal' : 'status-warn'); }
+    const baro = document.getElementById('baro-press'); if (baro) baro.textContent = Math.round(simState.baro) + ' hPa';
+    const at = document.getElementById('air-temp'); if (at) at.textContent = Math.round(simState.airTemp) + '°C';
+    const hum = document.getElementById('humidity'); if (hum) hum.textContent = Math.round(simState.humidity) + '%';
+    const comp = document.getElementById('compass-status'); if (comp) { comp.textContent = simState.compassOK ? 'OK' : 'WARN'; comp.className = 'metric-val ' + (simState.compassOK ? 'status-normal' : 'status-warn'); }
+
+    // Color coding (critical thresholds)
+    // battery low
+    const bvEl = document.getElementById('batt-voltage'); if (bvEl){ const v = simState.battVolt; if (v < 10.8) bvEl.className = 'metric-val status-critical'; else if (v < 11.3) bvEl.className = 'metric-val status-warn'; else bvEl.className = 'metric-val status-normal'; }
+}
+
+// Start simulation loop (UI-only)
+let powerInterval = null;
+function startPowerSimulation(){ if (powerInterval) return; powerInterval = setInterval(()=>{ updatePowerSim(); renderPowerPanel(); }, 700); }
+function stopPowerSimulation(){ if (powerInterval){ clearInterval(powerInterval); powerInterval = null; } }
+
+// start simulation when panel is visible (but keep running to keep states fresh)
+startPowerSimulation();
 
 
 

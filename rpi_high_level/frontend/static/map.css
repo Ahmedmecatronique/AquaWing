@@ -28,6 +28,17 @@ body { overflow: visible; }
     height: 100vh;
 }
 
+/* Panels layout: ensure tabs span full width and the two left-side panels occupy the same grid cell */
+.panel-tabs { grid-column: 1 / 3; display:flex; gap:8px; margin:12px 0; }
+.telemetry-panel, .power-panel { grid-column: 1 / 2; grid-row: 2 / 3; }
+.right-column { grid-column: 2 / 3; grid-row: 2 / 3; }
+
+/* On small screens, let natural flow stack vertically */
+@media (max-width: 900px) {
+    .panel-tabs { grid-column: 1 / -1; }
+    .telemetry-panel, .power-panel, .right-column { grid-column: 1 / -1; grid-row: auto; }
+}
+
 .telemetry-panel {
     background: var(--glass-bg) !important;
     border: 1px solid var(--glass-border) !important;
@@ -129,9 +140,40 @@ body { overflow: visible; }
 .btn { padding:8px 12px; border-radius:6px; background:transparent; color:#9fffe9; border:1px solid rgba(0,255,200,0.06); cursor:pointer; }
 .btn.danger { border-color: rgba(255,0,80,0.12); color:#ff9fb1; }
 
-.speed-control { display:flex; align-items:center; gap:8px; }
+/* START FLIGHT (green) and WAIT (red) button styles */
+.btn-success { background: linear-gradient(90deg,#27d07f,#19b86a); color:#021; border: none; padding:8px 12px; font-weight:800; border-radius:8px; transition: transform 120ms ease, box-shadow 120ms ease; }
+.btn-danger { background: linear-gradient(90deg,#ff6b6b,#ff3b3b); color:#210; border: none; padding:8px 12px; font-weight:800; border-radius:8px; transition: transform 120ms ease, box-shadow 120ms ease; }
+.btn-success[disabled], .btn-danger[disabled] { opacity: 0.55; cursor: not-allowed; box-shadow: none; transform: none; }
+.btn-success:hover:not([disabled]) { box-shadow: 0 8px 26px rgba(34, 197, 94, 0.18); transform: translateY(-2px); }
+.btn-danger:hover:not([disabled]) { box-shadow: 0 8px 26px rgba(255, 99, 71, 0.18); transform: translateY(-2px); }
+
+/* Mission Control grouping (refined) */
+.mission-control { display:flex; flex-direction:column; gap:6px; align-items:flex-start; padding:8px 12px; border-radius:10px; background: rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04); min-width:220px; margin-right:6px; }
+.mission-label { font-size:12px; color:var(--muted); font-weight:900; letter-spacing:0.8px; text-transform:uppercase; }
+.mission-buttons { display:flex; gap:8px; align-items:center; }
+
+/* Follow button: secondary visual weight */
+.btn-follow { background: transparent; border: 1px solid rgba(255,255,255,0.04); color: var(--muted); padding:6px 10px; border-radius:8px; font-weight:700; opacity:0.85; transition: box-shadow 120ms ease, transform 120ms ease, opacity 120ms; }
+.btn-follow:hover:not([disabled]) { box-shadow: 0 6px 18px rgba(0,0,0,0.12); transform: translateY(-1px); opacity: 1; }
+.btn-follow[disabled] { opacity: 0.55; cursor:not-allowed; }
+.btn-follow:active { transform: translateY(0); }
+
+/* Locked visuals for mission-related UI */
+.locked-ctrl { opacity: 0.55; pointer-events: none; filter: saturate(60%); }
+.telemetry-panel.mission-locked { box-shadow: inset 0 0 0 2px rgba(255,255,255,0.01); opacity: 0.95; }
+
+/* Flight status badge */
+.status-badge { padding:6px 10px; border-radius:8px; font-weight:800; background: rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.03); color: var(--muted); min-width:160px; text-align:center; font-size:13px; }
+.status-badge.started { background: linear-gradient(90deg,#a6f4c5,#3ed78e); color:#021; border-color: rgba(0,255,136,0.12); box-shadow: 0 6px 20px rgba(34,197,94,0.06); }
+.status-badge.waiting { background: linear-gradient(90deg,#ffd1c1,#ff8f8f); color:#210; border-color: rgba(255,77,77,0.12); }
+.status-badge.locked { background: linear-gradient(90deg,#f7d6a6,#ffd6a6); color:#2a1500; border-color: rgba(255,122,24,0.12); box-shadow: 0 6px 20px rgba(255,122,24,0.04); }
+
+.speed-control { display:flex; flex-direction:column; align-items:flex-start; gap:8px; }
 .speed-control label { font-size:12px; opacity:0.8; }
 .speed-control input[type="range"] { width:180px; }
+
+/* When mission-control is inside speed-control, ensure small spacing */
+.speed-control .mission-control { margin-top:6px; }
 
 .small { font-size:11px; opacity:0.8; margin-top:6px; }
 
@@ -249,6 +291,56 @@ body { overflow: visible; }
 .waypoint-icon {
     filter: drop-shadow(0 0 6px rgba(0, 168, 255, 0.5));
 }
+
+/* Panel tabs */
+.panel-tabs { display:flex; gap:8px; margin:12px 0; }
+.tab { padding:8px 10px; border-radius:8px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.03); color: var(--muted); font-weight:800; cursor:pointer; }
+.tab.active { background: linear-gradient(90deg, rgba(255,122,24,0.10), rgba(255,122,24,0.04)); color: var(--accent); box-shadow: 0 6px 20px rgba(255,122,24,0.06); }
+.tab:focus { outline: 2px solid rgba(255,122,24,0.12); }
+
+.power-panel { background: var(--glass-bg); border: 1px solid var(--glass-border); padding: 12px; border-radius: 12px; display:flex; flex-direction:column; gap:12px; min-width:260px; backdrop-filter: blur(10px); box-shadow: 0 12px 30px rgba(2,6,12,0.6); color: var(--text); }
+.power-content { overflow:auto; max-height: calc(100vh - 220px); padding-right:6px; }
+.power-grid { display:grid; grid-template-columns: 1fr; gap:12px; }
+.power-section { background: linear-gradient(180deg,#02181a,#041217); padding:10px; border-radius:8px; border:1px solid rgba(0,255,200,0.02); }
+.section-title { font-size:13px; font-weight:800; color:var(--accent); margin-bottom:8px; }
+.metric-row { display:flex; gap:12px; flex-wrap:wrap; }
+.small-row { gap:8px; }
+.metric { flex:1; min-width:140px; display:flex; flex-direction:column; gap:6px; }
+.metric.small { min-width:120px; }
+.metric-label { font-size:12px; color:var(--muted); font-weight:800; }
+.metric-val { font-weight:800; color:#cffff4; }
+.metric-bar { height:10px; background: rgba(255,255,255,0.03); border-radius:6px; overflow:hidden; }
+.bar-fill { height:100%; width:0%; background: linear-gradient(90deg,var(--accent),var(--accent-hover)); transition: width 320ms linear; }
+
+/* Motor cards and sliders */
+.motors-grid { display:flex; gap:12px; flex-wrap:wrap; }
+.motor-card { flex:1; min-width:220px; background: linear-gradient(180deg,#031217,#04161a); padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.03); display:flex; flex-direction:column; gap:8px; }
+.motor-title { font-weight:800; color:var(--accent); font-size:13px; }
+.motor-power { -webkit-appearance: none; appearance: none; height:10px; border-radius:8px; background: rgba(255,255,255,0.03); width:100%; outline:none; }
+.motor-power:disabled { opacity:0.95; }
+.motor-power::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:#fff; box-shadow: 0 2px 6px rgba(0,0,0,0.4); }
+.motor-metrics { display:grid; grid-template-columns: repeat(2,1fr); gap:8px; }
+.motor-metrics .metric { gap:4px; }
+
+/* status color overrides for motor metrics */
+.motor-card .metric-val.status-normal { color: var(--good); }
+.motor-card .metric-val.status-warn { color: #ffb347; }
+.motor-card .metric-val.status-critical { color: var(--bad); }
+
+@media(min-width:1100px) {
+    .power-grid { grid-template-columns: 1fr 1fr; }
+}
+
+/* status colors */
+.status-normal { color: var(--good); font-weight:900; }
+.status-warn { color: #ffb347; font-weight:900; }
+.status-critical { color: var(--bad); font-weight:900; }
+
+/* Responsive adjustments: make power sections grid into 2 columns on wide screens */
+@media(min-width:1100px) {
+    .power-grid { grid-template-columns: 1fr 1fr; }
+}
+
 
 .waypoint-marker {
     background: linear-gradient(135deg, var(--accent), #cc6a2a);

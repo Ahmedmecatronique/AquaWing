@@ -19,12 +19,17 @@
 
     <div class="dashboard-grid">
         <!-- TELEMETRY (left column) -->
+        <div class="panel-tabs" role="tablist" aria-label="Telemetry Tabs">
+            <button id="tab-telemetry" class="tab active" role="tab" aria-selected="true">Telemetry</button>
+            <button id="tab-power" class="tab" role="tab" aria-selected="false">Power & Motors</button>
+        </div>
         <aside class="telemetry-panel">
             <div class="telemetry-header">
                 <div class="telemetry-title">DRONE TELEMETRY</div>
                 <div class="telemetry-status">
                     <div id="arm-status" class="status-chip">DISARMED</div>
                     <div id="mode" class="mode-chip">MODE: -</div>
+                    <div id="flight-status" class="status-badge" aria-live="polite">Idle</div>
                 </div>
             </div>
 
@@ -84,10 +89,140 @@
                 <div class="speed-control">
                     <label for="speed-control">Speed</label>
                     <input id="speed-control" type="range" min="0" max="10" step="0.1" value="0">
+
+                    <div class="mission-control" role="group" aria-label="Mission Control">
+                        <div class="mission-label">Mission Control</div>
+                        <div class="mission-buttons">
+                            <button id="start-flight-btn" class="btn btn-success" aria-pressed="false" aria-disabled="false">START FLIGHT</button>
+                            <button id="wait-btn" class="btn btn-danger" disabled aria-disabled="true">WAIT / MISSION END</button>
+                        </div>
+                    </div>
                 </div>
-                <div style="display:flex; gap:8px;">
-                    <button id="follow-btn" class="btn-primary">Follow: OFF</button>
+
+                <div style="display:flex; gap:12px; align-items:center;">
+                    <button id="follow-btn" class="btn-primary btn-follow" aria-pressed="false" aria-label="Toggle follow">Follow: OFF</button>
                     <button id="logout-btn" class="btn-primary">Logout</button>
+                </div>
+            </div>
+        </aside>
+
+
+
+        <aside class="power-panel" data-panel="power" style="display:none;">
+            <div class="power-header">
+                <div class="telemetry-title">POWER • MOTORS • SERVOS • SENSORS</div>
+            </div>
+
+            <div class="power-content">
+                <div class="power-grid">
+                    <!-- SECTION 1: MOTORS -->
+                    <section class="power-section motors">
+                        <div class="section-title">Motors</div>
+                        <div class="motors-grid">
+                            <!-- Motor 1 card -->
+                            <div class="motor-card" id="motor-card-1">
+                                <div class="motor-title">Motor 1</div>
+                                <input class="motor-power" id="motor1-power" type="range" min="0" max="100" value="10" disabled aria-readonly="true">
+                                <div class="motor-metrics">
+                                    <div class="metric"><div class="metric-label">Power</div><div id="motor1-power-val" class="metric-val">10%</div></div>
+                                    <div class="metric"><div class="metric-label">Speed</div><div id="motor1-rps" class="metric-val">0.0 tr/s</div></div>
+                                    <div class="metric"><div class="metric-label">Current</div><div id="motor1-current" class="metric-val">0.00 A</div></div>
+                                    <div class="metric"><div class="metric-label">Voltage</div><div id="motor1-voltage" class="metric-val">12.6 V</div></div>
+                                    <div class="metric"><div class="metric-label">Temp</div><div id="motor1-temp" class="metric-val">30°C</div></div>
+                                </div>
+                            </div>
+
+                            <!-- Motor 2 card -->
+                            <div class="motor-card" id="motor-card-2">
+                                <div class="motor-title">Motor 2</div>
+                                <input class="motor-power" id="motor2-power" type="range" min="0" max="100" value="10" disabled aria-readonly="true">
+                                <div class="motor-metrics">
+                                    <div class="metric"><div class="metric-label">Power</div><div id="motor2-power-val" class="metric-val">10%</div></div>
+                                    <div class="metric"><div class="metric-label">Speed</div><div id="motor2-rps" class="metric-val">0.0 tr/s</div></div>
+                                    <div class="metric"><div class="metric-label">Current</div><div id="motor2-current" class="metric-val">0.00 A</div></div>
+                                    <div class="metric"><div class="metric-label">Voltage</div><div id="motor2-voltage" class="metric-val">12.6 V</div></div>
+                                    <div class="metric"><div class="metric-label">Temp</div><div id="motor2-temp" class="metric-val">30°C</div></div>
+                                </div>
+                            </div>
+
+                            <!-- Motor 3 card -->
+                            <div class="motor-card" id="motor-card-3">
+                                <div class="motor-title">Motor 3</div>
+                                <input class="motor-power" id="motor3-power" type="range" min="0" max="100" value="10" disabled aria-readonly="true">
+                                <div class="motor-metrics">
+                                    <div class="metric"><div class="metric-label">Power</div><div id="motor3-power-val" class="metric-val">10%</div></div>
+                                    <div class="metric"><div class="metric-label">Speed</div><div id="motor3-rps" class="metric-val">0.0 tr/s</div></div>
+                                    <div class="metric"><div class="metric-label">Current</div><div id="motor3-current" class="metric-val">0.00 A</div></div>
+                                    <div class="metric"><div class="metric-label">Voltage</div><div id="motor3-voltage" class="metric-val">12.6 V</div></div>
+                                    <div class="metric"><div class="metric-label">Temp</div><div id="motor3-temp" class="metric-val">30°C</div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- SECTION 2: SERVOS -->
+                    <section class="power-section servos">
+                        <div class="section-title">Servos</div>
+                        <div class="metric-grid">
+                            <div class="metric small">
+                                <div class="metric-label">Servo 1</div>
+                                <div class="metric-bar"><div id="servo1-pos" class="bar-fill" style="width:10%"></div></div>
+                                <div id="servo1-val" class="metric-val">10°</div>
+                            </div>
+                            <div class="metric small">
+                                <div class="metric-label">Servo 2</div>
+                                <div class="metric-bar"><div id="servo2-pos" class="bar-fill" style="width:10%"></div></div>
+                                <div id="servo2-val" class="metric-val">10°</div>
+                            </div>
+                            <div class="metric small">
+                                <div class="metric-label">Servo 3</div>
+                                <div class="metric-bar"><div id="servo3-pos" class="bar-fill" style="width:10%"></div></div>
+                                <div id="servo3-val" class="metric-val">10°</div>
+                            </div>
+                            <div class="metric small">
+                                <div class="metric-label">Servo 4</div>
+                                <div class="metric-bar"><div id="servo4-pos" class="bar-fill" style="width:10%"></div></div>
+                                <div id="servo4-val" class="metric-val">10°</div>
+                            </div>
+                            <div class="metric small">
+                                <div class="metric-label">Servo 5</div>
+                                <div class="metric-bar"><div id="servo5-pos" class="bar-fill" style="width:10%"></div></div>
+                                <div id="servo5-val" class="metric-val">10°</div>
+                            </div>
+                            <div class="metric small">
+                                <div class="metric-label">Servo 6</div>
+                                <div class="metric-bar"><div id="servo6-pos" class="bar-fill" style="width:10%"></div></div>
+                                <div id="servo6-val" class="metric-val">10°</div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- SECTION 3: POWER / ELECTRICAL -->
+                    <section class="power-section power">
+                        <div class="section-title">Power / Electrical</div>
+                        <div class="metric-row small-row">
+                            <div class="metric"><div class="metric-label">Battery Voltage</div><div id="batt-voltage" class="metric-val">12.6 V</div></div>
+                            <div class="metric"><div class="metric-label">Battery Current</div><div id="batt-current" class="metric-val">0.0 A</div></div>
+                            <div class="metric"><div class="metric-label">Power</div><div id="power-cons" class="metric-val">0 W</div></div>
+                            <div class="metric"><div class="metric-label">Bus Voltage</div><div id="bus-voltage" class="metric-val">12.6 V</div></div>
+                            <div class="metric"><div class="metric-label">Battery Temp</div><div id="batt-temp" class="metric-val">30°C</div></div>
+                        </div>
+                    </section>
+
+                    <!-- SECTION 4: ENVIRONMENT & SENSORS -->
+                    <section class="power-section sensors">
+                        <div class="section-title">Environment & Sensors</div>
+                        <div class="metric-row small-row">
+                            <div class="metric"><div class="metric-label">IMU</div><div id="imu-status" class="metric-val status-normal">OK</div></div>
+                            <div class="metric"><div class="metric-label">GPS</div><div id="gps-status" class="metric-val status-normal">FIX</div></div>
+                            <div class="metric"><div class="metric-label">Barometer</div><div id="baro-press" class="metric-val">1013 hPa</div></div>
+                        </div>
+                        <div class="metric-row small-row">
+                            <div class="metric"><div class="metric-label">Air Temp</div><div id="air-temp" class="metric-val">22°C</div></div>
+                            <div class="metric"><div class="metric-label">Humidity</div><div id="humidity" class="metric-val">45%</div></div>
+                            <div class="metric"><div class="metric-label">Compass</div><div id="compass-status" class="metric-val status-normal">OK</div></div>
+                        </div>
+                    </section>
                 </div>
             </div>
         </aside>
