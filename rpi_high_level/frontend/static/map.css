@@ -29,7 +29,7 @@ body { overflow: visible; }
 }
 
 /* Panels layout: ensure tabs span full width and the two left-side panels occupy the same grid cell */
-.panel-tabs { grid-column: 1 / 3; display:flex; gap:8px; margin:12px 0; }
+.panel-tabs { grid-column: 1 / 3; display:flex; gap:8px; margin:12px 0; align-items: center; }
 .telemetry-panel, .power-panel { grid-column: 1 / 2; grid-row: 2 / 3; }
 .right-column { grid-column: 2 / 3; grid-row: 2 / 3; }
 
@@ -68,7 +68,7 @@ body { overflow: visible; }
 .camera-panel .small { font-size:12px; }
 
 /* Ensure map panel above cameras spans full width of right-column */
-.map-panel { width:100%; }
+.map-panel { width:100%; position: relative; }
 
 /* Responsive: on small screens stack vertically */
 @media (max-width: 980px) {
@@ -83,8 +83,25 @@ body { overflow: visible; }
 .panel-controls { display:flex; gap:8px; align-items:center; }
 .small-btn { background:transparent; border:1px solid rgba(0,255,200,0.08); color:#9fffe9; padding:6px 10px; border-radius:6px; cursor:pointer; }
 
-.map-canvas { height: calc(55vh); border-radius:6px; overflow:hidden; }
+.map-canvas { height: calc(55vh); border-radius:6px; overflow:hidden; position: relative; }
 .map-canvas, #map { z-index: 1; }
+
+/* Top-right Logout button in the tabs bar */
+.top-logout-btn {
+  margin-left: auto;
+  padding: 6px 14px;
+  background: #ff8c00;
+  color: white;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+}
+
+.top-logout-btn:hover {
+  background: #ffa733;
+}
+
 
 /* Reduce map height on small screens to keep cameras usable */
 @media (max-width: 900px) {
@@ -144,10 +161,23 @@ body { overflow: visible; }
 .btn-success:hover:not([disabled]) { box-shadow: 0 8px 26px rgba(34, 197, 94, 0.18); transform: translateY(-2px); }
 .btn-danger:hover:not([disabled]) { box-shadow: 0 8px 26px rgba(255, 99, 71, 0.18); transform: translateY(-2px); }
 
-/* Mission Control grouping (refined) */
+/* waitBtnControl grouping (refined) */
 .mission-control { display:flex; flex-direction:column; gap:6px; align-items:flex-start; padding:8px 12px; border-radius:10px; background: rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04); min-width:220px; margin-right:6px; }
 .mission-label { font-size:12px; color:var(--muted); font-weight:900; letter-spacing:0.8px; text-transform:uppercase; }
-.mission-buttons { display:flex; gap:8px; align-items:center; }
+.mission-buttons { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+
+/* PRE-FLIGHT button (blue) */
+.btn-preflight { background: linear-gradient(90deg,#2b6efb,#1e4ed8); color:#fff; border:none; padding:8px 12px; border-radius:8px; font-weight:800; box-shadow: 0 6px 18px rgba(30,78,216,0.12); cursor: pointer; }
+.btn-preflight:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(30,78,216,0.18); }
+
+/* Pre-flight status container (UI only) */
+.preflight-status { margin-top:8px; display:flex; flex-direction:column; gap:6px; padding:8px 10px; border-radius:8px; background: rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.03); font-size:13px; color:var(--muted); width:100%; max-width:100%; }
+.preflight-status .status-item { display:flex; justify-content:space-between; gap:8px; align-items:center; padding:4px 6px; border-radius:6px; }
+.preflight-status .component { font-weight:700; }
+.preflight-status .status { font-weight:900; padding:2px 8px; border-radius:6px; font-size:12px; }
+.preflight-status .status.ok { background: linear-gradient(90deg,#dfffe8,#baf6d0); color:#021; }
+.preflight-status .status.fail { background: linear-gradient(90deg,#ffdfe6,#ffd1d6); color:#210; }
+.preflight-status .status.wait { background: rgba(255,255,255,0.02); color:var(--muted); border:1px solid rgba(255,255,255,0.02); }
 
 /* Follow button: secondary visual weight */
 .btn-follow { background: transparent; border: 1px solid rgba(255,255,255,0.04); color: var(--muted); padding:6px 10px; border-radius:8px; font-weight:700; opacity:0.85; transition: box-shadow 120ms ease, transform 120ms ease, opacity 120ms; }
@@ -410,11 +440,6 @@ body { overflow: visible; }
 .toast .msg { flex:1; font-size:13px; color: #cffff4; }
 .toast .meta { font-size:12px; opacity:0.8; }
 
-/* SYSTEM TEST button (neutral / blue) */
-.btn-system-test { background: linear-gradient(90deg,#2b6efb,#1e4ed8); color:#fff; border:none; padding:8px 12px; border-radius:8px; font-weight:800; box-shadow: 0 6px 18px rgba(30,78,216,0.12); }
-.btn-system-test:hover{ transform: translateY(-2px); box-shadow: 0 10px 28px rgba(30,78,216,0.18); }
-.btn-system-test:active{ transform: translateY(1px); }
-
 /* SYSTEM TEST modal */
 .modal { position: fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:100001; }
 .modal[aria-hidden="false"]{ display:flex; }
@@ -423,26 +448,9 @@ body { overflow: visible; }
 .modal .modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
 .modal .modal-title { font-weight:900; font-size:16px; color:var(--accent); }
 .modal .modal-close { background:transparent; border:none; font-size:22px; cursor:pointer; color:var(--text); }
-.modal .sys-section { margin-bottom:12px; }
-.modal .sys-section h4 { font-size:13px; margin:6px 0; color:var(--muted); font-weight:800; }
-.modal .sys-list { list-style:none; padding:0; margin:6px 0 0 0; display:grid; gap:6px; }
-.modal .sys-item { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:6px 8px; background: rgba(255,255,255,0.01); border-radius:8px; border:1px solid rgba(255,255,255,0.02); }
-.modal .sys-item .name { color:var(--muted); font-weight:800; }
-.modal .sys-item .status { font-weight:900; }
-.modal .sys-item .status.ok { color: var(--good); }
-.modal .sys-item .status.fail { color: var(--bad); }
-.modal .sys-result { margin-top:12px; font-weight:900; font-size:15px; text-align:center; padding:8px; border-radius:8px; }
-.modal .sys-result.ok { background: linear-gradient(90deg,#dfffe8,#baf6d0); color:#021; }
-.modal .sys-result.fail { background: linear-gradient(90deg,#ffdfe6,#ffd1d6); color:#210; }
 
-/* System Test sequential log - floating console (override) */
-#system-test-log { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); width: 420px; max-height: 260px; background: rgba(6,10,18,0.95); border: 1px solid rgba(255,122,24,0.4); border-radius: 10px; padding: 10px; overflow-y: auto; z-index: 99999; display: none; font-family: monospace; font-size: 13px; }
-#system-test-log[aria-hidden="false"] { display: block; }
-#system-test-log .log-body { display:flex; flex-direction:column; gap:6px; }
-#system-test-log .log-line { white-space:pre-wrap; padding:6px 8px; border-radius:6px; background: rgba(255,255,255,0.01); color: var(--muted); }
-.log-info { color: #cfd8ff; }
-.log-ok { color: #3cff8f; }
-.log-fail { color: #ff4d4d; }
+
+
 
 /* Hide duplicate Follow button in telemetry (keep map follow) */
 #follow-btn{ display:none !important; }

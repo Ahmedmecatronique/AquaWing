@@ -22,6 +22,7 @@
         <div class="panel-tabs" role="tablist" aria-label="Telemetry Tabs">
             <button id="tab-telemetry" class="tab active" role="tab" aria-selected="true">Telemetry</button>
             <button id="tab-power" class="tab" role="tab" aria-selected="false">Power & Motors</button>
+            <button id="logout-btn" class="top-logout-btn" aria-label="Logout">Logout</button>
         </div>
         <aside class="telemetry-panel">
             <div class="telemetry-header">
@@ -88,15 +89,21 @@
                         <div class="mission-label">Mission Control</div>
                         <div class="mission-buttons">
                             <button id="start-flight-btn" class="btn btn-success" aria-pressed="false" aria-disabled="false">START FLIGHT</button>
-                            <button id="wait-btn" class="btn btn-danger" disabled aria-disabled="true">WAIT / MISSION END</button>
+                            <button id="preflight-btn" class="btn btn-preflight" aria-pressed="false">PRE-FLIGHT CHECK</button>
+                            <button id="wait-btn" class="btn btn-danger" disabled aria-disabled="true">END MESSION </button>
+                        </div>
+
+                        <!-- Pre-flight status area (UI only) -->
+                        <div id="preflight-status" class="preflight-status" aria-live="polite" aria-atomic="true">
+                            <div class="status-item"><span class="component">Main Battery</span><span class="status wait">WAIT</span></div>
+                            <div class="status-item"><span class="component">Motors</span><span class="status wait">WAIT</span></div>
+                            <div class="status-item"><span class="component">Sensors</span><span class="status wait">WAIT</span></div>
                         </div>
                     </div>
                 </div>
 
                 <div style="display:flex; gap:12px; align-items:center;">
                     <button id="follow-btn" class="btn-primary btn-follow" aria-pressed="false" aria-label="Toggle follow">Follow: OFF</button>
-                    <button id="system-test-btn" class="btn blue">SYSTEM TEST</button>
-                    <button id="logout-btn" class="btn-primary">Logout</button>
                 </div>
             </div>
 
@@ -290,37 +297,9 @@
 
     <!-- CONTROL BAR removed -->
 
-    <!-- Visible System Test log (floating) -->
-    <div id="system-test-log" style="
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 420px;
-      max-height: 240px;
-      background: #000;
-      color: #00ff88;
-      padding: 12px;
-      border-radius: 8px;
-      font-family: monospace;
-      display: none;
-      z-index: 99999;
-    " aria-hidden="true"></div>
 
-    <!-- SYSTEM TEST Modal -->
-    <div id="system-test-modal" class="modal" aria-hidden="true">
-        <div class="modal-backdrop" data-action="close"></div>
-        <div class="modal-panel">
-            <div class="modal-header">
-                <div class="modal-title">SYSTEM TEST REPORT</div>
-                <button id="system-test-close" class="modal-close" aria-label="Close">&times;</button>
-            </div>
-            <div class="modal-body" id="system-test-body">Running checks...</div>
-            <div class="modal-footer">
-                <button id="system-test-close-ok" class="btn btn-ghost">Close</button>
-            </div>
-        </div>
-    </div>
+
+
 
     <!-- Toast HUD -->
     <div id="toast" aria-live="polite" aria-atomic="true" class="toast-container" style="display:none;"></div>

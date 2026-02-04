@@ -781,8 +781,12 @@ function updateAttitude(data){
 // Backwards-compatible: expose updateAttitude and call from telemetry
 if (typeof window.updateAttitude === 'undefined') window.updateAttitude = updateAttitude;
 
-const logoutBtn = document.getElementById('logout-btn');
-if (logoutBtn) logoutBtn.addEventListener('click', () => { if (ws) ws.close(); window.location.href='/logout'; });
+// Global click handler for Logout (single handler, minimal)
+document.addEventListener("click", (e) => {
+  if (e.target && e.target.id === "logout-btn") {
+    window.location.href = "/logout";
+  }
+});
 
 // Video / Camera controls
 const videoToggle = document.getElementById('video-toggle');
