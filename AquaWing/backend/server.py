@@ -118,17 +118,18 @@ def create_app() -> FastAPI:
 
     @app.on_event("startup")
     async def startup_event():
-        """Start background telemetry loop on server startup."""
+        """Server startup — telemetry loop is NOT auto-started."""
         print("\n" + "="*70)
         print("🚀 RPi Drone Control Backend Starting")
         print("="*70)
         print(f"📍 Frontend: {frontend_dir}")
         print(f"🔐 Auth enabled: Yes")
         print(f"📡 WebSocket protected: Yes")
+        print(f"✈️  Telemetry: waiting for START FLIGHT command")
         print("="*70 + "\n")
         
-        # Start demo telemetry background task
-        asyncio.create_task(demo_telemetry_loop(websocket.manager))
+        # Demo telemetry loop is NOT started automatically.
+        # It will be triggered by the frontend via WS command.
 
     # ========================================================================
     # Authentication Routes

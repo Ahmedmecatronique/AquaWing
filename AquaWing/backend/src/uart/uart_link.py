@@ -3,9 +3,14 @@ UART Link - Serial Port Communication
 
 Handles opening, closing, and communication over a serial UART connection.
 Provides abstraction for sending and receiving messages.
+Le câblage GPS (port, baudrate, GPIO) est lu depuis config/cablage.py.
 
 TODO: Implement real serial communication
 """
+
+import sys, os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
+from config.cablage import GPS
 
 import serial
 from typing import Optional
@@ -14,24 +19,26 @@ from typing import Optional
 class UARTLink:
     """
     UART serial communication interface.
+    Configuration par défaut lue depuis config.cablage.GPS.
     
     TODO: Add connection state management
     TODO: Add automatic reconnection logic
     TODO: Add message queuing and retry logic
     """
     
-    def __init__(self, port: str = "/dev/ttyUSB0", baudrate: int = 115200, timeout: float = 1.0):
+    def __init__(self, port: str = None, baudrate: int = None, timeout: float = None):
         """
         Initialize UART link (without opening).
+        Defaults are read from config/cablage.py GPS config.
         
         Args:
-            port: Serial port name (e.g., "/dev/ttyUSB0" on Linux)
-            baudrate: Serial transmission speed
-            timeout: Read timeout in seconds
+            port: Serial port name (default from cablage.GPS)
+            baudrate: Serial transmission speed (default from cablage.GPS)
+            timeout: Read timeout in seconds (default from cablage.GPS)
         """
-        self.port = port
-        self.baudrate = baudrate
-        self.timeout = timeout
+        self.port = port or GPS["port"]
+        self.baudrate = baudrate or GPS["baudrate"]
+        self.timeout = timeout or GPS["timeout_s"]
         self.serial = None
     
     def open(self) -> bool:

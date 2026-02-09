@@ -13,6 +13,7 @@ import math
 from datetime import datetime, timedelta
 from typing import Optional
 from pydantic import BaseModel
+from backend.src.streaming.vedio_heatmap_stream import HeatmapStreamer
 
 # ============================================================================
 # CONFIGURATION
@@ -237,6 +238,35 @@ def video_endpoint():
 
         return Response(content=svg, media_type="image/svg+xml")
 
+# ============================================================================
+# THERMAL HEATMAP STREAM (AMG8833)
+# ============================================================================
+
+_heatmap_streamer = HeatmapStreamer(output_size=320, temp_min=18.0, temp_max=45.0)
+
+@app.get("/thermal")
+def thermal_endpoint():
+    """Retourne une image heatmap JPEG de la caméra thermique AMG8833."""
+    try:
+        jpeg = _heatmap_streamer.get_jpeg(quality=85)
+        return Response(content=jpeg, media_type="image/jpeg")
+    except Exception as e:
+        svg = f"""<?xml version='1.0' encoding='UTF-8'?>
+<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320' viewBox='0 0 320 320'>
+    <rect width='100%' height='100%' fill='#111' />
+    <text x='50%' y='45%' fill='#f55' font-family='monospace' font-size='14' text-anchor='middle'>Thermal error</text>
+    <text x='50%' y='60%' fill='#888' font-family='monospace' font-size='11' text-anchor='middle'>{str(e)[:60]}</text>
+</svg>"""
+        return Response(content=svg, media_type="image/svg+xml")
+
+@app.get("/thermal/stats")
+def thermal_stats_endpoint():
+    """Retourne les stats de température (min, max, avg, pixels)."""
+    try:
+        return _heatmap_streamer.get_stats()
+    except Exception as e:
+        return {"error": str(e)}
+
 @app.get("/health")
 def health():
     """Health check endpoint."""
@@ -340,12 +370,13 @@ async def websocket_endpoint(websocket: WebSocket):
 
             elif cmd == "start_flight":
                 print(f"  ▶ START FLIGHT requested by {username}")
-                # TODO: send arm + start to flight controller
+                _flight_active = True
+                asyncio.create_task(demo_telemetry_loop())
                 await websocket.send_json({"type": "ack", "cmd": "start_flight", "status": "ok"})
 
             elif cmd == "abort":
                 print(f"  ■ ABORT requested by {username}")
-                # TODO: send emergency stop to flight controller
+                _flight_active = False
                 await websocket.send_json({"type": "ack", "cmd": "abort", "status": "ok"})
 
             elif cmd == "set_speed":
@@ -367,17 +398,21 @@ async def websocket_endpoint(websocket: WebSocket):
 
 @app.on_event("startup")
 async def startup_event():
-    """Start demo telemetry loop on startup."""
-    # load persisted users and start telemetry
+    """Load users on startup. Telemetry loop is NOT auto-started."""
     load_users()
-    asyncio.create_task(demo_telemetry_loop())
+    # Demo telemetry loop is disabled by default.
+    # It starts only when the frontend sends a 'start_flight' command.
+
+# Global flag to control backend telemetry broadcast
+_flight_active = False
 
 async def demo_telemetry_loop():
-    """Demo loop: broadcast telemetry every 0.5 seconds."""
+    """Demo loop: broadcast telemetry every 0.5 seconds while flight is active."""
+    global _flight_active
     counter = 0
     radius = 0.005
     
-    while True:
+    while _flight_active:
         counter += 1
         angle = (counter * 2.0) % 360
         

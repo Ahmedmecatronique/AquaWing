@@ -20,6 +20,7 @@ let polyline = null;
 let followMode = false;
 let lastUpdate = 0;
 let videoOn = false;
+let thermalOn = false;
 let rgbTimer = null;
 let thermalTimer = null;
 let rgbSamples = [];
@@ -100,8 +101,14 @@ function connectWebSocket() {
                 return;
             }
 
-            // Otherwise it's telemetry
-            updateTelemetry(data);
+            // Otherwise it's telemetry from backend demo loop.
+            // ALWAYS IGNORE backend telemetry — the frontend handles
+            // trajectory flight entirely on its own.
+            // (Backend circular demo is now disabled by default anyway.)
+            // Only accept if we are NOT flying a frontend trajectory.
+            if (!frontendFlying && !demoTimer) {
+                updateTelemetry(data);
+            }
         } catch (err) {
             console.error('Invalid WS data:', err);
         }
@@ -112,14 +119,17 @@ function connectWebSocket() {
     };
 
     ws.onclose = () => {
-        console.log('WebSocket disconnected, reconnecting in ' + WS_RECONNECT_INTERVAL + 'ms');
-        setTimeout(connectWebSocket, WS_RECONNECT_INTERVAL);
+        console.log('WebSocket disconnected');
+        // Do NOT auto-reconnect — WebSocket will reconnect lazily when needed
     };
 }
 
 // -------------------------------
 // DEMO SIMULATION (no WebSocket)
 // -------------------------------
+// State: true when the frontend trajectory demo is actively flying
+let frontendFlying = false;
+
 let demoTimer = null;
 let demoCounter = 0;
 function startDemo() {
@@ -127,22 +137,44 @@ function startDemo() {
     if (!map) initMap();
     if (!polyline) polyline = L.polyline([], {color: '#ff9f1a', weight:4, opacity:0.9}).addTo(map);
 
-    demoTimer = setInterval(() => {
-        demoCounter += 1;
-        const angle = (demoCounter * 10) % 360;
-        const radius = 0.005; // roughly ~500m
-        const lat = MAP_CENTER[0] + radius * Math.cos(angle * Math.PI/180);
-        const lon = MAP_CENTER[1] + radius * Math.sin(angle * Math.PI/180);
-        const alt = 10 + 5 * Math.sin(demoCounter/5);
-        const speed = 2 + Math.abs(Math.sin(demoCounter/4))*3;
-        const battery = Math.max(10, 95 - Math.floor(demoCounter/30));
+    // Clear previous flight path
+    polyline.setLatLngs([]);
+    demoCounter = 0;
+    frontendFlying = true;
 
-        const telemetry = { lat, lon, alt, heading: angle, speed, battery, ts: Date.now() };
-        updateTelemetry(telemetry);
-    }, 500);
+    // Fly along the waypoints trajectory
+    if (waypoints.length >= 2) {
+        let wpIndex = 0;
+        let progress = 0;
+        const stepSize = 0.02;
+        demoTimer = setInterval(() => {
+            demoCounter += 1;
+            if (wpIndex >= waypoints.length - 1) {
+                stopDemo();
+                showToast('Trajectory complete — drone arrived', 'success');
+                return;
+            }
+            const from = waypoints[wpIndex];
+            const to = waypoints[wpIndex + 1];
+            progress += stepSize;
+            if (progress >= 1) { progress = 0; wpIndex++; }
+            if (wpIndex >= waypoints.length - 1 && progress > 0) { progress = 1; }
+            const lat = from.lat + (to.lat - from.lat) * progress;
+            const lon = from.lon + (to.lon - from.lon) * progress;
+            const heading = Math.atan2(to.lon - from.lon, to.lat - from.lat) * 180 / Math.PI;
+            const alt = 20;
+            const speed = 3.0;
+            const battery = Math.max(10, 95 - Math.floor(demoCounter / 30));
+            const telemetry = { lat, lon, alt, heading, speed, battery, ts: Date.now() };
+            updateTelemetry(telemetry);
+        }, 500);
+    }
 }
 
-function stopDemo(){ if(demoTimer) { clearInterval(demoTimer); demoTimer = null; } }
+function stopDemo(){
+    if(demoTimer) { clearInterval(demoTimer); demoTimer = null; }
+    frontendFlying = false;
+}
 
 // ============================================================================
 // MAP INITIALIZATION
@@ -463,11 +495,20 @@ function clearAllWaypoints() {
 }
 
 /** Send route to backend via WebSocket */
+/** Ensure WebSocket is connected (lazy connect) */
+function ensureWebSocket() {
+    if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
+        connectWebSocket();
+    }
+}
+
 async function sendRouteToBackend() {
     if (waypoints.length < 2) {
         showToast('Need at least 2 waypoints to send route', 'error');
         return;
     }
+    
+    ensureWebSocket();
     
     const timestamp = new Date().toISOString().replace(/[^0-9]/g, '').slice(0, 14);
     const missionName = `mission_manual_${timestamp}`;
@@ -489,7 +530,7 @@ async function sendRouteToBackend() {
         if (ws && ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify(payload));
         } else {
-            showToast('WebSocket not connected', 'error');
+            showToast('WebSocket connecting... try again in a moment', 'error');
         }
     } catch (err) {
         showToast(`Error: ${err.message}`, 'error');
@@ -706,16 +747,24 @@ function updateFlightControls() {
     }
 }
 
-// START FLIGHT — send command via WebSocket
+// START FLIGHT — requires waypoints, then starts demo simulation + sends WS command
 if (startFlightBtn) {
     startFlightBtn.addEventListener('click', () => {
         if (startFlightBtn.disabled) return;
+        // Block if no route has been defined
+        if (waypoints.length < 2) {
+            showToast('Define a trajectory first (at least 2 waypoints)', 'error');
+            return;
+        }
+        ensureWebSocket();
         if (ws && ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({ cmd: 'start_flight' }));
         }
+        // Start the drone simulation along the waypoint route
+        startDemo();
         flightStarted = true;
         updateFlightControls();
-        showToast('Mission started — command sent', 'success');
+        showToast('Mission started — drone is flying the trajectory', 'success');
     });
 }
 
@@ -723,9 +772,12 @@ if (startFlightBtn) {
 if (waitBtn) {
     waitBtn.addEventListener('click', () => {
         if (waitBtn.disabled) return;
+        ensureWebSocket();
         if (ws && ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({ cmd: 'abort' }));
         }
+        // Stop the demo simulation
+        stopDemo();
         missionLocked = true;
         // VISUAL ONLY: mark mission area locked and disable mission-related controls
         const telemetryPanel = document.querySelector('.telemetry-panel');
@@ -916,6 +968,26 @@ function setVideo(on){
 
 if (videoToggle) videoToggle.addEventListener('click', ()=> setVideo(!videoOn));
 
+// ── Thermal ON/OFF ──
+const thermalToggle = document.getElementById('thermal-toggle');
+
+function setThermal(on){
+    thermalOn = !!on;
+    if (thermalToggle && window.Toggles) window.Toggles.setState(thermalToggle, thermalOn);
+    if (thermalToggle) thermalToggle.textContent = thermalOn ? 'Thermal: ON' : 'Thermal: OFF';
+    if (thermalStatus) thermalStatus.className = `status-dot ${thermalOn ? 'on' : 'off'}`;
+    if (thermalStatus) thermalStatus.textContent = thermalOn ? 'ON' : 'OFF';
+    if (thermalOn) {
+        if (thermalPlaceholder) thermalPlaceholder.style.display = 'none';
+        startThermalLoop();
+    } else {
+        if (thermalPlaceholder) thermalPlaceholder.style.display = 'flex';
+        stopThermalLoop();
+    }
+}
+
+if (thermalToggle) thermalToggle.addEventListener('click', ()=> setThermal(!thermalOn));
+
 // Speed control: slider sends WS command {cmd:'set_speed', value: <number>} and updates UI
 const speedControl = document.getElementById('speed-control');
 const setSpeedValue = document.getElementById('set-speed-value');
@@ -936,12 +1008,10 @@ if (speedControl) {
 window.addEventListener('load', () => {
     console.log('Initializing RPi Drone Control Map...');
     initMap();
-    // In demo mode don't connect to WebSocket. Start simulated telemetry instead.
-    //connectWebSocket();
-    startDemo();
+    // WebSocket connects lazily when user sends a command (to avoid backend circular demo telemetry)
+    // Demo does NOT auto-start — user must define a trajectory then click START FLIGHT
     setVideo(false);
-    // Start thermal monitoring (graceful if backend not available)
-    try{ startThermalLoop(); }catch(e){}
+    setThermal(false);
     // Ensure route controls initial state
     updateRouteControls();
 
@@ -1094,10 +1164,4 @@ startPowerSimulation();
 
 
 
-// Reconnect WebSocket on page visibility change
-document.addEventListener('visibilitychange', () => {
-    if (!document.hidden && (!ws || ws.readyState === WebSocket.CLOSED)) {
-        console.log('Page became visible, reconnecting WebSocket');
-        connectWebSocket();
-    }
-});
+// No auto-reconnect on visibility change — WebSocket connects lazily when needed

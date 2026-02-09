@@ -5,3 +5,5 @@ python-multipart
 pyyaml
 pydantic
 pyserial
+numpy
+Pillow
