@@ -83,9 +83,27 @@ function connectWebSocket() {
     ws.onmessage = (event) => {
         try {
             const data = JSON.parse(event.data);
+
+            // Server acknowledgement or error
+            if (data.type === 'ack') {
+                console.log(`✓ ACK ${data.cmd}:`, data);
+                if (data.cmd === 'send_route') {
+                    showToast(`Route saved: ${data.name} (${data.count} pts)`, 'success');
+                    if (startFlightBtn) { startFlightBtn.disabled = false; startFlightBtn.setAttribute('aria-disabled', 'false'); }
+                    updateFlightControls();
+                }
+                return;
+            }
+            if (data.type === 'error') {
+                console.warn('WS error:', data.msg);
+                showToast(data.msg, 'error');
+                return;
+            }
+
+            // Otherwise it's telemetry
             updateTelemetry(data);
         } catch (err) {
-            console.error('Invalid telemetry data:', err);
+            console.error('Invalid WS data:', err);
         }
     };
 
@@ -444,7 +462,7 @@ function clearAllWaypoints() {
     updateRouteControls();
 }
 
-/** Send route to backend */
+/** Send route to backend via WebSocket */
 async function sendRouteToBackend() {
     if (waypoints.length < 2) {
         showToast('Need at least 2 waypoints to send route', 'error');
@@ -462,26 +480,16 @@ async function sendRouteToBackend() {
     }));
     
     const payload = {
+        cmd: 'send_route',
         name: missionName,
         points: points
     };
     
     try {
-        const response = await fetch('/api/missions', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-        
-        if (response.ok) {
-            const count = waypoints.length;
-            showToast(`Route saved: ${missionName} (${count} pts)`, 'success');
-            // Enable START FLIGHT (UI-only) when route saved successfully
-            if (startFlightBtn) { startFlightBtn.disabled = false; startFlightBtn.setAttribute('aria-disabled', 'false'); }
-            updateFlightControls();
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify(payload));
         } else {
-            const errText = await response.text();
-            showToast(`Save failed: ${response.status} ${errText}`, 'error');
+            showToast('WebSocket not connected', 'error');
         }
     } catch (err) {
         showToast(`Error: ${err.message}`, 'error');
@@ -698,20 +706,26 @@ function updateFlightControls() {
     }
 }
 
-// START FLIGHT - UI only
+// START FLIGHT — send command via WebSocket
 if (startFlightBtn) {
     startFlightBtn.addEventListener('click', () => {
         if (startFlightBtn.disabled) return;
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ cmd: 'start_flight' }));
+        }
         flightStarted = true;
         updateFlightControls();
-        showToast('Mission in progress (simulated)', 'success');
+        showToast('Mission started — command sent', 'success');
     });
 }
 
-// WAIT / MISSION END - UI only
+// WAIT / MISSION END — send abort via WebSocket
 if (waitBtn) {
     waitBtn.addEventListener('click', () => {
         if (waitBtn.disabled) return;
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ cmd: 'abort' }));
+        }
         missionLocked = true;
         // VISUAL ONLY: mark mission area locked and disable mission-related controls
         const telemetryPanel = document.querySelector('.telemetry-panel');

@@ -290,7 +290,15 @@ def get_session_from_headers(headers: dict) -> Optional[str]:
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    """Protected WebSocket endpoint for telemetry."""
+    """Protected WebSocket endpoint for telemetry + commands.
+
+    Telemetry is broadcast to all clients by demo_telemetry_loop.
+    Incoming messages are treated as JSON commands:
+      { "cmd": "send_route",  "points": [...] }
+      { "cmd": "start_flight" }
+      { "cmd": "abort" }
+      { "cmd": "set_speed", "value": 5.0 }
+    """
     session_id = get_session_from_headers(dict(websocket.headers))
     
     if not session_id:
@@ -302,13 +310,56 @@ async def websocket_endpoint(websocket: WebSocket):
         await websocket.close(code=1008, reason="Invalid session")
         return
     
+    print(f"✓ WS connected: {username}")
     await manager.connect(websocket)
     
     try:
         while True:
-            data = await websocket.receive_text()
+            raw = await websocket.receive_text()
+            try:
+                msg = json.loads(raw)
+            except json.JSONDecodeError:
+                await websocket.send_json({"type": "error", "msg": "Invalid JSON"})
+                continue
+
+            cmd = msg.get("cmd", "")
+            print(f"⇠ WS cmd from {username}: {cmd}")
+
+            if cmd == "send_route":
+                points = msg.get("points", [])
+                name = msg.get("name", f"mission_{int(time.time())}")
+                print(f"  Route '{name}' with {len(points)} waypoints")
+                # TODO: forward to flight controller via UART
+                await websocket.send_json({
+                    "type": "ack",
+                    "cmd": "send_route",
+                    "status": "ok",
+                    "name": name,
+                    "count": len(points)
+                })
+
+            elif cmd == "start_flight":
+                print(f"  ▶ START FLIGHT requested by {username}")
+                # TODO: send arm + start to flight controller
+                await websocket.send_json({"type": "ack", "cmd": "start_flight", "status": "ok"})
+
+            elif cmd == "abort":
+                print(f"  ■ ABORT requested by {username}")
+                # TODO: send emergency stop to flight controller
+                await websocket.send_json({"type": "ack", "cmd": "abort", "status": "ok"})
+
+            elif cmd == "set_speed":
+                value = msg.get("value", 0)
+                print(f"  Speed → {value} m/s")
+                # TODO: forward to flight controller
+                await websocket.send_json({"type": "ack", "cmd": "set_speed", "value": value})
+
+            else:
+                await websocket.send_json({"type": "error", "msg": f"Unknown cmd: {cmd}"})
+
     except WebSocketDisconnect:
         await manager.disconnect(websocket)
+        print(f"✓ WS disconnected: {username}")
 
 # ============================================================================
 # DEMO TELEMETRY LOOP
