@@ -45,6 +45,15 @@
                         </div>
                     </div>
 
+                    <div class="telemetry-card distance-card">
+                        <div class="card-title">Parcourue</div>
+                        <div class="distance-value"><span id="dist-traveled">0.00</span><span class="distance-unit">km</span></div>
+                    </div>
+
+                    <div class="telemetry-card distance-card">
+                        <div class="card-title">Restante</div>
+                        <div class="distance-value"><span id="dist-remaining">0.00</span><span class="distance-unit">km</span></div>
+                    </div>
 
                 </div>
 
@@ -90,6 +99,7 @@
                         <div class="mission-buttons">
                             <button id="start-flight-btn" class="btn btn-success" aria-pressed="false" aria-disabled="false">START FLIGHT</button>
                             <button id="preflight-btn" class="btn btn-preflight" aria-pressed="false">PRE-FLIGHT CHECK</button>
+                            <button id="emergency-rtl-btn" class="btn btn-warning" aria-label="Emergency Return to Launch">EMERGENCY RTL</button>
                             <button id="wait-btn" class="btn btn-danger" disabled aria-disabled="true">END MESSION </button>
                         </div>
 
@@ -237,7 +247,7 @@
                 <div class="panel-header">
                     <div class="panel-title">Map</div>
                     <div class="panel-controls">
-                        <!-- follow control moved to top HUD -->
+                        <button id="map-toggle" class="btn-primary">Map: ON</button>
                     </div>
                 </div>
                 <div id="map" class="map-canvas"></div>

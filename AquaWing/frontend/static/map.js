@@ -31,6 +31,11 @@ const RGB_INTERVAL = 900; // ms
 const THERMAL_INTERVAL = 1200; // ms
 const SAMPLE_WINDOW_MS = 5000; // sliding window for averages (ms)
 
+// Distance tracking
+let distanceTraveled = 0;  // meters
+let prevTeleLat = null;
+let prevTeleLon = null;
+
 // Lightweight Toggle helper (integrated into existing files, no external JS)
 (function(){ if (window.Toggles) return; const Toggles = {};
   function isBtn(el){ return el && el.tagName === 'BUTTON' && el.classList && el.classList.contains('toggle-switch'); }
@@ -141,6 +146,11 @@ function startDemo() {
     polyline.setLatLngs([]);
     demoCounter = 0;
     frontendFlying = true;
+
+    // Reset distance tracking
+    distanceTraveled = 0;
+    prevTeleLat = null;
+    prevTeleLon = null;
 
     // Fly along the waypoints trajectory
     if (waypoints.length >= 2) {
@@ -301,6 +311,22 @@ function updateTelemetry(data) {
         gauge.style.setProperty('--battery', pct + '%');
         const pctEl = document.getElementById('battery-percent'); if (pctEl) pctEl.textContent = pct + '%';
     }
+
+    // Distance traveled (accumulate haversine between consecutive telemetry points)
+    if (prevTeleLat !== null && prevTeleLon !== null) {
+        const seg = haversineDistanceMeters(prevTeleLat, prevTeleLon, lat, lon);
+        if (seg < 500) distanceTraveled += seg; // ignore GPS jumps > 500m
+    }
+    prevTeleLat = lat;
+    prevTeleLon = lon;
+
+    // Distance remaining = total route - traveled (clamped to 0)
+    const totalRoute = calculateRouteTotalDistance();
+    const distRemaining = Math.max(0, totalRoute - distanceTraveled);
+
+    const setText2 = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+    setText2('dist-traveled', (distanceTraveled / 1000).toFixed(2));
+    setText2('dist-remaining', totalRoute > 0 ? (distRemaining / 1000).toFixed(2) : '--');
 
 
     // Update attitude (Artificial Horizon) if IMU data present, fallback to heading display
@@ -769,6 +795,57 @@ if (startFlightBtn) {
 }
 
 // WAIT / MISSION END — send abort via WebSocket
+
+// EMERGENCY RTL — Return To Launch (fly back to waypoint 1)
+let rtlTimer = null;
+const emergencyRtlBtn = document.getElementById('emergency-rtl-btn');
+if (emergencyRtlBtn) {
+    emergencyRtlBtn.addEventListener('click', () => {
+        if (!confirm('EMERGENCY RTL: Le drone va abandonner la mission et retourner au point de départ. Confirmer ?')) return;
+        ensureWebSocket();
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ cmd: 'abort' }));
+            ws.send(JSON.stringify({ cmd: 'rtl' }));
+        }
+        // Stop current flight
+        stopDemo();
+        if (rtlTimer) { clearInterval(rtlTimer); rtlTimer = null; }
+
+        // Get current drone position from the last telemetry marker
+        const home = waypoints.length > 0 ? waypoints[0] : null;
+        if (!home) { showToast('No home waypoint — cannot RTL', 'error'); return; }
+
+        let curLat = prevTeleLat;
+        let curLon = prevTeleLon;
+        if (curLat === null || curLon === null) {
+            if (droneMarker) { const ll = droneMarker.getLatLng(); curLat = ll.lat; curLon = ll.lng; }
+            else { showToast('No drone position — cannot RTL', 'error'); return; }
+        }
+
+        const rtlFrom = { lat: curLat, lon: curLon };
+        let rtlProgress = 0;
+        const rtlStep = 0.02;
+        frontendFlying = true;
+        showToast('EMERGENCY RTL — Drone returning to position 1', 'warning');
+
+        rtlTimer = setInterval(() => {
+            rtlProgress += rtlStep;
+            if (rtlProgress >= 1) {
+                rtlProgress = 1;
+                clearInterval(rtlTimer);
+                rtlTimer = null;
+                frontendFlying = false;
+                showToast('RTL complete — drone at home position', 'success');
+            }
+            const lat = rtlFrom.lat + (home.lat - rtlFrom.lat) * rtlProgress;
+            const lon = rtlFrom.lon + (home.lon - rtlFrom.lon) * rtlProgress;
+            const heading = Math.atan2(home.lon - rtlFrom.lon, home.lat - rtlFrom.lat) * 180 / Math.PI;
+            const telemetry = { lat, lon, alt: 20, heading, speed: 4.0, battery: 50, ts: Date.now() };
+            updateTelemetry(telemetry);
+        }, 500);
+    });
+}
+
 if (waitBtn) {
     waitBtn.addEventListener('click', () => {
         if (waitBtn.disabled) return;
@@ -955,6 +1032,7 @@ window.addEventListener('beforeunload', ()=>{
 function setVideo(on){
     videoOn = !!on;
     if (videoToggle && window.Toggles) window.Toggles.setState(videoToggle, videoOn);
+    if (videoToggle) videoToggle.textContent = videoOn ? 'RGB: ON' : 'RGB: OFF';
     if (videoStatus) videoStatus.className = `status-dot ${videoOn? 'on':'off'}`;
     if (videoOn) {
         if (videoPlaceholder) videoPlaceholder.style.display = 'none';
@@ -987,6 +1065,25 @@ function setThermal(on){
 }
 
 if (thermalToggle) thermalToggle.addEventListener('click', ()=> setThermal(!thermalOn));
+
+// ── Map ON/OFF ──
+const mapToggleBtn = document.getElementById('map-toggle');
+const mapCanvas = document.getElementById('map');
+let mapVisible = true;
+
+function setMapVisible(on){
+    mapVisible = !!on;
+    if (mapCanvas) mapCanvas.style.display = mapVisible ? '' : 'none';
+    if (mapToggleBtn) {
+        mapToggleBtn.textContent = mapVisible ? 'Map: ON' : 'Map: OFF';
+        mapToggleBtn.className = mapVisible ? 'ctrl-btn btn-primary' : 'ctrl-btn btn-ghost';
+    }
+    if (mapVisible && map) {
+        setTimeout(()=>{ try { map.invalidateSize(); } catch(e){} }, 100);
+    }
+}
+
+if (mapToggleBtn) mapToggleBtn.addEventListener('click', ()=> setMapVisible(!mapVisible));
 
 // Speed control: slider sends WS command {cmd:'set_speed', value: <number>} and updates UI
 const speedControl = document.getElementById('speed-control');
