@@ -11,17 +11,19 @@
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="/static/map.css?v=1">
+    <link rel="stylesheet" href="/static/map.css?v=2">
 </head>
 
 <body>
         <!-- removed legacy HUD overlays; using AQUA-WING HUD bar below -->
 
+    <div id="dev-banner" aria-hidden="true" style="display:none;position:fixed;left:12px;top:10px;z-index:2000;padding:6px 10px;border-radius:8px;background:rgba(0,0,0,0.6);color:var(--muted);font-size:12px;font-weight:700;border:1px solid rgba(255,255,255,0.03);">Map CSS: v2 • Map JS: v1</div>
     <div class="dashboard-grid">
         <!-- TELEMETRY (left column) -->
         <div class="panel-tabs" role="tablist" aria-label="Telemetry Tabs">
             <button id="tab-telemetry" class="tab active" role="tab" aria-selected="true">Telemetry</button>
             <button id="tab-power" class="tab" role="tab" aria-selected="false">Power & Motors</button>
+            <button id="tab-pid" class="tab" role="tab" aria-selected="false">PID Tuning</button>
             <button id="logout-btn" class="top-logout-btn" aria-label="Logout">Logout</button>
         </div>
         <aside class="telemetry-panel">
@@ -66,6 +68,43 @@
                     <div class="value-item"><div class="label">Time</div><div id="val-time" class="value">-</div></div>
                 </div>
 
+                <div id="pid-panel" class="telemetry-row" style="display:none;">
+                    <div class="hud-card" style="width:100%;">
+                        <div class="hud-title">PID TUNING</div>
+                        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;padding:12px;">
+                            <label for="pid-axis" class="small">Axis</label>
+                            <select id="pid-axis">
+                                <option value="pitch">Pitch</option>
+                                <option value="roll">Roll</option>
+                                <option value="yaw">Yaw</option>
+                                <option value="altitude">Altitude</option>
+                            </select>
+
+                            <div style="display:flex;gap:8px;align-items:center;">
+                                <label class="small">Kp</label>
+                                <input id="pid-kp" type="number" step="0.01" value="1.0" style="width:90px">
+                            </div>
+                            <div style="display:flex;gap:8px;align-items:center;">
+                                <label class="small">Ki</label>
+                                <input id="pid-ki" type="number" step="0.001" value="0.0" style="width:90px">
+                            </div>
+                            <div style="display:flex;gap:8px;align-items:center;">
+                                <label class="small">Kd</label>
+                                <input id="pid-kd" type="number" step="0.01" value="0.0" style="width:90px">
+                            </div>
+
+                            <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
+                                <button id="pid-apply" class="btn btn-preflight">Apply</button>
+                                <button id="pid-refresh" class="btn btn-ghost">Refresh</button>
+                            </div>
+                        </div>
+
+                        <div style="padding:8px 12px;border-top:1px solid rgba(255,255,255,0.02);font-size:13px;color:var(--muted);">
+                            Changes are applied in memory and forwarded to the flight controller on the RPi. They are volatile (not saved to disk).
+                        </div>
+                    </div>
+                </div>
+
                 <div class="telemetry-row compass-row">
                     <div class="hud-card">
                         <div class="hud-title">ATTITUDE</div>
@@ -98,9 +137,11 @@
                         <div class="mission-label">Mission Control</div>
                         <div class="mission-buttons">
                             <button id="start-flight-btn" class="btn btn-success" aria-pressed="false" aria-disabled="false">START FLIGHT</button>
+                            <button id="pause-mission-btn" class="btn btn-warning" disabled aria-disabled="true">PAUSE</button>
+                            <button id="resume-mission-btn" class="btn btn-success" disabled aria-disabled="true">RESUME</button>
                             <button id="preflight-btn" class="btn btn-preflight" aria-pressed="false">PRE-FLIGHT CHECK</button>
                             <button id="emergency-rtl-btn" class="btn btn-warning" aria-label="Emergency Return to Launch">EMERGENCY RTL</button>
-                            <button id="wait-btn" class="btn btn-danger" disabled aria-disabled="true">END MESSION </button>
+                            <button id="wait-btn" class="btn btn-danger" disabled aria-disabled="true">END MISSION</button>
                         </div>
 
                         <!-- Pre-flight status area (UI only) -->
@@ -237,6 +278,26 @@
                             <div class="metric"><div class="metric-label">Compass</div><div id="compass-status" class="metric-val status-normal">OK</div></div>
                         </div>
                     </section>
+
+                    <!-- System Settings (reuses existing card styles; non-intrusive controls) -->
+                    <div class="system-settings card" id="system-settings">
+                        <div class="panel-title">System Settings</div>
+                        <div class="settings-row" style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;">
+                            <div class="metric small" style="flex:1 1 220px;">
+                                <div class="metric-label">Battery low threshold (V)</div>
+                                <input id="setting-batt-low" type="range" min="9" max="12.6" step="0.1" value="10.8">
+                                <div id="setting-batt-low-val" class="metric-val">10.8 V</div>
+                            </div>
+                            <div class="metric small" style="flex:1 1 220px;">
+                                <div class="metric-label">Motor max temp (°C)</div>
+                                <input id="setting-motor-max-temp" type="range" min="50" max="120" step="1" value="85">
+                                <div id="setting-motor-max-temp-val" class="metric-val">85°C</div>
+                            </div>
+                        </div>
+                        <div style="margin-top:10px;">
+                            <button id="apply-settings-btn" class="btn btn-preflight">Apply Settings</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </aside>
@@ -246,6 +307,7 @@
             <div class="map-panel card">
                 <div class="panel-header">
                     <div class="panel-title">Map</div>
+                    <div id="route-distance" class="small" style="display:none;margin-left:8px">Route: <b>0.00 km</b></div>
                     <div class="panel-controls">
                         <button id="map-toggle" class="btn-primary">Map: ON</button>
                     </div>
@@ -256,6 +318,8 @@
                     <button id="center-btn" class="ctrl-btn btn-ghost">Center</button>
                     <button id="clear-btn" class="ctrl-btn btn-ghost">Clear Track</button>
                     <button id="waypoints-toggle" class="ctrl-btn btn-ghost">Waypoints: OFF</button>
+                    <button id="send-route-btn" class="ctrl-btn btn-primary" style="display:none;margin-left:8px">Send Route</button>
+                    <button id="clear-route-btn" class="ctrl-btn btn-ghost" style="display:none">Clear Route</button>
                 </div>
             </div>
 
@@ -276,9 +340,11 @@
                     </div>
                     <div class="video-content">
                         <img id="video-stream" class="video-stream" src="" alt="RGB stream" />
+                        <canvas id="rgb-overlay" class="video-overlay" aria-hidden="true"></canvas>
                         <div id="video-placeholder" class="video-placeholder">RGB disabled</div>
                         <div class="camera-stats small">
                             <span id="rgb-res">1280×720</span> • <span id="rgb-bitrate">0 kb/s</span>
+                            <span id="rgb-ai" class="ai-comment" style="margin-left:10px;color:var(--accent);font-weight:700"></span>
                         </div>
                     </div>
                 </div>
@@ -293,9 +359,11 @@
                     </div>
                     <div class="video-content">
                         <img id="thermal-stream" class="thermal-stream" src="" alt="Thermal stream" />
+                        <canvas id="thermal-overlay" class="video-overlay" aria-hidden="true"></canvas>
                         <div id="thermal-placeholder" class="video-placeholder">Thermal disabled</div>
                         <div class="camera-stats small">
                             <span id="thermal-res">--</span> • <span id="thermal-fps">0 fps</span>
+                            <span id="thermal-ai" class="ai-comment" style="margin-left:10px;color:var(--accent);font-weight:700"></span>
                         </div>
                     </div>
                 </div>
@@ -315,6 +383,7 @@
     <!-- Toast HUD -->
     <div id="toast" aria-live="polite" aria-atomic="true" class="toast-container" style="display:none;"></div>
 
-    <script defer src="/static/map.js"></script>
+    <script>/* dev: stamped version */ window.__MAP_CSS_VERSION='v2'; window.__MAP_JS_VERSION='v1';</script>
+    <script defer src="/static/map.js?v=2"></script>
 </body>
 </html>

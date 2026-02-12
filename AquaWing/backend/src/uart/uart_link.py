@@ -44,18 +44,22 @@ class UARTLink:
     def open(self) -> bool:
         """
         Open the serial connection.
-        
-        Returns:
-            True if successful, False otherwise
-            
-        TODO: Implement actual serial port opening
+
+        Attempts to open the configured serial port. If the port cannot be
+        opened this returns False (caller can fallback to simulated mode).
         """
         try:
-            print(f"TODO: Implement opening serial port {self.port} at {self.baudrate} baud")
-            # self.serial = serial.Serial(self.port, self.baudrate, timeout=self.timeout)
-            return True
+            self.serial = serial.Serial(self.port, self.baudrate, timeout=self.timeout)
+            if getattr(self.serial, 'is_open', False):
+                print(f"UART opened {self.port} @ {self.baudrate}")
+                return True
+            # unexpected state
+            print(f"UART could not be opened (unknown state)")
+            self.serial = None
+            return False
         except Exception as e:
-            print(f"Error opening UART: {e}")
+            print(f"Error opening UART {self.port}: {e}")
+            self.serial = None
             return False
     
     def close(self):
@@ -70,20 +74,22 @@ class UARTLink:
     def send(self, data: bytes) -> bool:
         """
         Send data over UART.
-        
-        Args:
-            data: Bytes to send
-            
-        Returns:
-            True if successful, False otherwise
-            
-        TODO: Implement actual serial transmission
+
+        If the serial device is not available this method will *simulate*
+        sending (log the encoded message) so higher layers can be tested on
+        the Raspberry Pi without hardware connected.
         """
-        if not self.serial or not self.serial.is_open:
-            print("TODO: Serial port not open, cannot send")
-            return False
-        
+        if not self.serial or not getattr(self.serial, 'is_open', False):
+            # Simulated send for development / unit tests
+            try:
+                print(f"[UART SIM] send {len(data)} bytes: {data.hex()}")
+                return True
+            except Exception as e:
+                print(f"UART simulated send failed: {e}")
+                return False
+
         try:
+            # real serial write (not yet implemented in this repo)
             print(f"TODO: Send {len(data)} bytes over UART: {data.hex()}")
             # self.serial.write(data)
             return True

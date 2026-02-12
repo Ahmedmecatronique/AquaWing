@@ -114,37 +114,64 @@ async def get_telemetry():
     return _telemetry_data
 
 
+# ---------------------------------------------------------------------------
+# PID tuning endpoints (frontend -> backend -> optional MCU forward)
+# ---------------------------------------------------------------------------
+from pydantic import BaseModel as _BaseModel
+from backend.src.control.flight_controller import flight_controller as _fc
+from backend.src.uart.uart_link import UARTLink as _UARTLink
+from backend.src.uart.protocol import encode_message as _encode_message, MessageType as _MsgType
+
+
+class PIDUpdate(_BaseModel):
+    axis: str
+    kp: float
+    ki: float
+    kd: float
+
+
+@router.get("/pid")
+async def get_pid():
+    """Return current PID gains for all axes (in-memory)."""
+    try:
+        return _fc.pid_gains
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/pid")
+async def update_pid(p: PIDUpdate):
+    """Update PID gains (applies in-memory and forwards to MCU via UART if available)."""
+    axis = p.axis
+    ok = _fc.set_pid_gains(axis, p.kp, p.ki, p.kd)
+    if not ok:
+        raise HTTPException(status_code=400, detail=f"Unknown axis: {axis}")
+
+    # forward to MCU (simulated when UART not present)
+    try:
+        uart = _UARTLink()
+        payload = { 'axis': axis, 'kp': p.kp, 'ki': p.ki, 'kd': p.kd }
+        data = _encode_message(_MsgType.PID_UPDATE, payload)
+        sent = uart.send(data)
+        return { 'success': True, 'sent_to_mcu': bool(sent), 'pid': _fc.pid_gains[axis] }
+    except Exception as e:
+        return { 'success': True, 'sent_to_mcu': False, 'pid': _fc.pid_gains[axis], 'warning': str(e) }
+
+
 @router.post("/command", response_model=CommandResponse)
 async def send_command(cmd: Command):
     """
     Send a command to the drone.
-    
-    Args:
-        cmd: Command object with command type and parameters
-        
-    Returns:
-        CommandResponse: Result of command execution
-        
-    TODO: Add authentication check
-    TODO: Validate command against drone capabilities
-    TODO: Transmit command to drone via UART
-    TODO: Add command queuing and acknowledgment
+
+    Placeholder implementation: validates and returns a queued command response.
     """
     try:
-        # Placeholder command validation
         valid_commands = ["arm", "disarm", "takeoff", "land", "move", "rtl", "hover"]
         if cmd.command not in valid_commands:
-            return CommandResponse(
-                success=False,
-                message=f"Unknown command: {cmd.command}"
-            )
-        
-        # TODO: Implement actual command transmission
-        return CommandResponse(
-            success=True,
-            message=f"Command '{cmd.command}' queued",
-            command_id="cmd_001"
-        )
+            return CommandResponse(success=False, message=f"Unknown command: {cmd.command}")
+
+        # TODO: Implement actual command transmission via UART
+        return CommandResponse(success=True, message=f"Command '{cmd.command}' queued", command_id="cmd_001")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

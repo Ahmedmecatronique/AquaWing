@@ -137,40 +137,49 @@ let frontendFlying = false;
 
 let demoTimer = null;
 let demoCounter = 0;
-function startDemo() {
+// Demo state (persist across pause/resume)
+let demoWpIndex = 0;
+let demoProgress = 0;
+let demoStepSize = 0.02;
+let demoPaused = false;
+
+function startDemo(reset=true) {
     // Create initial marker and polyline if not present
     if (!map) initMap();
     if (!polyline) polyline = L.polyline([], {color: '#ff9f1a', weight:4, opacity:0.9}).addTo(map);
 
-    // Clear previous flight path
-    polyline.setLatLngs([]);
-    demoCounter = 0;
-    frontendFlying = true;
-
-    // Reset distance tracking
-    distanceTraveled = 0;
-    prevTeleLat = null;
-    prevTeleLon = null;
+    if (reset) {
+        // Clear previous flight path
+        polyline.setLatLngs([]);
+        demoCounter = 0;
+        demoWpIndex = 0;
+        demoProgress = 0;
+        demoStepSize = 0.02;
+        demoPaused = false;
+        // Reset distance tracking
+        distanceTraveled = 0;
+        prevTeleLat = null;
+        prevTeleLon = null;
+    }
 
     // Fly along the waypoints trajectory
     if (waypoints.length >= 2) {
-        let wpIndex = 0;
-        let progress = 0;
-        const stepSize = 0.02;
+        frontendFlying = true;
         demoTimer = setInterval(() => {
+            if (demoPaused) return; // do not advance when paused
             demoCounter += 1;
-            if (wpIndex >= waypoints.length - 1) {
+            if (demoWpIndex >= waypoints.length - 1) {
                 stopDemo();
                 showToast('Trajectory complete — drone arrived', 'success');
                 return;
             }
-            const from = waypoints[wpIndex];
-            const to = waypoints[wpIndex + 1];
-            progress += stepSize;
-            if (progress >= 1) { progress = 0; wpIndex++; }
-            if (wpIndex >= waypoints.length - 1 && progress > 0) { progress = 1; }
-            const lat = from.lat + (to.lat - from.lat) * progress;
-            const lon = from.lon + (to.lon - from.lon) * progress;
+            const from = waypoints[demoWpIndex];
+            const to = waypoints[demoWpIndex + 1];
+            demoProgress += demoStepSize;
+            if (demoProgress >= 1) { demoProgress = 0; demoWpIndex++; }
+            if (demoWpIndex >= waypoints.length - 1 && demoProgress > 0) { demoProgress = 1; }
+            const lat = from.lat + (to.lat - from.lat) * demoProgress;
+            const lon = from.lon + (to.lon - from.lon) * demoProgress;
             const heading = Math.atan2(to.lon - from.lon, to.lat - from.lat) * 180 / Math.PI;
             const alt = 20;
             const speed = 3.0;
@@ -178,12 +187,53 @@ function startDemo() {
             const telemetry = { lat, lon, alt, heading, speed, battery, ts: Date.now() };
             updateTelemetry(telemetry);
         }, 500);
+    } else {
+        showToast('Define at least 2 waypoints to start a mission', 'error');
     }
+}
+
+function pauseDemo(){
+    if (!frontendFlying) return;
+    demoPaused = true;
+    if (demoTimer) { clearInterval(demoTimer); demoTimer = null; }
+}
+
+function resumeDemo(){
+    if (!frontendFlying) return;
+    if (!demoPaused) return;
+    demoPaused = false;
+    // Restart interval preserving demoWpIndex/demoProgress
+    demoTimer = setInterval(() => {
+        if (demoPaused) return;
+        demoCounter += 1;
+        if (demoWpIndex >= waypoints.length - 1) {
+            stopDemo();
+            showToast('Trajectory complete — drone arrived', 'success');
+            return;
+        }
+        const from = waypoints[demoWpIndex];
+        const to = waypoints[demoWpIndex + 1];
+        demoProgress += demoStepSize;
+        if (demoProgress >= 1) { demoProgress = 0; demoWpIndex++; }
+        if (demoWpIndex >= waypoints.length - 1 && demoProgress > 0) { demoProgress = 1; }
+        const lat = from.lat + (to.lat - from.lat) * demoProgress;
+        const lon = from.lon + (to.lon - from.lon) * demoProgress;
+        const heading = Math.atan2(to.lon - from.lon, to.lat - from.lat) * 180 / Math.PI;
+        const alt = 20;
+        const speed = 3.0;
+        const battery = Math.max(10, 95 - Math.floor(demoCounter / 30));
+        const telemetry = { lat, lon, alt, heading, speed, battery, ts: Date.now() };
+        updateTelemetry(telemetry);
+    }, 500);
 }
 
 function stopDemo(){
     if(demoTimer) { clearInterval(demoTimer); demoTimer = null; }
     frontendFlying = false;
+    demoPaused = false;
+    // disable pause/resume controls when stopped
+    if (pauseMissionBtn) pauseMissionBtn.disabled = true;
+    if (resumeMissionBtn) resumeMissionBtn.disabled = true;
 }
 
 // ============================================================================
@@ -356,6 +406,21 @@ function updateTelemetry(data) {
 
     // Follow
     if (followMode) map.panTo(latlng);
+
+    // Map telemetry fields to system panel when available (non-destructive)
+    try {
+        if (data.battery_voltage_v !== undefined) simState.battVolt = Number(data.battery_voltage_v);
+        if (data.battery_temp_c !== undefined) simState.battTemp = Number(data.battery_temp_c);
+        if (Array.isArray(data.motors)) {
+            data.motors.forEach((m,i)=>{ if (i<3){ simState.motorRPS[i] = Number(m.rps || simState.motorRPS[i]); simState.motorTemp[i] = Number(m.temp || simState.motorTemp[i]); simState.motorCurrent[i] = Number(m.current || simState.motorCurrent[i]); simState.motorVoltage[i] = Number(m.voltage || simState.motorVoltage[i]); }});
+        }
+        if (Array.isArray(data.servos)) { data.servos.forEach((s,i)=>{ if (i<6) simState.servoPos[i] = Number(s.pos || simState.servoPos[i]); }); }
+        if (data.imu_ok !== undefined) simState.imuOK = !!data.imu_ok;
+        if (data.gps_fix !== undefined) simState.gpsFix = !!data.gps_fix;
+        if (data.baro_hpa !== undefined) simState.baro = Number(data.baro_hpa);
+        // Re-render power panel immediately if telemetry provided
+        renderPowerPanel();
+    } catch(e){ /* ignore mapping errors */ }
 
     // Update control-bar HUD (demo overlay)
     updateControlBar(lat, lon, alt, speed, battery);
@@ -626,6 +691,8 @@ if (waypointsToggleBtn) {
         // Show/hide route control buttons
         if (sendRouteBtn) sendRouteBtn.style.display = waypointsEnabled ? 'block' : 'none';
         if (clearRouteBtn) clearRouteBtn.style.display = waypointsEnabled ? 'block' : 'none';
+        // Show/hide route distance
+        const rd = document.getElementById('route-distance'); if (rd) rd.style.display = waypointsEnabled ? 'block' : 'none';
         
         // Clear route when toggling off
         if (!waypointsEnabled) {
@@ -788,6 +855,9 @@ if (startFlightBtn) {
         }
         // Start the drone simulation along the waypoint route
         startDemo();
+        // enable pause/resume controls
+        if (pauseMissionBtn) pauseMissionBtn.disabled = false;
+        if (resumeMissionBtn) resumeMissionBtn.disabled = true;
         flightStarted = true;
         updateFlightControls();
         showToast('Mission started — drone is flying the trajectory', 'success');
@@ -872,6 +942,32 @@ if (waitBtn) {
     });
 }
 
+// Pause / Resume mission controls
+const pauseMissionBtn = document.getElementById('pause-mission-btn');
+const resumeMissionBtn = document.getElementById('resume-mission-btn');
+if (pauseMissionBtn) {
+    pauseMissionBtn.addEventListener('click', () => {
+        if (pauseMissionBtn.disabled) return;
+        pauseDemo();
+        if (pauseMissionBtn) pauseMissionBtn.disabled = true;
+        if (resumeMissionBtn) resumeMissionBtn.disabled = false;
+        flightStarted = false;
+        updateFlightControls();
+        showToast('Mission paused', 'info');
+    });
+}
+if (resumeMissionBtn) {
+    resumeMissionBtn.addEventListener('click', () => {
+        if (resumeMissionBtn.disabled) return;
+        resumeDemo();
+        if (pauseMissionBtn) pauseMissionBtn.disabled = false;
+        if (resumeMissionBtn) resumeMissionBtn.disabled = true;
+        flightStarted = true;
+        updateFlightControls();
+        showToast('Mission resumed', 'success');
+    });
+}
+
 // initial sync
 updateFlightControls();
 
@@ -931,6 +1027,30 @@ document.addEventListener("click", (e) => {
   }
 });
 
+// --- Dev: surface active versions and JS errors in a small banner ---
+(function(){
+    try{
+        const banner = document.getElementById('dev-banner');
+        if (banner && window.__MAP_CSS_VERSION && window.__MAP_JS_VERSION) {
+            banner.textContent = `Map CSS: ${window.__MAP_CSS_VERSION} • Map JS: ${window.__MAP_JS_VERSION}`;
+        }
+        const errBox = document.createElement('div'); errBox.id = 'dev-errors'; document.body.appendChild(errBox);
+        window.addEventListener('error', (ev)=>{
+            if (banner) banner.classList.add('error');
+            errBox.style.display = 'block';
+            const line = document.createElement('div'); line.textContent = `[ERROR] ${ev.message} @ ${ev.filename}:${ev.lineno}`; errBox.appendChild(line);
+            console.error('Dev banner captured error:', ev.message, ev.filename, ev.lineno);
+        });
+        window.addEventListener('unhandledrejection', (ev)=>{
+            if (banner) banner.classList.add('error');
+            errBox.style.display = 'block';
+            const line = document.createElement('div'); line.textContent = `[PROMISE REJECTION] ${String(ev.reason)}`; errBox.appendChild(line);
+            console.error('Dev banner captured rejection:', ev.reason);
+        });
+        console.log('Dev banner initialized:', window.__MAP_CSS_VERSION, window.__MAP_JS_VERSION);
+    }catch(e){ console.warn('Dev banner init failed', e); }
+})();
+
 // Video / Camera controls
 const videoToggle = document.getElementById('video-toggle');
 const videoImg = document.getElementById('video-stream');
@@ -989,13 +1109,73 @@ async function fetchAndDisplayRGB(res){
     if (videoStatus) videoStatus.className = 'status-dot on';
 }
 
+let rgbAiTimer = null;
+
+function drawDetectionsOnCanvas(canvasId, detections){
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const rectW = canvas.offsetWidth;
+    const rectH = canvas.offsetHeight;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.round(rectW * dpr);
+    canvas.height = Math.round(rectH * dpr);
+    canvas.style.width = rectW + 'px';
+    canvas.style.height = rectH + 'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0); // scale drawing to DPR
+    // clear
+    ctx.clearRect(0,0,rectW,rectH);
+    detections.forEach(det => {
+        const x = det.x * rectW;
+        const y = det.y * rectH;
+        const bw = det.w * rectW;
+        const bh = det.h * rectH;
+        ctx.strokeStyle = det.color || '#ff9f1a';
+        ctx.lineWidth = Math.max(2, Math.round(Math.min(rectW,rectH)*0.006));
+        ctx.strokeRect(x,y,bw,bh);
+        ctx.fillStyle = det.color || '#ff9f1a';
+        ctx.font = `${Math.max(12, Math.round(rectW*0.03))}px Outfit, sans-serif`;
+        ctx.fillText(`${det.label} – ${det.conf}%`, x + 6, Math.max(14, y + 18));
+    });
+}
+function clearOverlay(canvasId){ const c=document.getElementById(canvasId); if(!c) return; const ctx=c.getContext('2d'); ctx && ctx.clearRect(0,0,c.width,c.height); }
+
+function simulateRGBDetections(){
+    // only simulate small detections when RGB is on
+    if (!videoOn) return;
+    const detections = [];
+    if (Math.random() < 0.7) {
+        detections.push({ x:0.2 + Math.random()*0.4, y:0.15 + Math.random()*0.6, w:0.25, h:0.4, label: 'Person', conf: 80 + Math.round(Math.random()*18), color:'#ff9f1a' });
+        document.getElementById('rgb-ai') && (document.getElementById('rgb-ai').textContent = `Person detected – ${detections[0].conf}% confidence`);
+    } else {
+        document.getElementById('rgb-ai') && (document.getElementById('rgb-ai').textContent = '');
+    }
+    drawDetectionsOnCanvas('rgb-overlay', detections);
+}
+
+function simulateThermalDetections(){
+    if (!thermalOn) return;
+    const detections = [];
+    if (Math.random() < 0.6) {
+        detections.push({ x:0.25 + Math.random()*0.4, y:0.25 + Math.random()*0.45, w:0.25, h:0.3, label: 'Floating Object', conf: 70 + Math.round(Math.random()*20), color:'#ff9f1a' });
+        document.getElementById('thermal-ai') && (document.getElementById('thermal-ai').textContent = `Floating Object detected – ${detections[0].conf}% confidence`);
+    } else {
+        document.getElementById('thermal-ai') && (document.getElementById('thermal-ai').textContent = '');
+    }
+    drawDetectionsOnCanvas('thermal-overlay', detections);
+}
+
 function startRGBLoop(res){
     stopRGBLoop();
     // initial fetch immediately
     fetchAndDisplayRGB(res);
     rgbTimer = setInterval(()=> fetchAndDisplayRGB(res), RGB_INTERVAL);
+    // start AI overlay simulation
+    if (rgbAiTimer) clearInterval(rgbAiTimer);
+    rgbAiTimer = setInterval(simulateRGBDetections, 1200);
+    simulateRGBDetections();
 }
-function stopRGBLoop(){ if (rgbTimer) { clearInterval(rgbTimer); rgbTimer = null; } try{ if (lastRGBObjectURL) { URL.revokeObjectURL(lastRGBObjectURL); lastRGBObjectURL = null; } }catch(e){} if (videoImg) videoImg.src = ''; const elB = document.getElementById('rgb-bitrate'); if (elB) elB.textContent = '0 kb/s'; const elR = document.getElementById('rgb-res'); if (elR) elR.textContent = '--'; if (videoStatus) videoStatus.className = 'status-dot off'; }
+function stopRGBLoop(){ if (rgbTimer) { clearInterval(rgbTimer); rgbTimer = null; } try{ if (lastRGBObjectURL) { URL.revokeObjectURL(lastRGBObjectURL); lastRGBObjectURL = null; } }catch(e){} if (videoImg) videoImg.src = ''; const elB = document.getElementById('rgb-bitrate'); if (elB) elB.textContent = '0 kb/s'; const elR = document.getElementById('rgb-res'); if (elR) elR.textContent = '--'; if (videoStatus) videoStatus.className = 'status-dot off'; if (rgbAiTimer) { clearInterval(rgbAiTimer); rgbAiTimer = null; } clearOverlay('rgb-overlay'); document.getElementById('rgb-ai') && (document.getElementById('rgb-ai').textContent = ''); }
 
 // Thermal fetch (if backend exists)
 const thermalImg = document.getElementById('thermal-stream');
@@ -1021,8 +1201,9 @@ async function fetchAndDisplayThermal(){
     if (thermalStatus) thermalStatus.className = 'status-dot on';
 }
 
-function startThermalLoop(){ stopThermalLoop(); fetchAndDisplayThermal(); thermalTimer = setInterval(()=> fetchAndDisplayThermal(), THERMAL_INTERVAL); }
-function stopThermalLoop(){ if (thermalTimer) { clearInterval(thermalTimer); thermalTimer = null; } try{ if (lastThermalObjectURL) { URL.revokeObjectURL(lastThermalObjectURL); lastThermalObjectURL = null; } }catch(e){} if (thermalImg) thermalImg.src = ''; const elF = document.getElementById('thermal-fps'); if (elF) elF.textContent = '0 fps'; const elR = document.getElementById('thermal-res'); if (elR) elR.textContent = '--'; if (thermalStatus) thermalStatus.className = 'status-dot off'; }
+let thermalAiTimer = null;
+function startThermalLoop(){ stopThermalLoop(); fetchAndDisplayThermal(); thermalTimer = setInterval(()=> fetchAndDisplayThermal(), THERMAL_INTERVAL); if (thermalAiTimer) clearInterval(thermalAiTimer); thermalAiTimer = setInterval(simulateThermalDetections, 1400); simulateThermalDetections(); }
+function stopThermalLoop(){ if (thermalTimer) { clearInterval(thermalTimer); thermalTimer = null; } try{ if (lastThermalObjectURL) { URL.revokeObjectURL(lastThermalObjectURL); lastThermalObjectURL = null; } }catch(e){} if (thermalImg) thermalImg.src = ''; const elF = document.getElementById('thermal-fps'); if (elF) elF.textContent = '0 fps'; const elR = document.getElementById('thermal-res'); if (elR) elR.textContent = '--'; if (thermalStatus) thermalStatus.className = 'status-dot off'; if (thermalAiTimer) { clearInterval(thermalAiTimer); thermalAiTimer = null; } clearOverlay('thermal-overlay'); document.getElementById('thermal-ai') && (document.getElementById('thermal-ai').textContent = ''); }
 
 // cleanup on unload
 window.addEventListener('beforeunload', ()=>{
@@ -1116,38 +1297,7 @@ window.addEventListener('load', () => {
     setTimeout(()=>{ try { if (map && typeof map.invalidateSize === 'function') map.invalidateSize(); } catch(e){} }, 250);
 });
 
-// keep map layout consistent on window resize
-window.addEventListener('resize', ()=>{ try { if (map && typeof map.invalidateSize === 'function') map.invalidateSize(); } catch(e){} });
-
-
-// ============================================================================
-// Power & Motors Panel: Tabs, visibility and simulated data (UI-only)
-// ============================================================================
-
-const tabTelemetry = document.getElementById('tab-telemetry');
-const tabPower = document.getElementById('tab-power');
-const powerPanel = document.querySelector('.power-panel');
-
-function showTelemetryPanel() {
-    const telemetry = document.querySelector('.telemetry-panel');
-    if (telemetry) telemetry.style.display = 'flex';
-    if (powerPanel) powerPanel.style.display = 'none';
-    if (tabTelemetry) { tabTelemetry.classList.add('active'); tabTelemetry.setAttribute('aria-selected','true'); }
-    if (tabPower) { tabPower.classList.remove('active'); tabPower.setAttribute('aria-selected','false'); }
-}
-
-function showPowerPanel() {
-    const telemetry = document.querySelector('.telemetry-panel');
-    if (telemetry) telemetry.style.display = 'none';
-    if (powerPanel) powerPanel.style.display = 'flex';
-    if (tabTelemetry) { tabTelemetry.classList.remove('active'); tabTelemetry.setAttribute('aria-selected','false'); }
-    if (tabPower) { tabPower.classList.add('active'); tabPower.setAttribute('aria-selected','true'); }
-}
-
-if (tabTelemetry) tabTelemetry.addEventListener('click', showTelemetryPanel);
-if (tabPower) tabPower.addEventListener('click', showPowerPanel);
-
-// Simulation state with smoothing helper
+// Simulation state with smoothing helper (must be declared before use)
 const simState = {
     motorSpeed: [20,20,20],
     motorRPS: [5,5,5],
@@ -1165,8 +1315,165 @@ const simState = {
     baro: 1013,
     airTemp: 22,
     humidity: 45,
-    compassOK: true
+    compassOK: true,
+    battLowThreshold: 10.8,
+    motorMaxTemp: 85
 };
+
+// Settings & Sidebar wiring (Dashboard / Systèmes / Caméra)
+(function(){
+    // default thresholds (already set in simState declaration above)
+    if (typeof simState.battLowThreshold === 'undefined') simState.battLowThreshold = 10.8;
+    if (typeof simState.motorMaxTemp === 'undefined') simState.motorMaxTemp = 85;
+
+    const navDashboard = document.getElementById('nav-dashboard');
+    const navSystems = document.getElementById('nav-systems');
+    const navCamera = document.getElementById('nav-camera');
+
+    function clearNavActive(){ [navDashboard, navSystems, navCamera].forEach(n=>{ if(n){ n.classList.remove('nav-active'); n.setAttribute('aria-pressed','false'); }}); }
+    function activateNav(el){ if(!el) return; clearNavActive(); el.classList.add('nav-active'); el.setAttribute('aria-pressed','true'); }
+
+    function showDashboard(){ activateNav(navDashboard); const telemetry = document.querySelector('.telemetry-panel'); if (telemetry) telemetry.style.display = 'flex'; if (powerPanel) powerPanel.style.display = 'none'; const right = document.querySelector('.right-column'); if (right) right.style.display = 'flex'; }
+    function showSystems(){ activateNav(navSystems); // show power panel and settings
+        const telemetry = document.querySelector('.telemetry-panel'); if (telemetry) telemetry.style.display = 'none'; if (powerPanel) powerPanel.style.display = 'flex'; const settings = document.getElementById('system-settings'); if (settings) settings.style.display = 'block'; if (typeof powerPanel.scrollIntoView === 'function') powerPanel.scrollIntoView({behavior:'smooth'});
+    }
+    function showCamera(){ activateNav(navCamera); const telemetry = document.querySelector('.telemetry-panel'); if (telemetry) telemetry.style.display = 'flex'; if (powerPanel) powerPanel.style.display = 'none'; // ensure both camera feeds on
+        if (!videoOn) setVideo(true); if (!thermalOn) setThermal(true); const cams = document.querySelector('.cams-area'); if (cams) cams.scrollIntoView({behavior:'smooth'});
+    }
+
+    if (navDashboard) navDashboard.addEventListener('click', showDashboard);
+    if (navSystems) navSystems.addEventListener('click', showSystems);
+    if (navCamera) navCamera.addEventListener('click', showCamera);
+    // keyboard accessibility
+    [navDashboard,navSystems,navCamera].forEach(el=>{ if(!el) return; el.addEventListener('keydown', (ev)=>{ if(ev.key==='Enter' || ev.key===' ') { ev.preventDefault(); el.click(); }}); });
+
+    // Settings controls
+    const battLowInput = document.getElementById('setting-batt-low');
+    const battLowVal = document.getElementById('setting-batt-low-val');
+    const motorMaxInput = document.getElementById('setting-motor-max-temp');
+    const motorMaxVal = document.getElementById('setting-motor-max-temp-val');
+    const applyBtn = document.getElementById('apply-settings-btn');
+
+    if (battLowInput && battLowVal){ battLowVal.textContent = battLowInput.value + ' V'; battLowInput.addEventListener('input', (e)=> battLowVal.textContent = e.target.value + ' V'); }
+    if (motorMaxInput && motorMaxVal){ motorMaxVal.textContent = motorMaxInput.value + '°C'; motorMaxInput.addEventListener('input', (e)=> motorMaxVal.textContent = e.target.value + '°C'); }
+    if (applyBtn){ applyBtn.addEventListener('click', ()=>{
+        if (battLowInput) simState.battLowThreshold = parseFloat(battLowInput.value);
+        if (motorMaxInput) simState.motorMaxTemp = parseFloat(motorMaxInput.value);
+        showToast('Settings applied', 'success');
+        renderPowerPanel();
+    }); }
+
+    // start on dashboard
+    try { showDashboard(); } catch(e){}
+})();
+
+// keep map layout consistent on window resize
+window.addEventListener('resize', ()=>{ try { if (map && typeof map.invalidateSize === 'function') map.invalidateSize(); } catch(e){} try{ if (videoOn) simulateRGBDetections(); if (thermalOn) simulateThermalDetections(); } catch(e){} });
+
+
+// ============================================================================
+// Power & Motors Panel: Tabs, visibility and simulated data (UI-only)
+// ============================================================================
+
+const tabTelemetry = document.getElementById('tab-telemetry');
+const tabPower = document.getElementById('tab-power');
+const tabPid = document.getElementById('tab-pid');
+const powerPanel = document.querySelector('.power-panel');
+
+function showTelemetryPanel() {
+    const telemetry = document.querySelector('.telemetry-panel');
+    if (telemetry) telemetry.style.display = 'flex';
+    if (powerPanel) powerPanel.style.display = 'none';
+    // show telemetry main, hide pid panel
+    const pidPanel = document.getElementById('pid-panel'); if (pidPanel) pidPanel.style.display = 'none';
+    if (tabTelemetry) { tabTelemetry.classList.add('active'); tabTelemetry.setAttribute('aria-selected','true'); }
+    if (tabPower) { tabPower.classList.remove('active'); tabPower.setAttribute('aria-selected','false'); }
+    if (tabPid) { tabPid.classList.remove('active'); tabPid.setAttribute('aria-selected','false'); }
+}
+
+function showPowerPanel() {
+    const telemetry = document.querySelector('.telemetry-panel');
+    if (telemetry) telemetry.style.display = 'none';
+    if (powerPanel) powerPanel.style.display = 'flex';
+    if (tabTelemetry) { tabTelemetry.classList.remove('active'); tabTelemetry.setAttribute('aria-selected','false'); }
+    if (tabPower) { tabPower.classList.add('active'); tabPower.setAttribute('aria-selected','true'); }
+    if (tabPid) { tabPid.classList.remove('active'); tabPid.setAttribute('aria-selected','false'); }
+}
+
+function showPidPanel() {
+    console.log('showPidPanel() called');
+    const telemetry = document.querySelector('.telemetry-panel');
+    if (telemetry) telemetry.style.display = 'flex';
+    if (powerPanel) powerPanel.style.display = 'none';
+    const pidPanel = document.getElementById('pid-panel'); if (pidPanel) pidPanel.style.display = 'flex';
+    if (tabTelemetry) { tabTelemetry.classList.remove('active'); tabTelemetry.setAttribute('aria-selected','false'); }
+    if (tabPower) { tabPower.classList.remove('active'); tabPower.setAttribute('aria-selected','false'); }
+    if (tabPid) { tabPid.classList.add('active'); tabPid.setAttribute('aria-selected','true'); }
+    fetchPidGains();
+}
+
+if (tabTelemetry) tabTelemetry.addEventListener('click', showTelemetryPanel);
+if (tabPower) tabPower.addEventListener('click', showPowerPanel);
+if (tabPid) tabPid.addEventListener('click', showPidPanel);
+
+
+// PID panel helpers
+async function fetchPidGains() {
+    console.log('fetchPidGains()');
+    try {
+        const res = await fetch('/api/pid');
+        if (!res.ok) throw new Error('Failed to fetch PID gains');
+        const data = await res.json();
+        console.log('PID gains received', data);
+        const axis = document.getElementById('pid-axis');
+        const kp = document.getElementById('pid-kp');
+        const ki = document.getElementById('pid-ki');
+        const kd = document.getElementById('pid-kd');
+        if (axis && kp && ki && kd) {
+            const a = axis.value || 'pitch';
+            const gains = data[a] || { kp:1, ki:0, kd:0 };
+            kp.value = gains.kp;
+            ki.value = gains.ki;
+            kd.value = gains.kd;
+        }
+    } catch (err) {
+        console.warn('fetchPidGains error', err);
+    }
+}
+
+// Fetch PID gains on initial load so fields are populated even if user doesn't click the tab
+try { fetchPidGains(); } catch(e) { console.warn('initial fetchPidGains failed', e); }
+
+async function applyPidUpdate() {
+    const axis = document.getElementById('pid-axis').value;
+    const kp = parseFloat(document.getElementById('pid-kp').value || 0);
+    const ki = parseFloat(document.getElementById('pid-ki').value || 0);
+    const kd = parseFloat(document.getElementById('pid-kd').value || 0);
+    try {
+        const res = await fetch('/api/pid', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ axis, kp, ki, kd })
+        });
+        if (!res.ok) {
+            const txt = await res.text();
+            throw new Error(txt || 'PID update failed');
+        }
+        const j = await res.json();
+        showToast(`PID ${axis} updated (${j.sent_to_mcu ? 'sent to MCU' : 'local only'})`, 'success');
+    } catch (err) {
+        console.error('applyPidUpdate error', err);
+        showToast('PID update failed', 'error');
+    }
+}
+
+// wire up buttons
+const pidApplyBtn = document.getElementById('pid-apply');
+const pidRefreshBtn = document.getElementById('pid-refresh');
+if (pidApplyBtn) pidApplyBtn.addEventListener('click', applyPidUpdate);
+if (pidRefreshBtn) pidRefreshBtn.addEventListener('click', fetchPidGains);
+
+/* 'Open PID' quick button removed (UI change) */
 
 function smooth(val, target, alpha=0.15){ return val + (target - val) * alpha; }
 
@@ -1216,7 +1523,8 @@ function renderPowerPanel() {
         // color coding
         const tmpVal = simState.motorTemp[i];
         const curVal = simState.motorCurrent[i];
-        const tmpClassTarget = (tmpVal > 85) ? 'status-critical' : (tmpVal > 70) ? 'status-warn' : 'status-normal';
+        const motorMax = typeof simState.motorMaxTemp === 'number' ? simState.motorMaxTemp : 85;
+        const tmpClassTarget = (tmpVal > motorMax) ? 'status-critical' : (tmpVal > (motorMax - 15)) ? 'status-warn' : 'status-normal';
         const curClassTarget = (curVal > 8) ? 'status-critical' : (curVal > 5) ? 'status-warn' : 'status-normal';
         if (tmp) tmp.className = 'metric-val ' + tmpClassTarget;
         if (cur) cur.className = 'metric-val ' + curClassTarget;
@@ -1248,7 +1556,7 @@ function renderPowerPanel() {
 
     // Color coding (critical thresholds)
     // battery low
-    const bvEl = document.getElementById('batt-voltage'); if (bvEl){ const v = simState.battVolt; if (v < 10.8) bvEl.className = 'metric-val status-critical'; else if (v < 11.3) bvEl.className = 'metric-val status-warn'; else bvEl.className = 'metric-val status-normal'; }
+    const bvEl = document.getElementById('batt-voltage'); if (bvEl){ const v = simState.battVolt; const battLow = (typeof simState.battLowThreshold === 'number') ? simState.battLowThreshold : 10.8; const battWarn = battLow + 0.5; if (v < battLow) bvEl.className = 'metric-val status-critical'; else if (v < battWarn) bvEl.className = 'metric-val status-warn'; else bvEl.className = 'metric-val status-normal'; }
 }
 
 // Start simulation loop (UI-only)
