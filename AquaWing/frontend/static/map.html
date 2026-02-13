@@ -15,10 +15,453 @@
 </head>
 
 <body>
-        <!-- removed legacy HUD overlays; using AQUA-WING HUD bar below -->
-
     <div id="dev-banner" aria-hidden="true" style="display:none;position:fixed;left:12px;top:10px;z-index:2000;padding:6px 10px;border-radius:8px;background:rgba(0,0,0,0.6);color:var(--muted);font-size:12px;font-weight:700;border:1px solid rgba(255,255,255,0.03);">Map CSS: v2 • Map JS: v1</div>
-    <div class="dashboard-grid">
+    
+    <!-- TOP BAR: System Status -->
+    <div class="top-status-bar">
+        <div class="status-item">
+            <span class="status-label">BATTERY</span>
+            <span id="top-battery" class="status-value">100.0% (16.8V)</span>
+        </div>
+        <div class="status-item">
+            <span class="status-label">GPS</span>
+            <span id="top-gps" class="status-value">0 SATS (3D FIX)</span>
+        </div>
+        <div class="status-item">
+            <span class="status-label">ALT</span>
+            <span id="top-alt" class="status-value">0.0m</span>
+        </div>
+        <div class="status-item system-status">
+            <span class="status-dot-indicator" id="system-status-dot"></span>
+            <span id="system-status-text" class="status-value">SYSTEM DISARMED</span>
+        </div>
+        <button id="ai-advisor-btn" class="ai-advisor-btn" title="Conseiller IA : Analyse et recommandations pour le vol">
+            <span class="ai-icon">⚡</span>
+            <span>AI ADVISOR</span>
+        </button>
+        <div class="top-brand">AQUAWING</div>
+    </div>
+
+    <div class="main-layout">
+        <!-- LEFT SIDEBAR: Navigation and Controls -->
+        <aside class="left-sidebar">
+            <div class="sidebar-header">
+                <div class="logo-text">
+                    <div class="logo-title">DRONE CONTROL OS</div>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <button id="nav-dashboard" class="nav-item nav-active">
+                    <span class="nav-icon">🗺️</span>
+                    <span>Dashboard</span>
+                </button>
+                <button id="nav-missions" class="nav-item">
+                    <span class="nav-icon">⛰️</span>
+                    <span>Missions</span>
+                </button>
+                <button id="nav-systems" class="nav-item">
+                    <span class="nav-icon">⚡</span>
+                    <span>Systems</span>
+                </button>
+                <button id="nav-optical" class="nav-item">
+                    <span class="nav-icon">📷</span>
+                    <span>Optical</span>
+                </button>
+            </nav>
+
+        </aside>
+
+        <!-- Speed Control Panel (shown when Dashboard tab is active) -->
+        <div class="speed-control-panel" id="speed-control-panel" style="display:none;">
+            <div class="speed-control-panel-header">
+                <div class="panel-title">SPEED CONTROL</div>
+            </div>
+            <div class="speed-control-panel-content">
+                <div class="speed-control-wrapper">
+                    <label for="speed-control-sidebar">SPEED (M/S)</label>
+                    <input id="speed-control-sidebar" type="range" min="0" max="10" step="0.1" value="0">
+                    <div class="speed-value-display">
+                        <span id="speed-value-display">0.0</span> m/s
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Missions Panel (shown when Missions tab is active) -->
+        <div class="missions-panel" id="missions-panel" style="display:none;">
+            <div class="missions-panel-header">
+                <div class="panel-title">MISSION CONTROL</div>
+            </div>
+            <div class="missions-content">
+                <div class="mission-control-buttons">
+                    <button id="start-flight-btn" class="mission-btn btn-success" title="Démarrer la mission de vol">START FLIGHT</button>
+                    <button id="pause-mission-btn" class="mission-btn btn-warning" disabled title="Mettre en pause la mission en cours">PAUSE</button>
+                    <button id="resume-mission-btn" class="mission-btn btn-success" disabled title="Reprendre la mission en pause">RESUME</button>
+                    <button id="preflight-btn" class="mission-btn btn-preflight" title="Vérification pré-vol du système">PRE-FLIGHT CHECK</button>
+                    <button id="emergency-rtl-btn" class="mission-btn btn-warning" title="Retour d'urgence au point de départ">EMERGENCY RTL</button>
+                    <button id="wait-btn" class="mission-btn btn-danger" disabled title="Terminer la mission">END MISSION</button>
+                </div>
+                
+                <!-- Pre-flight status -->
+                <div id="preflight-status" class="preflight-status" aria-live="polite" aria-atomic="true" style="display:none;">
+                    <div class="status-item"><span class="component">Main Battery</span><span class="status wait">WAIT</span></div>
+                    <div class="status-item"><span class="component">Motors</span><span class="status wait">WAIT</span></div>
+                    <div class="status-item"><span class="component">Sensors</span><span class="status wait">WAIT</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Systems Panel (shown when Systems tab is active) -->
+        <div class="systems-panel" id="systems-panel" style="display:none;">
+            <div class="systems-panel-header">
+                <div class="panel-title">SYSTEMS</div>
+            </div>
+            <div class="systems-content">
+                <!-- Power Section -->
+                <div class="systems-section">
+                    <div class="systems-section-title">Power / Electrical</div>
+                    <div class="systems-metrics">
+                        <div class="systems-metric">
+                            <div class="systems-label">Battery Voltage</div>
+                            <div class="systems-value" id="sys-batt-voltage">12.6 V</div>
+                        </div>
+                        <div class="systems-metric">
+                            <div class="systems-label">Battery Current</div>
+                            <div class="systems-value" id="sys-batt-current">0.0 A</div>
+                        </div>
+                        <div class="systems-metric">
+                            <div class="systems-label">Power</div>
+                            <div class="systems-value" id="sys-power-cons">0 W</div>
+                        </div>
+                        <div class="systems-metric">
+                            <div class="systems-label">Bus Voltage</div>
+                            <div class="systems-value" id="sys-bus-voltage">12.6 V</div>
+                        </div>
+                        <div class="systems-metric">
+                            <div class="systems-label">Battery Temp</div>
+                            <div class="systems-value" id="sys-batt-temp">30°C</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Motors Section -->
+                <div class="systems-section">
+                    <div class="systems-section-title">Motors</div>
+                    <div class="systems-motors-grid">
+                        <div class="systems-motor-card">
+                            <div class="motor-label">Motor 1</div>
+                            <div class="motor-status" id="sys-motor-1">OK</div>
+                            <div class="motor-temp" id="sys-motor-1-temp">45°C</div>
+                        </div>
+                        <div class="systems-motor-card">
+                            <div class="motor-label">Motor 2</div>
+                            <div class="motor-status" id="sys-motor-2">OK</div>
+                            <div class="motor-temp" id="sys-motor-2-temp">45°C</div>
+                        </div>
+                        <div class="systems-motor-card">
+                            <div class="motor-label">Motor 3</div>
+                            <div class="motor-status" id="sys-motor-3">OK</div>
+                            <div class="motor-temp" id="sys-motor-3-temp">45°C</div>
+                        </div>
+                        <div class="systems-motor-card">
+                            <div class="motor-label">Motor 4</div>
+                            <div class="motor-status" id="sys-motor-4">OK</div>
+                            <div class="motor-temp" id="sys-motor-4-temp">45°C</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sensors Section -->
+                <div class="systems-section">
+                    <div class="systems-section-title">Sensors</div>
+                    <div class="systems-metrics">
+                        <div class="systems-metric">
+                            <div class="systems-label">IMU</div>
+                            <div class="systems-value status-normal" id="sys-imu">OK</div>
+                        </div>
+                        <div class="systems-metric">
+                            <div class="systems-label">GPS</div>
+                            <div class="systems-value status-normal" id="sys-gps">FIX</div>
+                        </div>
+                        <div class="systems-metric">
+                            <div class="systems-label">Barometer</div>
+                            <div class="systems-value" id="sys-baro">1013 hPa</div>
+                        </div>
+                        <div class="systems-metric">
+                            <div class="systems-label">Compass</div>
+                            <div class="systems-value status-normal" id="sys-compass">OK</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Optical Panel (shown when Optical tab is active) - Settings Panel -->
+        <div class="optical-panel" id="optical-panel" style="display:none;">
+            <div class="optical-panel-header">
+                <div class="panel-title">OPTICAL SETTINGS</div>
+            </div>
+            <div class="optical-settings-content">
+                <!-- RGB Camera Settings -->
+                <div class="optical-settings-section">
+                    <div class="settings-section-title">RGB CAMERA</div>
+                    <div class="settings-group">
+                        <label for="optical-rgb-resolution">Resolution</label>
+                        <select id="optical-rgb-resolution" aria-label="RGB resolution">
+                            <option value="640x480">640×480</option>
+                            <option value="800x600">800×600</option>
+                            <option value="1280x720" selected>1280×720</option>
+                        </select>
+                    </div>
+                    <div class="settings-group">
+                        <label for="rgb-brightness">Brightness</label>
+                        <input type="range" id="rgb-brightness" min="0" max="100" value="50">
+                        <div class="settings-value" id="rgb-brightness-val">50%</div>
+                    </div>
+                    <div class="settings-group">
+                        <label for="rgb-contrast">Contrast</label>
+                        <input type="range" id="rgb-contrast" min="0" max="100" value="50">
+                        <div class="settings-value" id="rgb-contrast-val">50%</div>
+                    </div>
+                    <div class="settings-group">
+                        <label for="rgb-saturation">Saturation</label>
+                        <input type="range" id="rgb-saturation" min="0" max="100" value="50">
+                        <div class="settings-value" id="rgb-saturation-val">50%</div>
+                    </div>
+                    <div class="settings-group">
+                        <button id="optical-video-toggle" class="btn-primary settings-toggle-btn">RGB: OFF</button>
+                    </div>
+                </div>
+
+                <!-- Thermal Camera Settings -->
+                <div class="optical-settings-section">
+                    <div class="settings-section-title">THERMAL CAMERA</div>
+                    <div class="settings-group">
+                        <label for="thermal-palette">Color Palette</label>
+                        <select id="thermal-palette">
+                            <option value="ironbow">Ironbow</option>
+                            <option value="rainbow">Rainbow</option>
+                            <option value="grayscale">Grayscale</option>
+                            <option value="hot">Hot</option>
+                        </select>
+                    </div>
+                    <div class="settings-group">
+                        <label for="thermal-temp-min">Min Temperature (°C)</label>
+                        <input type="number" id="thermal-temp-min" min="-40" max="100" value="0">
+                    </div>
+                    <div class="settings-group">
+                        <label for="thermal-temp-max">Max Temperature (°C)</label>
+                        <input type="number" id="thermal-temp-max" min="-40" max="100" value="100">
+                    </div>
+                    <div class="settings-group">
+                        <label>
+                            <input type="checkbox" id="thermal-emissivity"> Auto Emissivity
+                        </label>
+                    </div>
+                    <div class="settings-group">
+                        <button id="optical-thermal-toggle" class="btn-primary settings-toggle-btn">Thermal: OFF</button>
+                    </div>
+                </div>
+
+                <!-- AI Detection Settings -->
+                <div class="optical-settings-section">
+                    <div class="settings-section-title">AI DETECTION</div>
+                    <div class="settings-group">
+                        <label>
+                            <input type="checkbox" id="ai-detection-enabled" checked> Enable AI Detection
+                        </label>
+                    </div>
+                    <div class="settings-group">
+                        <label for="ai-confidence-threshold">Confidence Threshold</label>
+                        <input type="range" id="ai-confidence-threshold" min="0" max="100" value="50">
+                        <div class="settings-value" id="ai-confidence-threshold-val">50%</div>
+                    </div>
+                    <div class="settings-group">
+                        <label>
+                            <input type="checkbox" id="ai-show-bounding-boxes" checked> Show Bounding Boxes
+                        </label>
+                    </div>
+                    <div class="settings-group">
+                        <label>
+                            <input type="checkbox" id="ai-show-labels" checked> Show Labels
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Optical Cameras View (shown when Optical tab is active) -->
+        <div class="optical-cameras-view" id="optical-cameras-view" style="display:none;">
+            <div class="optical-cameras-grid">
+                <!-- RGB Camera -->
+                <div class="optical-camera-card full-size">
+                    <div class="optical-camera-header">
+                        <div class="optical-camera-title">RGB CAMERA</div>
+                        <div class="optical-camera-controls">
+                            <label class="small" for="optical-rgb-resolution-main">Res:</label>
+                            <select id="optical-rgb-resolution-main" aria-label="RGB resolution">
+                                <option value="640x480">640×480</option>
+                                <option value="800x600">800×600</option>
+                                <option value="1280x720" selected>1280×720</option>
+                            </select>
+                            <button id="optical-video-toggle-main" class="btn-primary">RGB: OFF</button>
+                        </div>
+                    </div>
+                    <!-- AI Analysis Comment Area -->
+                    <div class="ai-analysis-area" id="optical-rgb-ai-analysis">
+                        <div class="ai-analysis-label">AI ANALYSIS:</div>
+                        <div class="ai-analysis-text" id="optical-rgb-ai-text">Waiting for analysis...</div>
+                    </div>
+                    <div class="optical-video-content full-video">
+                        <img id="optical-video-stream" class="video-stream" src="" alt="RGB stream" />
+                        <canvas id="optical-rgb-overlay" class="video-overlay" aria-hidden="true"></canvas>
+                        <div id="optical-video-placeholder" class="video-placeholder">stream not available<br><small>serve MJPEG or an image</small></div>
+                    </div>
+                </div>
+
+                <!-- Thermal Camera -->
+                <div class="optical-camera-card full-size">
+                    <div class="optical-camera-header">
+                        <div class="optical-camera-title">THERMAL</div>
+                        <div class="optical-camera-controls">
+                            <button id="optical-thermal-toggle-main" class="btn-primary">Thermal: OFF</button>
+                        </div>
+                    </div>
+                    <!-- AI Analysis Comment Area -->
+                    <div class="ai-analysis-area" id="optical-thermal-ai-analysis">
+                        <div class="ai-analysis-label">AI ANALYSIS:</div>
+                        <div class="ai-analysis-text" id="optical-thermal-ai-text">Waiting for analysis...</div>
+                    </div>
+                    <div class="optical-video-content full-video">
+                        <img id="optical-thermal-stream" class="thermal-stream" src="" alt="Thermal stream" />
+                        <canvas id="optical-thermal-overlay" class="video-overlay" aria-hidden="true"></canvas>
+                        <div id="optical-thermal-placeholder" class="video-placeholder">Thermal stream not available</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT: Dashboard View -->
+        <main class="main-content">
+            <!-- System Overview Panel (Top) -->
+            <div class="system-overview-panel">
+                <div class="overview-grid">
+                    <div class="overview-card">
+                        <div class="overview-label">Battery</div>
+                        <div class="overview-value" id="overview-battery">100%</div>
+                        <div class="overview-sub" id="overview-battery-volt">16.8V</div>
+                    </div>
+                    <div class="overview-card">
+                        <div class="overview-label">GPS</div>
+                        <div class="overview-value" id="overview-gps">0 SATS</div>
+                        <div class="overview-sub">3D FIX</div>
+                    </div>
+                    <div class="overview-card">
+                        <div class="overview-label">Altitude</div>
+                        <div class="overview-value" id="overview-alt">0.0m</div>
+                        <div class="overview-sub" id="overview-speed">0.0 m/s</div>
+                    </div>
+                    <div class="overview-card">
+                        <div class="overview-label">Heading</div>
+                        <div class="overview-value" id="overview-heading">0°</div>
+                        <div class="overview-sub" id="overview-distance">0.00 km</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Map Container -->
+            <div class="map-container">
+                <div id="map" class="map-canvas"></div>
+                <div class="map-controls-overlay">
+                    <button id="follow-toggle" class="ctrl-btn btn-primary" title="Suivre automatiquement la position du drone sur la carte">Follow: OFF</button>
+                    <button id="center-btn" class="ctrl-btn btn-ghost" title="Centrer la carte sur la position actuelle du drone">Center</button>
+                    <button id="clear-btn" class="ctrl-btn btn-ghost" title="Effacer le tracé de vol affiché sur la carte">Clear Track</button>
+                    <button id="waypoints-toggle" class="ctrl-btn btn-ghost" title="Activer/désactiver le mode waypoints - Cliquez sur la carte pour ajouter des points">Waypoints: OFF</button>
+                    <button id="send-route-btn" class="ctrl-btn btn-primary" style="display:none;" title="Envoyer la route définie au drone pour exécution">Send Route</button>
+                    <button id="clear-route-btn" class="ctrl-btn btn-ghost" style="display:none;" title="Effacer tous les waypoints de la route actuelle">Clear Route</button>
+                    <button id="save-mission-btn" class="ctrl-btn btn-primary" style="display:none;" title="Sauvegarder la mission actuelle avec ses waypoints">Save Mission</button>
+                    <button id="load-mission-btn" class="ctrl-btn btn-ghost" style="display:none;" title="Charger une mission sauvegardée précédemment">Load Mission</button>
+                </div>
+            </div>
+            
+            <!-- Cameras Area (always visible in Dashboard) -->
+            <div class="cams-area dashboard-cams">
+                <div class="camera-panel rgb card" data-url="/video">
+                    <div class="panel-header">
+                        <div class="panel-title">Camera — RGB</div>
+                        <div class="panel-controls">
+                            <label class="small" for="rgb-resolution">Res:</label>
+                            <select id="rgb-resolution" aria-label="RGB resolution">
+                                <option value="640x480">640×480</option>
+                                <option value="800x600">800×600</option>
+                                <option value="1280x720" selected>1280×720</option>
+                            </select>
+                            <button id="video-toggle" class="btn-primary">RGB: OFF</button>
+                            <div id="video-status" class="status-dot off">OFF</div>
+                        </div>
+                    </div>
+                    <div class="video-content">
+                        <img id="video-stream" class="video-stream" src="" alt="RGB stream" />
+                        <canvas id="rgb-overlay" class="video-overlay" aria-hidden="true"></canvas>
+                        <div id="video-placeholder" class="video-placeholder">RGB disabled</div>
+                        <div class="camera-stats small">
+                            <span id="rgb-res">1280×720</span> • <span id="rgb-bitrate">0 kb/s</span>
+                            <span id="rgb-ai" class="ai-comment" style="margin-left:10px;color:var(--accent);font-weight:700"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="camera-panel thermal card" data-url="/thermal">
+                    <div class="panel-header">
+                        <div class="panel-title">Camera — Thermal</div>
+                        <div class="panel-controls">
+                            <button id="thermal-toggle" class="btn-primary">Thermal: OFF</button>
+                            <div id="thermal-status" class="status-dot off">OFF</div>
+                        </div>
+                    </div>
+                    <div class="video-content">
+                        <img id="thermal-stream" class="thermal-stream" src="" alt="Thermal stream" />
+                        <canvas id="thermal-overlay" class="video-overlay" aria-hidden="true"></canvas>
+                        <div id="thermal-placeholder" class="video-placeholder">Thermal disabled</div>
+                        <div class="camera-stats small">
+                            <span id="thermal-res">--</span> • <span id="thermal-fps">0 fps</span>
+                            <span id="thermal-ai" class="ai-comment" style="margin-left:10px;color:var(--accent);font-weight:700"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- BOTTOM BAR: Telemetry Info -->
+    <div class="bottom-telemetry-bar">
+        <div class="telemetry-item">
+            <span class="telemetry-label">UART:</span>
+            <span id="bottom-uart" class="telemetry-value">OK</span>
+        </div>
+        <div class="telemetry-item">
+            <span class="telemetry-label">RPI4:</span>
+            <span id="bottom-rpi-temp" class="telemetry-value">42°C</span>
+        </div>
+        <div class="telemetry-item">
+            <span class="telemetry-label">FC:</span>
+            <span id="bottom-fc" class="telemetry-value">PIXHAWK6X</span>
+        </div>
+        <div class="telemetry-item">
+            <span class="telemetry-label">MAG:</span>
+            <span id="bottom-mag" class="telemetry-value">CALIBRATED</span>
+        </div>
+        <div class="telemetry-item">
+            <span class="telemetry-label">LAT:</span>
+            <span id="bottom-lat" class="telemetry-value">37.774900</span>
+            <span class="telemetry-label" style="margin-left:12px;">LNG:</span>
+            <span id="bottom-lng" class="telemetry-value">-122.419400</span>
+        </div>
+    </div>
+
+    <!-- Hidden panels for tab switching (Telemetry, Power, PID) -->
+    <div class="dashboard-grid" style="display:none;">
         <!-- TELEMETRY (left column) -->
         <div class="panel-tabs" role="tablist" aria-label="Telemetry Tabs">
             <button id="tab-telemetry" class="tab active" role="tab" aria-selected="true">Telemetry</button>
@@ -319,6 +762,8 @@
                     <button id="clear-btn" class="ctrl-btn btn-ghost">Clear Track</button>
                     <button id="waypoints-toggle" class="ctrl-btn btn-ghost">Waypoints: OFF</button>
                     <button id="send-route-btn" class="ctrl-btn btn-primary" style="display:none;margin-left:8px">Send Route</button>
+                    <button id="save-mission-btn" class="ctrl-btn btn-ghost" style="display:none">Save Mission</button>
+                    <button id="load-mission-btn" class="ctrl-btn btn-ghost" style="display:none">Load Mission</button>
                     <button id="clear-route-btn" class="ctrl-btn btn-ghost" style="display:none">Clear Route</button>
                 </div>
             </div>
@@ -370,6 +815,8 @@
             </div>
         </section>
     </div>
+    </div>
+    <!-- End of hidden dashboard-grid -->
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>

@@ -3,11 +3,31 @@
 // ============================================================================
 
 console.log("✅ map.js loaded");
+
+// ============================================================================
+// URL Configuration - Uses current host (IP or localhost) automatically
+// ============================================================================
 const WS_RECONNECT_INTERVAL = 1000; // ms
 const POLYLINE_MAX_POINTS = 2000;
 const MAP_CENTER = [36.8065, 10.1815]; // Tunis
-const WS_URL = (location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws";
+
+// Get current host (works with both IP address and localhost)
+const getBaseURL = () => {
+    return location.protocol + "//" + location.host;
+};
+
+const getWebSocketURL = () => {
+    const protocol = location.protocol === "https:" ? "wss:" : "ws:";
+    return protocol + "//" + location.host + "/ws";
+};
+
+// Use current host automatically (IP or localhost)
+const WS_URL = getWebSocketURL();
 const VIDEO_URL = "/video";
+const API_BASE = ""; // Relative URLs work with any host
+
+console.log("🌐 WebSocket URL:", WS_URL);
+console.log("🌐 Base URL:", getBaseURL());
 
 // ============================================================================
 // STATE
@@ -58,6 +78,8 @@ let waypointsEnabled = false;
 let waypoints = [];           // [{lat, lon, seq: 1,2,3...}]
 let waypointMarkers = [];     // [L.marker objects]
 let routeLine = null;         // L.polyline for route
+let savedMissions = [];        // List of saved missions from API
+let currentMissionName = null; // Currently loaded mission name
 
 // Flight UI state (UI-only, simulated)
 let flightStarted = false;    // user clicked START FLIGHT
@@ -344,6 +366,66 @@ function updateTelemetry(data) {
     setText('val-heading', Math.round(heading));
     setText('val-speed', speed.toFixed(1));
     setText('val-time', formatTimestamp(ts));
+    
+    // Update top bar
+    setText('top-battery', `${battery.toFixed(1)}% (${(battery * 0.168).toFixed(1)}V)`);
+    setText('top-gps', `${data.gps_sats || 0} SATS (3D FIX)`);
+    setText('top-alt', `${alt.toFixed(1)}m`);
+    
+    // Update bottom bar
+    setText('bottom-lat', lat.toFixed(6));
+    setText('bottom-lng', lon.toFixed(6));
+    
+    // Update system status
+    const statusDot = document.getElementById('system-status-dot');
+    const statusText = document.getElementById('system-status-text');
+    if (statusDot && statusText) {
+        if (arm) {
+            statusDot.style.background = '#ff4d4d';
+            statusDot.style.boxShadow = '0 0 8px rgba(255, 77, 77, 0.5)';
+            statusText.textContent = 'SYSTEM ARMED';
+        } else {
+            statusDot.style.background = '#00ff88';
+            statusDot.style.boxShadow = '0 0 8px rgba(0, 255, 136, 0.5)';
+            statusText.textContent = 'SYSTEM DISARMED';
+        }
+    }
+    
+    // Update overview panel
+    const setOverviewText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+    setOverviewText('overview-battery', `${battery.toFixed(0)}%`);
+    setOverviewText('overview-battery-volt', `${(battery * 0.168).toFixed(1)}V`);
+    setOverviewText('overview-gps', `${data.gps_sats || 0} SATS`);
+    setOverviewText('overview-alt', `${alt.toFixed(1)}m`);
+    setOverviewText('overview-speed', `${speed.toFixed(1)} m/s`);
+    setOverviewText('overview-heading', `${Math.round(heading)}°`);
+    const distTraveled = distanceTraveled / 1000;
+    setOverviewText('overview-distance', `${distTraveled.toFixed(2)} km`);
+    
+    // Update Systems panel
+    const setSysText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+    setSysText('sys-batt-voltage', `${(battery * 0.168).toFixed(1)} V`);
+    setSysText('sys-batt-current', `${(data.current || 0).toFixed(1)} A`);
+    setSysText('sys-power-cons', `${((battery * 0.168) * (data.current || 0)).toFixed(0)} W`);
+    setSysText('sys-bus-voltage', `${(battery * 0.168).toFixed(1)} V`);
+    setSysText('sys-batt-temp', `${(data.battery_temp || 30).toFixed(0)}°C`);
+    setSysText('sys-imu', 'OK');
+    setSysText('sys-gps', data.gps_sats > 0 ? 'FIX' : 'NO FIX');
+    setSysText('sys-baro', `${(data.baro_press || 1013).toFixed(0)} hPa`);
+    setSysText('sys-compass', 'OK');
+    
+    // Update motor statuses (simulated)
+    for (let i = 1; i <= 4; i++) {
+        setSysText(`sys-motor-${i}`, 'OK');
+        setSysText(`sys-motor-${i}-temp`, `${(45 + Math.random() * 5).toFixed(0)}°C`);
+    }
+    
+    // Update bottom bar telemetry
+    const setBottomText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+    setBottomText('bottom-uart', 'OK');
+    setBottomText('bottom-rpi-temp', '42°C');
+    setBottomText('bottom-fc', 'PIXHAWK6X');
+    setBottomText('bottom-mag', 'CALIBRATED');
 
     // Arm & mode
     const armEl = document.getElementById('arm-status');
@@ -689,8 +771,12 @@ if (waypointsToggleBtn) {
         if (window.Toggles) window.Toggles.setState(waypointsToggleBtn, waypointsEnabled);
         
         // Show/hide route control buttons
-        if (sendRouteBtn) sendRouteBtn.style.display = waypointsEnabled ? 'block' : 'none';
-        if (clearRouteBtn) clearRouteBtn.style.display = waypointsEnabled ? 'block' : 'none';
+        if (sendRouteBtn) sendRouteBtn.style.display = waypointsEnabled ? 'inline-block' : 'none';
+        if (clearRouteBtn) clearRouteBtn.style.display = waypointsEnabled ? 'inline-block' : 'none';
+        const saveMissionBtn = document.getElementById('save-mission-btn');
+        const loadMissionBtn = document.getElementById('load-mission-btn');
+        if (saveMissionBtn) saveMissionBtn.style.display = waypointsEnabled ? 'inline-block' : 'none';
+        if (loadMissionBtn) loadMissionBtn.style.display = waypointsEnabled ? 'inline-block' : 'none';
         // Show/hide route distance
         const rd = document.getElementById('route-distance'); if (rd) rd.style.display = waypointsEnabled ? 'block' : 'none';
         
@@ -798,6 +884,105 @@ if (clearRouteBtn) {
     clearRouteBtn.addEventListener('click', () => {
         clearAllWaypoints();
     });
+}
+
+// Mission management functions
+async function saveMissionToBackend() {
+    if (waypoints.length < 2) {
+        showToast('Need at least 2 waypoints to save mission', 'error');
+        return;
+    }
+    
+    const missionName = prompt('Enter mission name:', currentMissionName || `mission_${Date.now()}`);
+    if (!missionName) return;
+    
+    const points = waypoints.map(wp => ({
+        seq: wp.seq,
+        lat: wp.lat,
+        lon: wp.lon,
+        alt: 20  // Default altitude
+    }));
+    
+    try {
+        const res = await fetch(API_BASE + '/api/missions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: missionName, points })
+        });
+        
+        if (!res.ok) {
+            const err = await res.text();
+            throw new Error(err || 'Failed to save mission');
+        }
+        
+        const data = await res.json();
+        currentMissionName = missionName;
+        showToast(`Mission '${missionName}' saved successfully`, 'success');
+        await loadMissionsList();
+    } catch (err) {
+        console.error('Save mission error:', err);
+        showToast(`Failed to save mission: ${err.message}`, 'error');
+    }
+}
+
+async function loadMissionsList() {
+    try {
+        const res = await fetch(API_BASE + '/api/missions');
+        if (!res.ok) throw new Error('Failed to load missions');
+        const data = await res.json();
+        savedMissions = data.missions || [];
+        return savedMissions;
+    } catch (err) {
+        console.error('Load missions list error:', err);
+        return [];
+    }
+}
+
+async function loadMissionFromBackend(missionName) {
+    try {
+        const res = await fetch(API_BASE + `/api/missions/${encodeURIComponent(missionName)}`);
+        if (!res.ok) throw new Error('Mission not found');
+        const mission = await res.json();
+        
+        // Clear current waypoints
+        clearAllWaypoints();
+        
+        // Load waypoints from mission
+        mission.points.forEach((point, idx) => {
+            addWaypoint(point.lat, point.lon);
+        });
+        
+        currentMissionName = missionName;
+        showToast(`Mission '${missionName}' loaded (${mission.points.length} waypoints)`, 'success');
+    } catch (err) {
+        console.error('Load mission error:', err);
+        showToast(`Failed to load mission: ${err.message}`, 'error');
+    }
+}
+
+async function showMissionSelector() {
+    const missions = await loadMissionsList();
+    if (missions.length === 0) {
+        showToast('No saved missions found', 'info');
+        return;
+    }
+    
+    const missionName = prompt(`Select mission to load:\n${missions.map((m, i) => `${i + 1}. ${m}`).join('\n')}\n\nEnter mission name:`, '');
+    if (missionName && missions.includes(missionName)) {
+        await loadMissionFromBackend(missionName);
+    } else if (missionName) {
+        showToast('Mission not found', 'error');
+    }
+}
+
+// Wire up mission buttons
+const saveMissionBtn = document.getElementById('save-mission-btn');
+const loadMissionBtn = document.getElementById('load-mission-btn');
+if (saveMissionBtn) {
+    saveMissionBtn.addEventListener('click', saveMissionToBackend);
+}
+if (loadMissionBtn) {
+    loadMissionBtn.addEventListener('click', showMissionSelector);
 }
 
 // ============================================================================
@@ -942,6 +1127,31 @@ if (waitBtn) {
     });
 }
 
+// PRE-FLIGHT CHECK button
+const preflightBtn = document.getElementById('preflight-btn');
+if (preflightBtn) {
+    preflightBtn.addEventListener('click', () => {
+        const preflightStatus = document.getElementById('preflight-status');
+        if (!preflightStatus) return;
+        
+        preflightStatus.style.display = 'flex';
+        const items = preflightStatus.querySelectorAll('.status-item');
+        
+        // Simulate pre-flight check
+        items.forEach((item, index) => {
+            setTimeout(() => {
+                const statusEl = item.querySelector('.status');
+                if (statusEl) {
+                    statusEl.textContent = 'OK';
+                    statusEl.className = 'status ok';
+                }
+            }, (index + 1) * 800);
+        });
+        
+        showToast('Pre-flight check initiated', 'info');
+    });
+}
+
 // Pause / Resume mission controls
 const pauseMissionBtn = document.getElementById('pause-mission-btn');
 const resumeMissionBtn = document.getElementById('resume-mission-btn');
@@ -1057,10 +1267,43 @@ const videoImg = document.getElementById('video-stream');
 const videoPlaceholder = document.getElementById('video-placeholder');
 const videoStatus = document.getElementById('video-status');
 const rgbResolutionSelect = document.getElementById('rgb-resolution');
+const opticalRgbResolutionSelect = document.getElementById('optical-rgb-resolution');
+const opticalRgbResolutionSelectMain = document.getElementById('optical-rgb-resolution-main');
+
+// Sync resolution selects
+function syncResolutionSelects(value) {
+    if (rgbResolutionSelect) rgbResolutionSelect.value = value;
+    if (opticalRgbResolutionSelect) opticalRgbResolutionSelect.value = value;
+    if (opticalRgbResolutionSelectMain) opticalRgbResolutionSelectMain.value = value;
+}
+
 if (rgbResolutionSelect) {
     rgbResolutionSelect.addEventListener('change', (ev)=>{
         const res = ev.target.value;
+        syncResolutionSelects(res);
         // if streaming is active, restart loop with new resolution
+        if (videoOn) startRGBLoop(res);
+        else {
+            const elR = document.getElementById('rgb-res'); if (elR) elR.textContent = res;
+        }
+    });
+}
+
+if (opticalRgbResolutionSelect) {
+    opticalRgbResolutionSelect.addEventListener('change', (ev)=>{
+        const res = ev.target.value;
+        syncResolutionSelects(res);
+        if (videoOn) startRGBLoop(res);
+        else {
+            const elR = document.getElementById('rgb-res'); if (elR) elR.textContent = res;
+        }
+    });
+}
+
+if (opticalRgbResolutionSelectMain) {
+    opticalRgbResolutionSelectMain.addEventListener('change', (ev)=>{
+        const res = ev.target.value;
+        syncResolutionSelects(res);
         if (videoOn) startRGBLoop(res);
         else {
             const elR = document.getElementById('rgb-res'); if (elR) elR.textContent = res;
@@ -1130,38 +1373,156 @@ function drawDetectionsOnCanvas(canvasId, detections){
         const y = det.y * rectH;
         const bw = det.w * rectW;
         const bh = det.h * rectH;
+        
+        // Enhanced bounding box with confidence indicator
         ctx.strokeStyle = det.color || '#ff9f1a';
         ctx.lineWidth = Math.max(2, Math.round(Math.min(rectW,rectH)*0.006));
         ctx.strokeRect(x,y,bw,bh);
+        
+        // Confidence bar at top of bounding box
+        const confBarWidth = (det.conf / 100) * bw;
         ctx.fillStyle = det.color || '#ff9f1a';
-        ctx.font = `${Math.max(12, Math.round(rectW*0.03))}px Outfit, sans-serif`;
-        ctx.fillText(`${det.label} – ${det.conf}%`, x + 6, Math.max(14, y + 18));
+        ctx.fillRect(x, y - 4, confBarWidth, 3);
+        
+        // Label with background for better visibility
+        const labelText = `${det.label} – ${det.conf}%`;
+        const fontSize = Math.max(12, Math.round(rectW*0.03));
+        ctx.font = `${fontSize}px Outfit, sans-serif`;
+        const textMetrics = ctx.measureText(labelText);
+        const textBgWidth = textMetrics.width + 8;
+        const textBgHeight = fontSize + 4;
+        
+        // Semi-transparent background for text
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+        ctx.fillRect(x + 2, y + 2, textBgWidth, textBgHeight);
+        
+        // Text
+        ctx.fillStyle = det.color || '#ff9f1a';
+        ctx.fillText(labelText, x + 6, y + fontSize + 2);
+        
+        // Corner markers for better visibility
+        const cornerSize = 8;
+        ctx.strokeStyle = det.color || '#ff9f1a';
+        ctx.lineWidth = 2;
+        // Top-left
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + cornerSize, y);
+        ctx.moveTo(x, y);
+        ctx.lineTo(x, y + cornerSize);
+        ctx.stroke();
+        // Top-right
+        ctx.beginPath();
+        ctx.moveTo(x + bw, y);
+        ctx.lineTo(x + bw - cornerSize, y);
+        ctx.moveTo(x + bw, y);
+        ctx.lineTo(x + bw, y + cornerSize);
+        ctx.stroke();
+        // Bottom-left
+        ctx.beginPath();
+        ctx.moveTo(x, y + bh);
+        ctx.lineTo(x + cornerSize, y + bh);
+        ctx.moveTo(x, y + bh);
+        ctx.lineTo(x, y + bh - cornerSize);
+        ctx.stroke();
+        // Bottom-right
+        ctx.beginPath();
+        ctx.moveTo(x + bw, y + bh);
+        ctx.lineTo(x + bw - cornerSize, y + bh);
+        ctx.moveTo(x + bw, y + bh);
+        ctx.lineTo(x + bw, y + bh - cornerSize);
+        ctx.stroke();
     });
 }
 function clearOverlay(canvasId){ const c=document.getElementById(canvasId); if(!c) return; const ctx=c.getContext('2d'); ctx && ctx.clearRect(0,0,c.width,c.height); }
+
+// Enhanced AI detection types
+const DETECTION_TYPES = {
+    rgb: [
+        { label: 'Person', color: '#ff9f1a', prob: 0.4 },
+        { label: 'Vehicle', color: '#00ff88', prob: 0.2 },
+        { label: 'Obstacle', color: '#ff6b6b', prob: 0.15 },
+        { label: 'Landing Zone', color: '#2b6efb', prob: 0.1 }
+    ],
+    thermal: [
+        { label: 'Heat Source', color: '#ff9f1a', prob: 0.5 },
+        { label: 'Floating Object', color: '#00ff88', prob: 0.3 },
+        { label: 'Water Disturbance', color: '#2b6efb', prob: 0.2 }
+    ]
+};
 
 function simulateRGBDetections(){
     // only simulate small detections when RGB is on
     if (!videoOn) return;
     const detections = [];
-    if (Math.random() < 0.7) {
-        detections.push({ x:0.2 + Math.random()*0.4, y:0.15 + Math.random()*0.6, w:0.25, h:0.4, label: 'Person', conf: 80 + Math.round(Math.random()*18), color:'#ff9f1a' });
-        document.getElementById('rgb-ai') && (document.getElementById('rgb-ai').textContent = `Person detected – ${detections[0].conf}% confidence`);
-    } else {
-        document.getElementById('rgb-ai') && (document.getElementById('rgb-ai').textContent = '');
+    const rand = Math.random();
+    let cumulativeProb = 0;
+    
+    for (const type of DETECTION_TYPES.rgb) {
+        cumulativeProb += type.prob;
+        if (rand < cumulativeProb) {
+            const conf = 70 + Math.round(Math.random() * 25);
+            detections.push({
+                x: 0.15 + Math.random() * 0.5,
+                y: 0.15 + Math.random() * 0.5,
+                w: 0.2 + Math.random() * 0.15,
+                h: 0.2 + Math.random() * 0.2,
+                label: type.label,
+                conf: conf,
+                color: type.color
+            });
+            
+            const aiEl = document.getElementById('rgb-ai');
+            if (aiEl) {
+                aiEl.textContent = `${type.label} detected – ${conf}% confidence`;
+                aiEl.style.color = type.color;
+            }
+            break;
+        }
     }
+    
+    if (detections.length === 0) {
+        const aiEl = document.getElementById('rgb-ai');
+        if (aiEl) aiEl.textContent = '';
+    }
+    
     drawDetectionsOnCanvas('rgb-overlay', detections);
 }
 
 function simulateThermalDetections(){
     if (!thermalOn) return;
     const detections = [];
-    if (Math.random() < 0.6) {
-        detections.push({ x:0.25 + Math.random()*0.4, y:0.25 + Math.random()*0.45, w:0.25, h:0.3, label: 'Floating Object', conf: 70 + Math.round(Math.random()*20), color:'#ff9f1a' });
-        document.getElementById('thermal-ai') && (document.getElementById('thermal-ai').textContent = `Floating Object detected – ${detections[0].conf}% confidence`);
-    } else {
-        document.getElementById('thermal-ai') && (document.getElementById('thermal-ai').textContent = '');
+    const rand = Math.random();
+    let cumulativeProb = 0;
+    
+    for (const type of DETECTION_TYPES.thermal) {
+        cumulativeProb += type.prob;
+        if (rand < cumulativeProb) {
+            const conf = 65 + Math.round(Math.random() * 30);
+            detections.push({
+                x: 0.2 + Math.random() * 0.5,
+                y: 0.2 + Math.random() * 0.5,
+                w: 0.2 + Math.random() * 0.2,
+                h: 0.2 + Math.random() * 0.25,
+                label: type.label,
+                conf: conf,
+                color: type.color
+            });
+            
+            const aiEl = document.getElementById('thermal-ai');
+            if (aiEl) {
+                aiEl.textContent = `${type.label} detected – ${conf}% confidence`;
+                aiEl.style.color = type.color;
+            }
+            break;
+        }
     }
+    
+    if (detections.length === 0) {
+        const aiEl = document.getElementById('thermal-ai');
+        if (aiEl) aiEl.textContent = '';
+    }
+    
     drawDetectionsOnCanvas('thermal-overlay', detections);
 }
 
@@ -1214,18 +1575,49 @@ function setVideo(on){
     videoOn = !!on;
     if (videoToggle && window.Toggles) window.Toggles.setState(videoToggle, videoOn);
     if (videoToggle) videoToggle.textContent = videoOn ? 'RGB: ON' : 'RGB: OFF';
+    const opticalVideoToggle = document.getElementById('optical-video-toggle');
+    const opticalVideoToggleMain = document.getElementById('optical-video-toggle-main');
+    if (opticalVideoToggle) opticalVideoToggle.textContent = videoOn ? 'RGB: ON' : 'RGB: OFF';
+    if (opticalVideoToggleMain) opticalVideoToggleMain.textContent = videoOn ? 'RGB: ON' : 'RGB: OFF';
     if (videoStatus) videoStatus.className = `status-dot ${videoOn? 'on':'off'}`;
     if (videoOn) {
         if (videoPlaceholder) videoPlaceholder.style.display = 'none';
+        const opticalVideoPlaceholder = document.getElementById('optical-video-placeholder');
+        if (opticalVideoPlaceholder) opticalVideoPlaceholder.style.display = 'none';
         const res = (rgbResolutionSelect && rgbResolutionSelect.value) ? rgbResolutionSelect.value : '1280x720';
         startRGBLoop(res);
     } else {
         if (videoPlaceholder) videoPlaceholder.style.display = 'flex';
+        const opticalVideoPlaceholder = document.getElementById('optical-video-placeholder');
+        if (opticalVideoPlaceholder) opticalVideoPlaceholder.style.display = 'flex';
         stopRGBLoop();
     }
 }
 
 if (videoToggle) videoToggle.addEventListener('click', ()=> setVideo(!videoOn));
+
+// Connect optical panel video toggle (settings panel)
+const opticalVideoToggle = document.getElementById('optical-video-toggle');
+if (opticalVideoToggle) {
+    opticalVideoToggle.addEventListener('click', () => {
+        setVideo(!videoOn);
+        // Sync button text
+        opticalVideoToggle.textContent = videoOn ? 'RGB: ON' : 'RGB: OFF';
+        const opticalVideoToggleMain = document.getElementById('optical-video-toggle-main');
+        if (opticalVideoToggleMain) opticalVideoToggleMain.textContent = videoOn ? 'RGB: ON' : 'RGB: OFF';
+    });
+}
+
+// Connect optical cameras view video toggle
+const opticalVideoToggleMain = document.getElementById('optical-video-toggle-main');
+if (opticalVideoToggleMain) {
+    opticalVideoToggleMain.addEventListener('click', () => {
+        setVideo(!videoOn);
+        // Sync button text
+        opticalVideoToggleMain.textContent = videoOn ? 'RGB: ON' : 'RGB: OFF';
+        if (opticalVideoToggle) opticalVideoToggle.textContent = videoOn ? 'RGB: ON' : 'RGB: OFF';
+    });
+}
 
 // ── Thermal ON/OFF ──
 const thermalToggle = document.getElementById('thermal-toggle');
@@ -1234,18 +1626,155 @@ function setThermal(on){
     thermalOn = !!on;
     if (thermalToggle && window.Toggles) window.Toggles.setState(thermalToggle, thermalOn);
     if (thermalToggle) thermalToggle.textContent = thermalOn ? 'Thermal: ON' : 'Thermal: OFF';
+    const opticalThermalToggle = document.getElementById('optical-thermal-toggle');
+    const opticalThermalToggleMain = document.getElementById('optical-thermal-toggle-main');
+    if (opticalThermalToggle) opticalThermalToggle.textContent = thermalOn ? 'Thermal: ON' : 'Thermal: OFF';
+    if (opticalThermalToggleMain) opticalThermalToggleMain.textContent = thermalOn ? 'Thermal: ON' : 'Thermal: OFF';
     if (thermalStatus) thermalStatus.className = `status-dot ${thermalOn ? 'on' : 'off'}`;
     if (thermalStatus) thermalStatus.textContent = thermalOn ? 'ON' : 'OFF';
     if (thermalOn) {
         if (thermalPlaceholder) thermalPlaceholder.style.display = 'none';
+        const opticalThermalPlaceholder = document.getElementById('optical-thermal-placeholder');
+        if (opticalThermalPlaceholder) opticalThermalPlaceholder.style.display = 'none';
         startThermalLoop();
     } else {
         if (thermalPlaceholder) thermalPlaceholder.style.display = 'flex';
+        const opticalThermalPlaceholder = document.getElementById('optical-thermal-placeholder');
+        if (opticalThermalPlaceholder) opticalThermalPlaceholder.style.display = 'flex';
         stopThermalLoop();
     }
 }
 
 if (thermalToggle) thermalToggle.addEventListener('click', ()=> setThermal(!thermalOn));
+
+// Connect optical panel thermal toggle (settings panel)
+const opticalThermalToggle = document.getElementById('optical-thermal-toggle');
+if (opticalThermalToggle) {
+    opticalThermalToggle.addEventListener('click', () => {
+        setThermal(!thermalOn);
+        // Sync button text
+        opticalThermalToggle.textContent = thermalOn ? 'Thermal: ON' : 'Thermal: OFF';
+        const opticalThermalToggleMain = document.getElementById('optical-thermal-toggle-main');
+        if (opticalThermalToggleMain) opticalThermalToggleMain.textContent = thermalOn ? 'Thermal: ON' : 'Thermal: OFF';
+    });
+}
+
+// Connect optical cameras view thermal toggle
+const opticalThermalToggleMain = document.getElementById('optical-thermal-toggle-main');
+if (opticalThermalToggleMain) {
+    opticalThermalToggleMain.addEventListener('click', () => {
+        setThermal(!thermalOn);
+        // Sync button text
+        opticalThermalToggleMain.textContent = thermalOn ? 'Thermal: ON' : 'Thermal: OFF';
+        if (opticalThermalToggle) opticalThermalToggle.textContent = thermalOn ? 'Thermal: ON' : 'Thermal: OFF';
+    });
+}
+
+// Sync optical panel video streams with main streams
+function syncOpticalStreams() {
+    const opticalVideoStream = document.getElementById('optical-video-stream');
+    const opticalThermalStream = document.getElementById('optical-thermal-stream');
+    const opticalVideoPlaceholder = document.getElementById('optical-video-placeholder');
+    const opticalThermalPlaceholder = document.getElementById('optical-thermal-placeholder');
+    
+    if (opticalVideoStream && videoImg) {
+        opticalVideoStream.src = videoImg.src;
+        if (opticalVideoPlaceholder) {
+            opticalVideoPlaceholder.style.display = videoPlaceholder ? videoPlaceholder.style.display : 'none';
+        }
+    }
+    
+    if (opticalThermalStream) {
+        const thermalImg = document.getElementById('thermal-stream');
+        if (thermalImg) {
+            opticalThermalStream.src = thermalImg.src;
+        }
+        if (opticalThermalPlaceholder) {
+            const thermalPlaceholder = document.getElementById('thermal-placeholder');
+            if (thermalPlaceholder) {
+                opticalThermalPlaceholder.style.display = thermalPlaceholder.style.display;
+            }
+        }
+    }
+    
+    // Sync AI analysis comments
+    const rgbAiText = document.getElementById('rgb-ai');
+    const thermalAiText = document.getElementById('thermal-ai');
+    const opticalRgbAiText = document.getElementById('optical-rgb-ai-text');
+    const opticalThermalAiText = document.getElementById('optical-thermal-ai-text');
+    
+    if (rgbAiText && opticalRgbAiText) {
+        const aiComment = rgbAiText.textContent.trim();
+        if (aiComment) {
+            opticalRgbAiText.textContent = aiComment;
+            opticalRgbAiText.style.color = '#00ffc8';
+        } else {
+            opticalRgbAiText.textContent = 'No detections';
+            opticalRgbAiText.style.color = 'rgba(234, 242, 255, 0.5)';
+        }
+    }
+    
+    if (thermalAiText && opticalThermalAiText) {
+        const aiComment = thermalAiText.textContent.trim();
+        if (aiComment) {
+            opticalThermalAiText.textContent = aiComment;
+            opticalThermalAiText.style.color = '#00ffc8';
+        } else {
+            opticalThermalAiText.textContent = 'No detections';
+            opticalThermalAiText.style.color = 'rgba(234, 242, 255, 0.5)';
+        }
+    }
+}
+
+// Update optical streams periodically
+setInterval(syncOpticalStreams, 100);
+
+// Optical Settings Panel - Parameter Controls
+const rgbBrightness = document.getElementById('rgb-brightness');
+const rgbContrast = document.getElementById('rgb-contrast');
+const rgbSaturation = document.getElementById('rgb-saturation');
+const aiConfidenceThreshold = document.getElementById('ai-confidence-threshold');
+
+if (rgbBrightness) {
+    const brightnessVal = document.getElementById('rgb-brightness-val');
+    rgbBrightness.addEventListener('input', (e) => {
+        const val = e.target.value;
+        if (brightnessVal) brightnessVal.textContent = val + '%';
+        // Apply brightness to video stream
+        const videoStream = document.getElementById('optical-video-stream');
+        if (videoStream) videoStream.style.filter = `brightness(${val}%) contrast(${rgbContrast?.value || 50}%) saturate(${rgbSaturation?.value || 50}%)`;
+    });
+}
+
+if (rgbContrast) {
+    const contrastVal = document.getElementById('rgb-contrast-val');
+    rgbContrast.addEventListener('input', (e) => {
+        const val = e.target.value;
+        if (contrastVal) contrastVal.textContent = val + '%';
+        const videoStream = document.getElementById('optical-video-stream');
+        if (videoStream) videoStream.style.filter = `brightness(${rgbBrightness?.value || 50}%) contrast(${val}%) saturate(${rgbSaturation?.value || 50}%)`;
+    });
+}
+
+if (rgbSaturation) {
+    const saturationVal = document.getElementById('rgb-saturation-val');
+    rgbSaturation.addEventListener('input', (e) => {
+        const val = e.target.value;
+        if (saturationVal) saturationVal.textContent = val + '%';
+        const videoStream = document.getElementById('optical-video-stream');
+        if (videoStream) videoStream.style.filter = `brightness(${rgbBrightness?.value || 50}%) contrast(${rgbContrast?.value || 50}%) saturate(${val}%)`;
+    });
+}
+
+if (aiConfidenceThreshold) {
+    const thresholdVal = document.getElementById('ai-confidence-threshold-val');
+    aiConfidenceThreshold.addEventListener('input', (e) => {
+        const val = e.target.value;
+        if (thresholdVal) thresholdVal.textContent = val + '%';
+        // Store threshold for AI detection filtering
+        window.aiConfidenceThreshold = val / 100;
+    });
+}
 
 // ── Map ON/OFF ──
 const mapToggleBtn = document.getElementById('map-toggle');
@@ -1292,6 +1821,230 @@ window.addEventListener('load', () => {
     setThermal(false);
     // Ensure route controls initial state
     updateRouteControls();
+    
+    // Initialize navigation
+    const navDashboard = document.getElementById('nav-dashboard');
+    const navMissions = document.getElementById('nav-missions');
+    const navSystems = document.getElementById('nav-systems');
+    const navOptical = document.getElementById('nav-optical');
+    
+    // Get panels from hidden dashboard-grid
+    const telemetryPanel = document.querySelector('.telemetry-panel');
+    const powerPanel = document.querySelector('.power-panel');
+    const rightColumn = document.querySelector('.right-column');
+    const camsArea = document.querySelector('.cams-area');
+    
+    function setActiveNav(activeEl) {
+        [navDashboard, navMissions, navSystems, navOptical].forEach(el => {
+            if (el) {
+                el.classList.remove('nav-active');
+            }
+        });
+        if (activeEl) activeEl.classList.add('nav-active');
+        
+        // Show/hide content based on navigation
+        if (activeEl === navDashboard) {
+            // Dashboard: show system overview, map, cameras, and speed control panel
+            const dashboardCams = document.querySelector('.dashboard-cams');
+            const speedControlPanel = document.getElementById('speed-control-panel');
+            const missionsPanel = document.getElementById('missions-panel');
+            const systemsPanel = document.getElementById('systems-panel');
+            const opticalPanel = document.getElementById('optical-panel');
+            const opticalCamerasView = document.getElementById('optical-cameras-view');
+            const mainContent = document.querySelector('.main-content');
+            const overviewPanel = document.querySelector('.system-overview-panel');
+            const mapContainer = document.querySelector('.map-container');
+            
+            // Show speed control panel
+            if (speedControlPanel) {
+                speedControlPanel.style.display = 'flex';
+                console.log('Speed control panel shown');
+            }
+            
+            // Hide other panels
+            if (missionsPanel) missionsPanel.style.display = 'none';
+            if (systemsPanel) systemsPanel.style.display = 'none';
+            if (opticalPanel) opticalPanel.style.display = 'none';
+            if (opticalCamerasView) opticalCamerasView.style.display = 'none';
+            
+            if (mainContent) {
+                mainContent.style.display = 'flex';
+                mainContent.classList.remove('missions-view');
+            }
+            if (overviewPanel) overviewPanel.style.display = 'block';
+            if (dashboardCams) dashboardCams.style.display = 'grid';
+            if (mapContainer) {
+                mapContainer.style.display = 'block';
+                mapContainer.style.flex = '0 0 35%';
+            }
+            if (rightColumn) rightColumn.style.display = 'flex';
+        } else if (activeEl === navMissions) {
+            // Missions: show missions panel and map
+            const speedControlPanel = document.getElementById('speed-control-panel');
+            const missionsPanel = document.getElementById('missions-panel');
+            const systemsPanel = document.getElementById('systems-panel');
+            const opticalPanel = document.getElementById('optical-panel');
+            const mainContent = document.querySelector('.main-content');
+            const mapContainer = document.querySelector('.map-container');
+            
+            // Hide other panels
+            if (speedControlPanel) speedControlPanel.style.display = 'none';
+            if (systemsPanel) systemsPanel.style.display = 'none';
+            if (opticalPanel) opticalPanel.style.display = 'none';
+            
+            // Show missions panel
+            if (missionsPanel) {
+                missionsPanel.style.display = 'flex';
+                console.log('Missions panel shown');
+            }
+            
+            // Show main content with map
+            if (mainContent) {
+                mainContent.style.display = 'flex';
+                mainContent.classList.add('missions-view');
+                // Hide overview panel and all cameras, show only map
+                const overviewPanel = document.querySelector('.system-overview-panel');
+                const dashboardCams = document.querySelector('.dashboard-cams');
+                const camsArea = document.querySelector('.cams-area');
+                const opticalCamerasView = document.getElementById('optical-cameras-view');
+                if (overviewPanel) overviewPanel.style.display = 'none';
+                if (dashboardCams) dashboardCams.style.display = 'none';
+                if (camsArea) camsArea.style.display = 'none';
+                if (opticalCamerasView) opticalCamerasView.style.display = 'none';
+                // Show map container
+                if (mapContainer) {
+                    mapContainer.style.display = 'block';
+                    mapContainer.style.flex = '1';
+                }
+            }
+            
+            // Enable waypoints by default
+            if (waypointsToggleBtn && !waypointsEnabled) {
+                waypointsEnabled = true;
+                if (window.Toggles) window.Toggles.setState(waypointsToggleBtn, true);
+                const sendRouteBtn = document.getElementById('send-route-btn');
+                const clearRouteBtn = document.getElementById('clear-route-btn');
+                const saveMissionBtn = document.getElementById('save-mission-btn');
+                const loadMissionBtn = document.getElementById('load-mission-btn');
+                if (sendRouteBtn) sendRouteBtn.style.display = 'inline-block';
+                if (clearRouteBtn) clearRouteBtn.style.display = 'inline-block';
+                if (saveMissionBtn) saveMissionBtn.style.display = 'inline-block';
+                if (loadMissionBtn) loadMissionBtn.style.display = 'inline-block';
+            }
+            
+            // Ensure map is visible and resized
+            if (map) {
+                setTimeout(() => {
+                    try {
+                        map.invalidateSize();
+                    } catch(e) {
+                        console.warn('Map resize error:', e);
+                    }
+                }, 100);
+            }
+        } else if (activeEl === navSystems) {
+            // Systems: show systems panel
+            const speedControlPanel = document.getElementById('speed-control-panel');
+            const missionsPanel = document.getElementById('missions-panel');
+            const systemsPanel = document.getElementById('systems-panel');
+            const opticalPanel = document.getElementById('optical-panel');
+            const mainContent = document.querySelector('.main-content');
+            const dashboardCams = document.querySelector('.dashboard-cams');
+            
+            if (speedControlPanel) speedControlPanel.style.display = 'none';
+            if (missionsPanel) missionsPanel.style.display = 'none';
+            if (systemsPanel) {
+                systemsPanel.style.display = 'flex';
+                console.log('Systems panel shown');
+            }
+            if (opticalPanel) opticalPanel.style.display = 'none';
+            // Hide main content
+            if (mainContent) mainContent.style.display = 'none';
+            if (dashboardCams) dashboardCams.style.display = 'none';
+        } else if (activeEl === navOptical) {
+            // Optical: show optical settings panel and cameras view
+            const speedControlPanel = document.getElementById('speed-control-panel');
+            const missionsPanel = document.getElementById('missions-panel');
+            const systemsPanel = document.getElementById('systems-panel');
+            const opticalPanel = document.getElementById('optical-panel');
+            const opticalCamerasView = document.getElementById('optical-cameras-view');
+            const mainContent = document.querySelector('.main-content');
+            const dashboardCams = document.querySelector('.dashboard-cams');
+            
+            if (speedControlPanel) speedControlPanel.style.display = 'none';
+            if (missionsPanel) missionsPanel.style.display = 'none';
+            if (systemsPanel) systemsPanel.style.display = 'none';
+            if (opticalPanel) {
+                opticalPanel.style.display = 'flex';
+                console.log('Optical settings panel shown');
+            }
+            if (opticalCamerasView) {
+                opticalCamerasView.style.display = 'flex';
+                console.log('Optical cameras view shown');
+            }
+            // Hide main content
+            if (mainContent) mainContent.style.display = 'none';
+            if (dashboardCams) dashboardCams.style.display = 'none';
+            // Auto-enable cameras
+            if (!videoOn) setVideo(true);
+            if (!thermalOn) setThermal(true);
+        }
+    }
+    
+    if (navDashboard) {
+        navDashboard.addEventListener('click', () => {
+            console.log('Dashboard clicked');
+            setActiveNav(navDashboard);
+        });
+    }
+    if (navMissions) {
+        navMissions.addEventListener('click', () => {
+            console.log('Missions clicked');
+            setActiveNav(navMissions);
+        });
+    }
+    if (navSystems) {
+        navSystems.addEventListener('click', () => {
+            console.log('Systems clicked');
+            setActiveNav(navSystems);
+        });
+    }
+    if (navOptical) {
+        navOptical.addEventListener('click', () => {
+            console.log('Optical clicked');
+            setActiveNav(navOptical);
+        });
+    }
+    
+    // Wire up speed control in sidebar
+    const speedControlSidebar = document.getElementById('speed-control-sidebar');
+    const speedValueDisplay = document.getElementById('speed-value-display');
+    if (speedControlSidebar && speedValueDisplay) {
+        speedControlSidebar.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            speedValueDisplay.textContent = val.toFixed(1);
+            // Also update the main speed control if it exists
+            const mainSpeedControl = document.getElementById('speed-control');
+            if (mainSpeedControl) {
+                mainSpeedControl.value = val;
+                const setSpeedValue = document.getElementById('set-speed-value');
+                if (setSpeedValue) setSpeedValue.textContent = val.toFixed(1);
+            }
+            // Send via WebSocket
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                try { ws.send(JSON.stringify({cmd:'set_speed', value: val})); } catch(e) { console.warn('WS send failed', e); }
+            }
+        });
+    }
+    
+    // Sync main speed control with sidebar
+    const mainSpeedControl = document.getElementById('speed-control');
+    if (mainSpeedControl && speedControlSidebar) {
+        mainSpeedControl.addEventListener('input', (e) => {
+            speedControlSidebar.value = e.target.value;
+            if (speedValueDisplay) speedValueDisplay.textContent = parseFloat(e.target.value).toFixed(1);
+        });
+    }
 
     // ensure leaflet map is correctly sized after layout changes
     setTimeout(()=>{ try { if (map && typeof map.invalidateSize === 'function') map.invalidateSize(); } catch(e){} }, 250);
@@ -1421,7 +2174,7 @@ if (tabPid) tabPid.addEventListener('click', showPidPanel);
 async function fetchPidGains() {
     console.log('fetchPidGains()');
     try {
-        const res = await fetch('/api/pid');
+        const res = await fetch(API_BASE + '/api/pid');
         if (!res.ok) throw new Error('Failed to fetch PID gains');
         const data = await res.json();
         console.log('PID gains received', data);
@@ -1450,7 +2203,7 @@ async function applyPidUpdate() {
     const ki = parseFloat(document.getElementById('pid-ki').value || 0);
     const kd = parseFloat(document.getElementById('pid-kd').value || 0);
     try {
-        const res = await fetch('/api/pid', {
+        const res = await fetch(API_BASE + '/api/pid', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ axis, kp, ki, kd })
@@ -1528,6 +2281,22 @@ function renderPowerPanel() {
         const curClassTarget = (curVal > 8) ? 'status-critical' : (curVal > 5) ? 'status-warn' : 'status-normal';
         if (tmp) tmp.className = 'metric-val ' + tmpClassTarget;
         if (cur) cur.className = 'metric-val ' + curClassTarget;
+        
+        // Enhanced motor health monitoring
+        const motorCard = document.getElementById('motor-card-' + (i+1));
+        if (motorCard) {
+            const healthScore = calculateMotorHealth(i);
+            if (healthScore < 50) {
+                motorCard.style.borderColor = 'rgba(255, 77, 77, 0.4)';
+                motorCard.style.boxShadow = '0 0 12px rgba(255, 77, 77, 0.12)';
+            } else if (healthScore < 75) {
+                motorCard.style.borderColor = 'rgba(255, 179, 71, 0.4)';
+                motorCard.style.boxShadow = '0 0 8px rgba(255, 179, 71, 0.08)';
+            } else {
+                motorCard.style.borderColor = 'rgba(0, 255, 136, 0.2)';
+                motorCard.style.boxShadow = '0 0 6px rgba(0, 255, 136, 0.06)';
+            }
+        }
     }
 
     // Remove aggregated motor-temps display if present
@@ -1557,6 +2326,87 @@ function renderPowerPanel() {
     // Color coding (critical thresholds)
     // battery low
     const bvEl = document.getElementById('batt-voltage'); if (bvEl){ const v = simState.battVolt; const battLow = (typeof simState.battLowThreshold === 'number') ? simState.battLowThreshold : 10.8; const battWarn = battLow + 0.5; if (v < battLow) bvEl.className = 'metric-val status-critical'; else if (v < battWarn) bvEl.className = 'metric-val status-warn'; else bvEl.className = 'metric-val status-normal'; }
+    
+    // Enhanced system health summary
+    updateSystemHealthSummary();
+}
+
+function calculateMotorHealth(motorIndex) {
+    const temp = simState.motorTemp[motorIndex] || 30;
+    const current = simState.motorCurrent[motorIndex] || 0;
+    const voltage = simState.motorVoltage[motorIndex] || 12.6;
+    const motorMax = typeof simState.motorMaxTemp === 'number' ? simState.motorMaxTemp : 85;
+    
+    let health = 100;
+    // Temperature penalty
+    if (temp > motorMax) health -= 40;
+    else if (temp > (motorMax - 15)) health -= 20;
+    else if (temp > (motorMax - 30)) health -= 10;
+    
+    // Current penalty
+    if (current > 8) health -= 30;
+    else if (current > 5) health -= 15;
+    
+    // Voltage penalty
+    if (voltage < 10.5) health -= 25;
+    else if (voltage < 11.5) health -= 10;
+    
+    return Math.max(0, Math.min(100, health));
+}
+
+function updateSystemHealthSummary() {
+    // Calculate overall system health
+    let totalHealth = 0;
+    let count = 0;
+    
+    // Motor health
+    for (let i = 0; i < 3; i++) {
+        totalHealth += calculateMotorHealth(i);
+        count++;
+    }
+    
+    // Battery health
+    const battHealth = calculateBatteryHealth();
+    totalHealth += battHealth;
+    count++;
+    
+    // Sensor health
+    const sensorHealth = calculateSensorHealth();
+    totalHealth += sensorHealth;
+    count++;
+    
+    const overallHealth = Math.round(totalHealth / count);
+    
+    // Update power panel header if element exists
+    const powerHeader = document.querySelector('.power-header .telemetry-title');
+    if (powerHeader) {
+        const healthColor = overallHealth >= 75 ? 'var(--good)' : overallHealth >= 50 ? '#ffb347' : 'var(--bad)';
+        powerHeader.innerHTML = `POWER • MOTORS • SERVOS • SENSORS <span style="color:${healthColor};font-size:12px;margin-left:8px;">Health: ${overallHealth}%</span>`;
+    }
+}
+
+function calculateBatteryHealth() {
+    const volt = simState.battVolt || 12.6;
+    const temp = simState.battTemp || 30;
+    const battLow = (typeof simState.battLowThreshold === 'number') ? simState.battLowThreshold : 10.8;
+    
+    let health = 100;
+    if (volt < battLow) health -= 50;
+    else if (volt < (battLow + 0.5)) health -= 25;
+    else if (volt < (battLow + 1.0)) health -= 10;
+    
+    if (temp > 65) health -= 30;
+    else if (temp > 50) health -= 15;
+    
+    return Math.max(0, Math.min(100, health));
+}
+
+function calculateSensorHealth() {
+    let health = 100;
+    if (!simState.imuOK) health -= 25;
+    if (!simState.gpsFix) health -= 25;
+    if (!simState.compassOK) health -= 15;
+    return Math.max(0, Math.min(100, health));
 }
 
 // Start simulation loop (UI-only)
