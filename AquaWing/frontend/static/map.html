@@ -1,5 +1,4 @@
-<!DOCTYPE html> 
-<html lang="en">
+<!DOCTYPE html> <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -69,6 +68,13 @@
                     <span>Optical</span>
                 </button>
             </nav>
+
+            <div class="sidebar-footer">
+                <button id="sidebar-logout-btn" class="sidebar-logout-btn" title="Déconnexion">
+                    <span class="logout-icon">🚪</span>
+                    <span>LOG OUT</span>
+                </button>
+            </div>
 
         </aside>
 
@@ -378,10 +384,6 @@
                     <button id="center-btn" class="ctrl-btn btn-ghost" title="Centrer la carte sur la position actuelle du drone">Center</button>
                     <button id="clear-btn" class="ctrl-btn btn-ghost" title="Effacer le tracé de vol affiché sur la carte">Clear Track</button>
                     <button id="waypoints-toggle" class="ctrl-btn btn-ghost" title="Activer/désactiver le mode waypoints - Cliquez sur la carte pour ajouter des points">Waypoints: OFF</button>
-                    <button id="send-route-btn" class="ctrl-btn btn-primary" style="display:none;" title="Envoyer la route définie au drone pour exécution">Send Route</button>
-                    <button id="clear-route-btn" class="ctrl-btn btn-ghost" style="display:none;" title="Effacer tous les waypoints de la route actuelle">Clear Route</button>
-                    <button id="save-mission-btn" class="ctrl-btn btn-primary" style="display:none;" title="Sauvegarder la mission actuelle avec ses waypoints">Save Mission</button>
-                    <button id="load-mission-btn" class="ctrl-btn btn-ghost" style="display:none;" title="Charger une mission sauvegardée précédemment">Load Mission</button>
                 </div>
             </div>
             
@@ -761,10 +763,6 @@
                     <button id="center-btn" class="ctrl-btn btn-ghost">Center</button>
                     <button id="clear-btn" class="ctrl-btn btn-ghost">Clear Track</button>
                     <button id="waypoints-toggle" class="ctrl-btn btn-ghost">Waypoints: OFF</button>
-                    <button id="send-route-btn" class="ctrl-btn btn-primary" style="display:none;margin-left:8px">Send Route</button>
-                    <button id="save-mission-btn" class="ctrl-btn btn-ghost" style="display:none">Save Mission</button>
-                    <button id="load-mission-btn" class="ctrl-btn btn-ghost" style="display:none">Load Mission</button>
-                    <button id="clear-route-btn" class="ctrl-btn btn-ghost" style="display:none">Clear Route</button>
                 </div>
             </div>
 

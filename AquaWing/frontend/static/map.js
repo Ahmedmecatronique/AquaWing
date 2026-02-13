@@ -1250,6 +1250,10 @@ document.addEventListener("click", (e) => {
   if (e.target && e.target.id === "logout-btn") {
     window.location.href = "/logout";
   }
+  // Handle sidebar logout button
+  if (e.target && (e.target.id === "sidebar-logout-btn" || e.target.closest("#sidebar-logout-btn"))) {
+    window.location.href = "/logout";
+  }
 });
 
 // --- Dev: surface active versions and JS errors in a small banner ---
