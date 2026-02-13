@@ -24,10 +24,21 @@ const getWebSocketURL = () => {
 // Use current host automatically (IP or localhost)
 const WS_URL = getWebSocketURL();
 const VIDEO_URL = "/video";
+const THERMAL_URL = "/thermal";
 const API_BASE = ""; // Relative URLs work with any host
+
+// Helper to build absolute URLs if needed
+const buildAbsoluteURL = (path) => {
+    if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('ws://') || path.startsWith('wss://')) {
+        return path; // Already absolute
+    }
+    return getBaseURL() + path;
+};
 
 console.log("🌐 WebSocket URL:", WS_URL);
 console.log("🌐 Base URL:", getBaseURL());
+console.log("🌐 Video URL:", VIDEO_URL);
+console.log("🌐 Thermal URL:", THERMAL_URL);
 
 // ============================================================================
 // STATE
@@ -143,9 +154,13 @@ function connectWebSocket() {
 
     ws.onerror = (error) => {
         console.error('WebSocket error:', error);
+        console.error('Failed to connect to:', WS_URL);
+        console.error('Current location:', location.href);
     };
 
-    ws.onclose = () => {
+    ws.onclose = (event) => {
+        console.warn('WebSocket closed. Code:', event.code, 'Reason:', event.reason || 'No reason');
+        console.warn('Will attempt to reconnect in', WS_RECONNECT_INTERVAL, 'ms');
         console.log('WebSocket disconnected');
         // Do NOT auto-reconnect — WebSocket will reconnect lazily when needed
     };
@@ -1313,11 +1328,20 @@ if (opticalRgbResolutionSelectMain) {
 
 async function fetchBlob(url){
     try {
-        const r = await fetch(url, {cache:'no-store'});
-        if (!r.ok) return null;
+        // Use relative URLs - they work with any host (IP or localhost)
+        const r = await fetch(url, {
+            cache: 'no-store',
+            credentials: 'include',
+            mode: 'cors'
+        });
+        if (!r.ok) {
+            console.warn('Fetch failed:', r.status, r.statusText, 'for URL:', url);
+            return null;
+        }
         const b = await r.blob();
         return b;
     } catch(e){
+        console.error('Fetch blob error:', e, 'for URL:', url);
         return null;
     }
 }
