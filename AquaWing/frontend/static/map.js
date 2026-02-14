@@ -4,6 +4,17 @@
 
 console.log("✅ map.js loaded");
 
+// Global error handler to catch and log any errors that might block execution
+window.addEventListener('error', function(e) {
+    console.error('❌ JavaScript Error:', e.error || e.message, e);
+    return false; // Don't prevent default error handling
+});
+
+// Catch unhandled promise rejections
+window.addEventListener('unhandledrejection', function(e) {
+    console.error('❌ Unhandled Promise Rejection:', e.reason);
+});
+
 // ============================================================================
 // URL Configuration - Uses current host (IP or localhost) automatically
 // ============================================================================
@@ -62,7 +73,7 @@ const RGB_INTERVAL = 900; // ms
 const THERMAL_INTERVAL = 1200; // ms
 const SAMPLE_WINDOW_MS = 5000; // sliding window for averages (ms)
 
-// Distance tracking
+// Distance tracking (declared once at top level)
 let distanceTraveled = 0;  // meters
 let prevTeleLat = null;
 let prevTeleLon = null;
@@ -267,6 +278,12 @@ function resumeDemo(){
 function stopDemo(){
     if(demoTimer) { clearInterval(demoTimer); demoTimer = null; }
     frontendFlying = false;
+    // Stop mission timer if mission was active
+    if (flightStarted) {
+        stopMissionTimer();
+        flightStarted = false;
+        updateFlightControls();
+    }
     demoPaused = false;
     // disable pause/resume controls when stopped
     if (pauseMissionBtn) pauseMissionBtn.disabled = true;
@@ -1056,6 +1073,7 @@ if (startFlightBtn) {
         if (resumeMissionBtn) resumeMissionBtn.disabled = true;
         flightStarted = true;
         updateFlightControls();
+        startMissionTimer(); // Start mission statistics tracking
         showToast('Mission started — drone is flying the trajectory', 'success');
     });
 }
@@ -1185,6 +1203,10 @@ if (resumeMissionBtn) {
         if (resumeMissionBtn) resumeMissionBtn.disabled = true;
         flightStarted = true;
         updateFlightControls();
+        // Resume mission timer if it was stopped
+        if (!missionStartTime) {
+            startMissionTimer();
+        }
         showToast('Mission resumed', 'success');
     });
 }
@@ -1281,6 +1303,50 @@ const videoToggle = document.getElementById('video-toggle');
 const videoImg = document.getElementById('video-stream');
 const videoPlaceholder = document.getElementById('video-placeholder');
 const videoStatus = document.getElementById('video-status');
+
+// Video placeholder timers
+const placeholderTimers = new Map();
+
+// Initialize placeholder text change after 5 seconds
+function initPlaceholderTimer(placeholderElement) {
+    if (!placeholderElement) return;
+    
+    // Clear existing timer if any
+    if (placeholderTimers.has(placeholderElement)) {
+        clearTimeout(placeholderTimers.get(placeholderElement));
+        placeholderTimers.delete(placeholderElement);
+    }
+    
+    // Reset text to initial state
+    const textEl = placeholderElement.querySelector('.video-placeholder-text');
+    if (textEl) {
+        textEl.textContent = 'Connecting to Camera...';
+    }
+    
+    // Set timer to change text after 5 seconds
+    const timer = setTimeout(() => {
+        if (textEl && placeholderElement.style.display !== 'none') {
+            textEl.textContent = 'Awaiting Signal...';
+        }
+        placeholderTimers.delete(placeholderElement);
+    }, 5000);
+    
+    placeholderTimers.set(placeholderElement, timer);
+}
+
+// Clear placeholder timer when video becomes available
+function clearPlaceholderTimer(placeholderElement) {
+    if (!placeholderElement) return;
+    if (placeholderTimers.has(placeholderElement)) {
+        clearTimeout(placeholderTimers.get(placeholderElement));
+        placeholderTimers.delete(placeholderElement);
+    }
+    // Reset text to initial state
+    const textEl = placeholderElement.querySelector('.video-placeholder-text');
+    if (textEl) {
+        textEl.textContent = 'Connecting to Camera...';
+    }
+}
 const rgbResolutionSelect = document.getElementById('rgb-resolution');
 const opticalRgbResolutionSelect = document.getElementById('optical-rgb-resolution');
 const opticalRgbResolutionSelectMain = document.getElementById('optical-rgb-resolution-main');
@@ -1605,15 +1671,27 @@ function setVideo(on){
     if (opticalVideoToggleMain) opticalVideoToggleMain.textContent = videoOn ? 'RGB: ON' : 'RGB: OFF';
     if (videoStatus) videoStatus.className = `status-dot ${videoOn? 'on':'off'}`;
     if (videoOn) {
-        if (videoPlaceholder) videoPlaceholder.style.display = 'none';
+        if (videoPlaceholder) {
+            videoPlaceholder.style.display = 'none';
+            clearPlaceholderTimer(videoPlaceholder);
+        }
         const opticalVideoPlaceholder = document.getElementById('optical-video-placeholder');
-        if (opticalVideoPlaceholder) opticalVideoPlaceholder.style.display = 'none';
+        if (opticalVideoPlaceholder) {
+            opticalVideoPlaceholder.style.display = 'none';
+            clearPlaceholderTimer(opticalVideoPlaceholder);
+        }
         const res = (rgbResolutionSelect && rgbResolutionSelect.value) ? rgbResolutionSelect.value : '1280x720';
         startRGBLoop(res);
     } else {
-        if (videoPlaceholder) videoPlaceholder.style.display = 'flex';
+        if (videoPlaceholder) {
+            videoPlaceholder.style.display = 'flex';
+            initPlaceholderTimer(videoPlaceholder);
+        }
         const opticalVideoPlaceholder = document.getElementById('optical-video-placeholder');
-        if (opticalVideoPlaceholder) opticalVideoPlaceholder.style.display = 'flex';
+        if (opticalVideoPlaceholder) {
+            opticalVideoPlaceholder.style.display = 'flex';
+            initPlaceholderTimer(opticalVideoPlaceholder);
+        }
         stopRGBLoop();
     }
 }
@@ -1657,14 +1735,26 @@ function setThermal(on){
     if (thermalStatus) thermalStatus.className = `status-dot ${thermalOn ? 'on' : 'off'}`;
     if (thermalStatus) thermalStatus.textContent = thermalOn ? 'ON' : 'OFF';
     if (thermalOn) {
-        if (thermalPlaceholder) thermalPlaceholder.style.display = 'none';
+        if (thermalPlaceholder) {
+            thermalPlaceholder.style.display = 'none';
+            clearPlaceholderTimer(thermalPlaceholder);
+        }
         const opticalThermalPlaceholder = document.getElementById('optical-thermal-placeholder');
-        if (opticalThermalPlaceholder) opticalThermalPlaceholder.style.display = 'none';
+        if (opticalThermalPlaceholder) {
+            opticalThermalPlaceholder.style.display = 'none';
+            clearPlaceholderTimer(opticalThermalPlaceholder);
+        }
         startThermalLoop();
     } else {
-        if (thermalPlaceholder) thermalPlaceholder.style.display = 'flex';
+        if (thermalPlaceholder) {
+            thermalPlaceholder.style.display = 'flex';
+            initPlaceholderTimer(thermalPlaceholder);
+        }
         const opticalThermalPlaceholder = document.getElementById('optical-thermal-placeholder');
-        if (opticalThermalPlaceholder) opticalThermalPlaceholder.style.display = 'flex';
+        if (opticalThermalPlaceholder) {
+            opticalThermalPlaceholder.style.display = 'flex';
+            initPlaceholderTimer(opticalThermalPlaceholder);
+        }
         stopThermalLoop();
     }
 }
@@ -1893,6 +1983,8 @@ window.addEventListener('load', () => {
             if (opticalCamerasView) opticalCamerasView.style.display = 'none';
             const pidPanel = document.getElementById('pid-panel');
             if (pidPanel) pidPanel.style.display = 'none';
+            const settingsPanel = document.getElementById('settings-panel');
+            if (settingsPanel) settingsPanel.style.display = 'none';
             
             if (mainContent) {
                 mainContent.style.display = 'flex';
@@ -1994,18 +2086,24 @@ window.addEventListener('load', () => {
             if (mainContent) mainContent.style.display = 'none';
             if (dashboardCams) dashboardCams.style.display = 'none';
         } else if (activeEl === navOptical) {
-            // Optical: show optical settings panel and cameras view
+            // Optical: show optical settings panel and cameras view (NO PID panel)
             const speedControlPanel = document.getElementById('speed-control-panel');
             const missionsPanel = document.getElementById('missions-panel');
             const systemsPanel = document.getElementById('systems-panel');
             const opticalPanel = document.getElementById('optical-panel');
             const opticalCamerasView = document.getElementById('optical-cameras-view');
+            const pidPanel = document.getElementById('pid-panel');
+            const settingsPanel = document.getElementById('settings-panel');
             const mainContent = document.querySelector('.main-content');
             const dashboardCams = document.querySelector('.dashboard-cams');
             
             if (speedControlPanel) speedControlPanel.style.display = 'none';
             if (missionsPanel) missionsPanel.style.display = 'none';
             if (systemsPanel) systemsPanel.style.display = 'none';
+            // Hide PID panel in Optical view
+            if (pidPanel) pidPanel.style.display = 'none';
+            // Hide Settings panel in Optical view
+            if (settingsPanel) settingsPanel.style.display = 'none';
             if (opticalPanel) {
                 opticalPanel.style.display = 'flex';
                 console.log('Optical settings panel shown');
@@ -2028,6 +2126,7 @@ window.addEventListener('load', () => {
             const opticalPanel = document.getElementById('optical-panel');
             const opticalCamerasView = document.getElementById('optical-cameras-view');
             const pidPanel = document.getElementById('pid-panel');
+            const settingsPanel = document.getElementById('settings-panel');
             const mainContent = document.querySelector('.main-content');
             const dashboardCams = document.querySelector('.dashboard-cams');
             
@@ -2036,6 +2135,8 @@ window.addEventListener('load', () => {
             if (systemsPanel) systemsPanel.style.display = 'none';
             if (opticalPanel) opticalPanel.style.display = 'none';
             if (opticalCamerasView) opticalCamerasView.style.display = 'none';
+            // Hide Settings panel in PID view
+            if (settingsPanel) settingsPanel.style.display = 'none';
             if (pidPanel) {
                 pidPanel.style.display = 'flex';
                 console.log('PID settings panel shown');
@@ -2099,6 +2200,12 @@ window.addEventListener('load', () => {
         navPid.addEventListener('click', () => {
             console.log('PID Settings clicked');
             setActiveNav(navPid);
+        });
+    }
+    if (navSettings) {
+        navSettings.addEventListener('click', () => {
+            console.log('Settings clicked');
+            setActiveNav(navSettings);
         });
     }
     
@@ -2629,6 +2736,11 @@ function simulateAIDetection() {
             if (aiDetectionData.confidence > 85) {
                 checkAlertConditions({ ai: { confidence: aiDetectionData.confidence } });
             }
+            
+            // Increment detection count if mission is active
+            if (missionStartTime !== null) {
+                missionDetectionCount++;
+            }
         }
     } else {
         // In standby, gradually decrease confidence
@@ -2789,6 +2901,10 @@ let missionStartLat = null;
 let missionStartLon = null;
 let missionPath = [];
 let missionArea = 0;
+let missionDetectionCount = 0; // Track number of detections
+// distanceTraveled is already declared at top level (line 77)
+let prevMissionLat = null;
+let prevMissionLon = null;
 
 function startMissionTimer() {
     missionStartTime = Date.now();
@@ -2796,13 +2912,32 @@ function startMissionTimer() {
     missionStartLon = null;
     missionPath = [];
     missionArea = 0;
+    missionDetectionCount = 0;
+    distanceTraveled = 0;
+    prevMissionLat = null;
+    prevMissionLon = null;
     updateMissionRuntime();
+    updateMissionStatsCard();
+    
+    // Show mission stats card
+    const statsCard = document.getElementById('mission-stats-card');
+    if (statsCard) statsCard.style.display = 'block';
 }
 
 function stopMissionTimer() {
     missionStartTime = null;
     const statsEl = document.getElementById('mission-runtime-stats');
     if (statsEl) statsEl.style.display = 'none';
+    
+    // Hide mission stats card
+    const statsCard = document.getElementById('mission-stats-card');
+    if (statsCard) statsCard.style.display = 'none';
+    
+    // Reset values
+    missionDetectionCount = 0;
+    distanceTraveled = 0;
+    prevMissionLat = null;
+    prevMissionLon = null;
 }
 
 function updateMissionRuntime() {
@@ -2849,10 +2984,73 @@ function updateMissionRuntime() {
     }
 }
 
-// Update mission stats every second
-setInterval(updateMissionRuntime, 1000);
+// Update Mission Statistics Card
+function updateMissionStatsCard() {
+    if (!missionStartTime) return;
+    
+    const statsCard = document.getElementById('mission-stats-card');
+    if (!statsCard) return;
+    
+    // Update timer
+    const elapsed = Date.now() - missionStartTime;
+    const hours = Math.floor(elapsed / 3600000);
+    const minutes = Math.floor((elapsed % 3600000) / 60000);
+    const seconds = Math.floor((elapsed % 60000) / 1000);
+    const timeEl = document.getElementById('mission-stat-time');
+    if (timeEl) {
+        timeEl.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+    
+    // Update distance (in km)
+    const distEl = document.getElementById('mission-stat-distance');
+    if (distEl) {
+        const distKm = (distanceTraveled / 1000).toFixed(2);
+        distEl.textContent = `${distKm} km`;
+    }
+    
+    // Update area scanned (in m²)
+    const areaEl = document.getElementById('mission-stat-area');
+    if (areaEl) {
+        let areaM2 = 0;
+        if (missionPath.length > 2) {
+            // Calculate area using bounding box approximation
+            const lats = missionPath.map(p => p.lat);
+            const lons = missionPath.map(p => p.lon);
+            const minLat = Math.min(...lats);
+            const maxLat = Math.max(...lats);
+            const minLon = Math.min(...lons);
+            const maxLon = Math.max(...lons);
+            
+            // Convert to meters (rough approximation)
+            const latDist = (maxLat - minLat) * 111000; // 1 degree ≈ 111 km
+            const lonDist = (maxLon - minLon) * 111000 * Math.cos((minLat + maxLat) / 2 * Math.PI / 180);
+            areaM2 = Math.abs(latDist * lonDist);
+        }
+        
+        // Format with appropriate unit
+        if (areaM2 >= 1000000) {
+            areaEl.textContent = `${(areaM2 / 1000000).toFixed(2)} km²`;
+        } else if (areaM2 >= 1000) {
+            areaEl.textContent = `${(areaM2 / 1000).toFixed(1)} k m²`;
+        } else {
+            areaEl.textContent = `${Math.round(areaM2)} m²`;
+        }
+    }
+    
+    // Update detection count
+    const detectionsEl = document.getElementById('mission-stat-detections');
+    if (detectionsEl) {
+        detectionsEl.textContent = missionDetectionCount.toString();
+    }
+}
 
-// Track mission path
+// Update mission stats every second
+setInterval(() => {
+    updateMissionRuntime();
+    updateMissionStatsCard();
+}, 1000);
+
+// Track mission path and calculate distance
 function addMissionPathPoint(lat, lon) {
     if (!missionStartTime) return;
     if (missionStartLat === null) {
@@ -2862,6 +3060,26 @@ function addMissionPathPoint(lat, lon) {
     missionPath.push({ lat, lon });
     // Keep only last 1000 points
     if (missionPath.length > 1000) missionPath.shift();
+    
+    // Calculate distance traveled
+    if (prevMissionLat !== null && prevMissionLon !== null) {
+        const dist = calculateDistance(prevMissionLat, prevMissionLon, lat, lon);
+        distanceTraveled += dist;
+    }
+    prevMissionLat = lat;
+    prevMissionLon = lon;
+}
+
+// Calculate distance between two coordinates (Haversine formula) in meters
+function calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371000; // Earth radius in meters
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
 }
 
 // AI Detection Panel
@@ -3007,29 +3225,80 @@ function removeAlert(alertKey) {
 }
 
 // Tactical Mode Toggle
+const TACTICAL_MODE_KEY = 'aquawing_tactical_mode';
 let tacticalMode = false;
 
-function toggleTacticalMode() {
-    tacticalMode = !tacticalMode;
+// Load tactical mode from localStorage
+function loadTacticalMode() {
+    try {
+        const saved = localStorage.getItem(TACTICAL_MODE_KEY);
+        if (saved === 'true') {
+            tacticalMode = true;
+            // Apply immediately if DOM is ready
+            if (document.body) {
+                applyTacticalMode(true);
+            }
+        }
+    } catch (e) {
+        console.warn('Failed to load tactical mode from localStorage:', e);
+    }
+}
+
+// Load tactical mode - defer to avoid blocking other code
+try {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadTacticalMode);
+    } else {
+        // Use setTimeout to ensure DOM is fully ready and don't block
+        setTimeout(loadTacticalMode, 0);
+    }
+} catch (e) {
+    console.warn('Failed to initialize tactical mode loader:', e);
+}
+
+// Apply tactical mode state
+function applyTacticalMode(enable) {
+    if (!document.body) return; // Safety check - don't execute if body doesn't exist
+    
     const body = document.body;
     const toggleBtn = document.getElementById('tactical-mode-toggle');
     const label = document.getElementById('tactical-mode-label');
     
-    if (tacticalMode) {
+    if (enable) {
         body.classList.add('tactical-mode');
         if (toggleBtn) toggleBtn.classList.add('active');
         if (label) label.textContent = 'TACTICAL ON';
-        showAlert('Tactical Mode', 'Tactical mode activated', 'warning', 3000);
     } else {
         body.classList.remove('tactical-mode');
         if (toggleBtn) toggleBtn.classList.remove('active');
         if (label) label.textContent = 'TACTICAL';
+    }
+}
+
+function toggleTacticalMode() {
+    tacticalMode = !tacticalMode;
+    
+    // Save to localStorage
+    localStorage.setItem(TACTICAL_MODE_KEY, tacticalMode.toString());
+    
+    // Apply changes
+    applyTacticalMode(tacticalMode);
+    
+    // Show alert
+    if (tacticalMode) {
+        showAlert('Tactical Mode', 'Tactical mode activated', 'warning', 3000);
+    } else {
         showAlert('Tactical Mode', 'Tactical mode deactivated', 'info', 3000);
     }
 }
 
 // Initialize tactical mode toggle
 document.addEventListener('DOMContentLoaded', () => {
+    // Ensure tactical mode is applied (in case DOM wasn't ready earlier)
+    if (tacticalMode) {
+        applyTacticalMode(true);
+    }
+    
     const tacticalBtn = document.getElementById('tactical-mode-toggle');
     if (tacticalBtn) {
         tacticalBtn.addEventListener('click', toggleTacticalMode);
@@ -3043,34 +3312,86 @@ document.addEventListener('DOMContentLoaded', () => {
             return originalStartFlight.apply(this, arguments);
         };
     }
+    
+    // Initialize placeholders for visible ones on page load
+    const allPlaceholders = [
+        document.getElementById('video-placeholder'),
+        document.getElementById('thermal-placeholder'),
+        document.getElementById('optical-video-placeholder'),
+        document.getElementById('optical-thermal-placeholder')
+    ];
+    
+    allPlaceholders.forEach(placeholder => {
+        if (placeholder && placeholder.style.display !== 'none') {
+            initPlaceholderTimer(placeholder);
+        }
+    });
 });
 
 // Enhanced telemetry update to include new features
-const originalUpdateTelemetry = updateTelemetry;
-updateTelemetry = function(data) {
-    // Call original function
-    originalUpdateTelemetry(data);
-    
-    // Update system health
-    updateSystemHealth();
-    
-    // Update drone marker with smooth animation
-    const lat = Number(data.lat || data.latitude || 0);
-    const lon = Number(data.lon || data.longitude || 0);
-    const heading = Number(data.heading || 0);
-    if (lat && lon) {
-        updateDroneMarkerAnimation(lat, lon, heading);
-        addMissionPathPoint(lat, lon);
-    }
-    
-    // Update AI detection if data available
-    if (data.ai) {
-        updateAIDetectionPanel(data.ai);
-    }
-    
-    // Alert System - Check trigger conditions
-    checkAlertConditions(data);
-};
+// Wrap enhancement in DOMContentLoaded to ensure all functions are defined
+document.addEventListener('DOMContentLoaded', function() {
+    // Wait a bit to ensure updateTelemetry is defined (it's a function declaration, so it should be hoisted)
+    setTimeout(function() {
+        if (typeof updateTelemetry === 'function') {
+            const originalUpdateTelemetry = updateTelemetry;
+            updateTelemetry = function(data) {
+                // Call original function
+                try {
+                    originalUpdateTelemetry(data);
+                } catch(e) {
+                    console.error('Error in original updateTelemetry:', e);
+                }
+                
+                // Update system health
+                try {
+                    if (typeof updateSystemHealth === 'function') {
+                        updateSystemHealth();
+                    }
+                } catch(e) {
+                    console.error('Error in updateSystemHealth:', e);
+                }
+                
+                // Update drone marker with smooth animation
+                try {
+                    const lat = Number(data.lat || data.latitude || 0);
+                    const lon = Number(data.lon || data.longitude || 0);
+                    const heading = Number(data.heading || 0);
+                    if (lat && lon) {
+                        if (typeof updateDroneMarkerAnimation === 'function') {
+                            updateDroneMarkerAnimation(lat, lon, heading);
+                        }
+                        if (typeof addMissionPathPoint === 'function') {
+                            addMissionPathPoint(lat, lon);
+                        }
+                    }
+                } catch(e) {
+                    console.error('Error updating drone marker:', e);
+                }
+                
+                // Update AI detection if data available
+                try {
+                    if (data.ai && typeof updateAIDetectionPanel === 'function') {
+                        updateAIDetectionPanel(data.ai);
+                    }
+                } catch(e) {
+                    console.error('Error updating AI detection:', e);
+                }
+                
+                // Alert System - Check trigger conditions
+                try {
+                    if (typeof checkAlertConditions === 'function') {
+                        checkAlertConditions(data);
+                    }
+                } catch(e) {
+                    console.error('Error checking alert conditions:', e);
+                }
+            };
+        } else {
+            console.warn('updateTelemetry function not found, enhancement skipped');
+        }
+    }, 100);
+});
 
 // Check alert conditions and trigger alerts
 function checkAlertConditions(data) {

@@ -10,14 +10,14 @@
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="/static/map.css?v=2">
+    <link rel="stylesheet" href="/static/map.css?v=5">
 </head>
 
 <body>
     <!-- Dynamic Alerts Container -->
     <div class="alerts-container" id="alerts-container" aria-live="polite" aria-atomic="false"></div>
 
-    <div id="dev-banner" aria-hidden="true" style="display:none;position:fixed;left:12px;top:10px;z-index:2000;padding:6px 10px;border-radius:8px;background:rgba(0,0,0,0.6);color:var(--muted);font-size:12px;font-weight:700;border:1px solid rgba(255,255,255,0.03);">Map CSS: v2 • Map JS: v1</div>
+    <div id="dev-banner" aria-hidden="true" style="display:none;position:fixed;left:12px;top:10px;z-index:2000;padding:6px 10px;border-radius:8px;background:rgba(0,0,0,0.6);color:var(--muted);font-size:12px;font-weight:700;border:1px solid rgba(255,255,255,0.03);">Map CSS: v5 • Map JS: v5</div>
     
     <!-- TOP BAR: Global System Status -->
     <div class="top-status-bar">
@@ -539,7 +539,10 @@
                     <div class="optical-video-content full-video">
                         <img id="optical-video-stream" class="video-stream" src="" alt="RGB stream" />
                         <canvas id="optical-rgb-overlay" class="video-overlay" aria-hidden="true"></canvas>
-                        <div id="optical-video-placeholder" class="video-placeholder">stream not available<br><small>serve MJPEG or an image</small></div>
+                        <div id="optical-video-placeholder" class="video-placeholder">
+                            <div class="video-loader"></div>
+                            <div class="video-placeholder-text">Connecting to Camera...</div>
+                        </div>
                     </div>
                 </div>
 
@@ -559,7 +562,10 @@
                     <div class="optical-video-content full-video">
                         <img id="optical-thermal-stream" class="thermal-stream" src="" alt="Thermal stream" />
                         <canvas id="optical-thermal-overlay" class="video-overlay" aria-hidden="true"></canvas>
-                        <div id="optical-thermal-placeholder" class="video-placeholder">Thermal stream not available</div>
+                        <div id="optical-thermal-placeholder" class="video-placeholder">
+                            <div class="video-loader"></div>
+                            <div class="video-placeholder-text">Connecting to Camera...</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -567,39 +573,27 @@
 
         <!-- MAIN CONTENT: Dashboard View -->
         <main class="main-content">
-            <!-- AI Detection Panel (Dashboard) -->
-            <div class="ai-detection-panel" id="ai-detection-panel">
-                <div class="ai-panel-header">
-                    <div class="panel-title">AI DETECTION</div>
+            <!-- Mission Statistics Card -->
+            <div class="mission-stats-card card" id="mission-stats-card" style="display:none;">
+                <div class="mission-stats-header">
+                    <div class="panel-title">MISSION STATISTICS</div>
                 </div>
-                <div class="ai-panel-content">
-                    <div class="ai-metric">
-                        <div class="ai-metric-label">Confidence</div>
-                        <div class="ai-metric-value">
-                            <span id="ai-confidence-value">0</span>%
-                        </div>
-                        <div class="ai-confidence-bar">
-                            <div class="ai-confidence-fill" id="ai-confidence-fill" style="width: 0%"></div>
-                        </div>
+                <div class="mission-stats-content">
+                    <div class="mission-stat-item">
+                        <div class="mission-stat-label">Mission Timer</div>
+                        <div class="mission-stat-value" id="mission-stat-time">00:00:00</div>
                     </div>
-                    <div class="ai-metric">
-                        <div class="ai-metric-label">Mode</div>
-                        <div class="ai-mode-badge" id="ai-mode-badge">
-                            <span class="ai-mode-icon">🔍</span>
-                            <span id="ai-mode-text">SEARCH</span>
-                        </div>
+                    <div class="mission-stat-item">
+                        <div class="mission-stat-label">Distance Covered</div>
+                        <div class="mission-stat-value" id="mission-stat-distance">0.00 km</div>
                     </div>
-                    <div class="ai-metric">
-                        <div class="ai-metric-label">Thermal Assist</div>
-                        <div class="ai-thermal-status" id="ai-thermal-status">
-                            <span class="ai-status-dot"></span>
-                            <span id="ai-thermal-text">INACTIVE</span>
-                        </div>
+                    <div class="mission-stat-item">
+                        <div class="mission-stat-label">Area Scanned</div>
+                        <div class="mission-stat-value" id="mission-stat-area">0 m²</div>
                     </div>
-                    <div class="ai-detections-list" id="ai-detections-list">
-                        <div class="ai-detection-item">
-                            <span class="detection-type">No detections</span>
-                        </div>
+                    <div class="mission-stat-item">
+                        <div class="mission-stat-label">Detections</div>
+                        <div class="mission-stat-value" id="mission-stat-detections">0</div>
                     </div>
                 </div>
             </div>
@@ -634,7 +628,10 @@
                     <div class="video-content">
                         <img id="video-stream" class="video-stream" src="" alt="RGB stream" />
                         <canvas id="rgb-overlay" class="video-overlay" aria-hidden="true"></canvas>
-                        <div id="video-placeholder" class="video-placeholder">RGB disabled</div>
+                        <div id="video-placeholder" class="video-placeholder">
+                            <div class="video-loader"></div>
+                            <div class="video-placeholder-text">Connecting to Camera...</div>
+                        </div>
                         <div class="camera-stats small">
                             <span id="rgb-res">1280×720</span> • <span id="rgb-bitrate">0 kb/s</span>
                             <span id="rgb-ai" class="ai-comment" style="margin-left:10px;color:var(--accent);font-weight:700"></span>
@@ -653,51 +650,13 @@
                     <div class="video-content">
                         <img id="thermal-stream" class="thermal-stream" src="" alt="Thermal stream" />
                         <canvas id="thermal-overlay" class="video-overlay" aria-hidden="true"></canvas>
-                        <div id="thermal-placeholder" class="video-placeholder">Thermal disabled</div>
+                        <div id="thermal-placeholder" class="video-placeholder">
+                            <div class="video-loader"></div>
+                            <div class="video-placeholder-text">Connecting to Camera...</div>
+                        </div>
                         <div class="camera-stats small">
                             <span id="thermal-res">--</span> • <span id="thermal-fps">0 fps</span>
                             <span id="thermal-ai" class="ai-comment" style="margin-left:10px;color:var(--accent);font-weight:700"></span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- AI Detection Panel (under thermal camera) -->
-                <div class="ai-detection-panel-dashboard card" id="ai-detection-panel-dashboard">
-                    <div class="ai-panel-header-dashboard">
-                        <div class="panel-title">AI DETECTION</div>
-                    </div>
-                    <div class="ai-panel-content-dashboard">
-                        <!-- Detection Mode -->
-                        <div class="ai-detection-item">
-                            <div class="ai-detection-label">Detection Mode</div>
-                            <div class="ai-mode-badge-dashboard" id="ai-mode-badge-dashboard">
-                                <span id="ai-mode-text-dashboard">Standby</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Confidence -->
-                        <div class="ai-detection-item">
-                            <div class="ai-detection-label">Confidence</div>
-                            <div class="ai-confidence-container">
-                                <div class="ai-confidence-value" id="ai-confidence-value-dashboard">0%</div>
-                                <div class="ai-confidence-bar-dashboard">
-                                    <div class="ai-confidence-fill-dashboard" id="ai-confidence-fill-dashboard" style="width: 0%"></div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Risk Level -->
-                        <div class="ai-detection-item">
-                            <div class="ai-detection-label">Risk Level</div>
-                            <div class="ai-risk-badge" id="ai-risk-badge">
-                                <span id="ai-risk-text">LOW</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Last Detection Timestamp -->
-                        <div class="ai-detection-item">
-                            <div class="ai-detection-label">Last Detection</div>
-                            <div class="ai-timestamp" id="ai-timestamp-dashboard">--:--:--</div>
                         </div>
                     </div>
                 </div>
@@ -1047,7 +1006,10 @@
                     <div class="video-content">
                         <img id="video-stream" class="video-stream" src="" alt="RGB stream" />
                         <canvas id="rgb-overlay" class="video-overlay" aria-hidden="true"></canvas>
-                        <div id="video-placeholder" class="video-placeholder">RGB disabled</div>
+                        <div id="video-placeholder" class="video-placeholder">
+                            <div class="video-loader"></div>
+                            <div class="video-placeholder-text">Connecting to Camera...</div>
+                        </div>
                         <div class="camera-stats small">
                             <span id="rgb-res">1280×720</span> • <span id="rgb-bitrate">0 kb/s</span>
                             <span id="rgb-ai" class="ai-comment" style="margin-left:10px;color:var(--accent);font-weight:700"></span>
@@ -1066,7 +1028,10 @@
                     <div class="video-content">
                         <img id="thermal-stream" class="thermal-stream" src="" alt="Thermal stream" />
                         <canvas id="thermal-overlay" class="video-overlay" aria-hidden="true"></canvas>
-                        <div id="thermal-placeholder" class="video-placeholder">Thermal disabled</div>
+                        <div id="thermal-placeholder" class="video-placeholder">
+                            <div class="video-loader"></div>
+                            <div class="video-placeholder-text">Connecting to Camera...</div>
+                        </div>
                         <div class="camera-stats small">
                             <span id="thermal-res">--</span> • <span id="thermal-fps">0 fps</span>
                             <span id="thermal-ai" class="ai-comment" style="margin-left:10px;color:var(--accent);font-weight:700"></span>
@@ -1092,6 +1057,6 @@
     <div id="toast" aria-live="polite" aria-atomic="true" class="toast-container" style="display:none;"></div>
 
     <script>/* dev: stamped version */ window.__MAP_CSS_VERSION='v2'; window.__MAP_JS_VERSION='v1';</script>
-    <script defer src="/static/map.js?v=2"></script>
+    <script defer src="/static/map.js?v=5"></script>
 </body>
 </html>

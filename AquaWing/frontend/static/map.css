@@ -599,6 +599,51 @@ html, body { height: 100%; width: 100%; background: #0a0e1a; font-family: 'Outfi
     flex-shrink: 0;
 }
 
+/* Mission Statistics Card */
+.mission-stats-card {
+    background: rgba(8, 12, 20, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 16px;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    min-width: 240px;
+}
+
+.mission-stats-header {
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.mission-stats-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.mission-stat-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.mission-stat-label {
+    font-size: 10px;
+    color: rgba(234, 242, 255, 0.6);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.mission-stat-value {
+    font-size: 20px;
+    font-weight: 900;
+    color: #00ffc8;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+}
+
 .ai-panel-header {
     margin-bottom: 8px;
     padding-bottom: 12px;
@@ -822,26 +867,172 @@ html, body { height: 100%; width: 100%; background: #0a0e1a; font-family: 'Outfi
     }
 }
 
-/* Tactical Mode Theme */
+/* Tactical Mode Theme - Military Style */
 body.tactical-mode {
-    --accent: #ff4d4d;
-    --accent-hover: #ff6b6b;
-    --neon: #ff8080;
+    --accent: #00ff41; /* Neon green */
+    --accent-hover: #39ff6f;
+    --neon: #00ff41;
+    --bg-0: #030505; /* Darker background */
+    --bg-1: #050808;
+    --glass-bg: rgba(3, 5, 5, 0.85);
+    --glass-border: rgba(0, 255, 65, 0.15);
+    --good: #00ff41;
+    --bad: #ff1a1a; /* Strong red for alerts */
+    transition: background-color 0.5s ease, color 0.5s ease;
 }
 
+/* Darker background */
+body.tactical-mode,
+body.tactical-mode html {
+    background: #030505 !important;
+}
+
+/* Top status bar - darker with neon green */
 body.tactical-mode .top-status-bar {
-    border-bottom-color: rgba(255, 77, 77, 0.2);
-    background: rgba(20, 5, 5, 0.95);
+    border-bottom-color: rgba(0, 255, 65, 0.3);
+    background: rgba(3, 5, 5, 0.98);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
 }
 
+/* Main content - darker */
+body.tactical-mode .main-content {
+    background: #030505;
+}
+
+/* Sidebar - darker */
+body.tactical-mode .left-sidebar {
+    background: rgba(3, 5, 5, 0.98);
+    border-color: rgba(0, 255, 65, 0.2);
+}
+
+/* Cards and panels - darker with neon green borders */
+body.tactical-mode .card,
+body.tactical-mode .panel,
+body.tactical-mode .camera-panel {
+    background: rgba(3, 5, 5, 0.9);
+    border-color: rgba(0, 255, 65, 0.15);
+    transition: background-color 0.5s ease, border-color 0.5s ease;
+}
+
+/* Health indicators - neon green */
 body.tactical-mode .health-dot.healthy {
-    background: #ff4d4d;
-    box-shadow: 0 0 8px rgba(255, 77, 77, 0.6);
+    background: #00ff41;
+    box-shadow: 0 0 12px rgba(0, 255, 65, 0.8), 0 0 24px rgba(0, 255, 65, 0.4);
+    animation: pulse-neon 2s ease-in-out infinite;
 }
 
+body.tactical-mode .health-label {
+    color: #00ff41;
+}
+
+/* AI confidence - neon green */
 body.tactical-mode .ai-confidence-fill {
-    background: linear-gradient(90deg, #ff4d4d, #ff8080);
-    box-shadow: 0 0 8px rgba(255, 77, 77, 0.5);
+    background: linear-gradient(90deg, #00ff41, #39ff6f);
+    box-shadow: 0 0 12px rgba(0, 255, 65, 0.6);
+}
+
+body.tactical-mode .ai-confidence-value {
+    color: #00ff41;
+}
+
+/* Mission stats - neon green */
+body.tactical-mode .mission-stat-value {
+    color: #00ff41;
+}
+
+body.tactical-mode .mission-stats-card {
+    border-color: rgba(0, 255, 65, 0.2);
+}
+
+/* Telemetry cards - neon green */
+body.tactical-mode .overview-card {
+    border-color: rgba(0, 255, 65, 0.2);
+}
+
+body.tactical-mode .overview-value {
+    color: #00ff41;
+}
+
+/* Buttons - neon green */
+body.tactical-mode .btn-primary {
+    background: rgba(0, 255, 65, 0.15);
+    border-color: rgba(0, 255, 65, 0.4);
+    color: #00ff41;
+}
+
+body.tactical-mode .btn-primary:hover {
+    background: rgba(0, 255, 65, 0.25);
+    border-color: rgba(0, 255, 65, 0.6);
+    box-shadow: 0 0 16px rgba(0, 255, 65, 0.4);
+}
+
+/* AI Advisor button - neon green */
+body.tactical-mode .ai-advisor-btn {
+    background: rgba(0, 255, 65, 0.1);
+    border-color: rgba(0, 255, 65, 0.3);
+    color: #00ff41;
+}
+
+body.tactical-mode .ai-advisor-btn:hover {
+    background: rgba(0, 255, 65, 0.2);
+    border-color: rgba(0, 255, 65, 0.5);
+    box-shadow: 0 0 20px rgba(0, 255, 65, 0.5);
+}
+
+/* Strong red alerts */
+body.tactical-mode .alert-toast.alert-error,
+body.tactical-mode .alert-toast.alert-warning {
+    background: rgba(255, 26, 26, 0.15);
+    border-color: rgba(255, 26, 26, 0.5);
+    color: #ff1a1a;
+    box-shadow: 0 4px 20px rgba(255, 26, 26, 0.4);
+}
+
+body.tactical-mode .alert-toast.alert-error .alert-icon,
+body.tactical-mode .alert-toast.alert-warning .alert-icon {
+    color: #ff1a1a;
+}
+
+/* Map controls - neon green */
+body.tactical-mode .ctrl-btn.btn-primary {
+    background: rgba(0, 255, 65, 0.15);
+    border-color: rgba(0, 255, 65, 0.4);
+    color: #00ff41;
+}
+
+body.tactical-mode .ctrl-btn.btn-primary:hover {
+    background: rgba(0, 255, 65, 0.25);
+    box-shadow: 0 0 12px rgba(0, 255, 65, 0.5);
+}
+
+/* Tactical mode button - active state */
+body.tactical-mode .tactical-mode-btn {
+    background: rgba(0, 255, 65, 0.2);
+    border-color: rgba(0, 255, 65, 0.5);
+    color: #00ff41;
+    box-shadow: 0 0 16px rgba(0, 255, 65, 0.4);
+}
+
+body.tactical-mode .tactical-mode-btn:hover {
+    background: rgba(0, 255, 65, 0.3);
+    box-shadow: 0 0 24px rgba(0, 255, 65, 0.6);
+}
+
+/* Smooth transitions for all elements */
+body.tactical-mode * {
+    transition: background-color 0.5s ease, border-color 0.5s ease, color 0.5s ease, box-shadow 0.5s ease;
+}
+
+/* Pulse animation for neon green elements */
+@keyframes pulse-neon {
+    0%, 100% {
+        opacity: 1;
+        box-shadow: 0 0 12px rgba(0, 255, 65, 0.8), 0 0 24px rgba(0, 255, 65, 0.4);
+    }
+    50% {
+        opacity: 0.8;
+        box-shadow: 0 0 16px rgba(0, 255, 65, 1), 0 0 32px rgba(0, 255, 65, 0.6);
+    }
 }
 
 /* Missions view: full map */
@@ -1252,6 +1443,7 @@ body.tactical-mode .ai-confidence-fill {
     font-weight:700; 
     background:linear-gradient(180deg, rgba(0,0,0,0.36), rgba(0,0,0,0.6));
     overflow: hidden;
+    gap: 16px;
 }
 
 .video-placeholder::before {
@@ -1270,22 +1462,54 @@ body.tactical-mode .ai-confidence-fill {
     left: -50%;
 }
 
-.video-placeholder::after {
-    content: '📹';
-    font-size: 48px;
-    opacity: 0.3;
-    animation: pulse-icon 2s ease-in-out infinite;
-    margin-bottom: 12px;
+/* Animated Loader */
+.video-loader {
+    width: 48px;
+    height: 48px;
+    border: 3px solid rgba(0, 255, 200, 0.2);
+    border-top-color: rgba(0, 255, 200, 0.8);
+    border-radius: 50%;
+    animation: spin-loader 1s linear infinite;
+    position: relative;
+}
+
+.video-loader::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 24px;
+    height: 24px;
+    border: 2px solid rgba(0, 255, 200, 0.3);
+    border-top-color: rgba(0, 255, 200, 0.6);
+    border-radius: 50%;
+    animation: spin-loader 0.6s linear infinite reverse;
+}
+
+/* Placeholder Text */
+.video-placeholder-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(0, 255, 200, 0.9);
+    text-align: center;
+    animation: soft-blink 2s ease-in-out infinite;
+    letter-spacing: 0.5px;
+}
+
+@keyframes spin-loader {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes soft-blink {
+    0%, 100% { opacity: 0.9; }
+    50% { opacity: 0.6; }
 }
 
 @keyframes shimmer {
     0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
     100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
-}
-
-@keyframes pulse-icon {
-    0%, 100% { opacity: 0.3; transform: scale(1); }
-    50% { opacity: 0.5; transform: scale(1.1); }
 }
 
 /* Overlay canvas for AI bounding boxes */
@@ -1977,6 +2201,12 @@ body.tactical-mode .ai-confidence-fill {
     overflow-y: auto;
     height: calc(100vh - 48px - 40px);
     flex-shrink: 0;
+}
+
+/* Hide PID panel when Optical view is active */
+.optical-cameras-view:not([style*="display: none"]) ~ .pid-panel,
+.optical-panel:not([style*="display: none"]) ~ .pid-panel {
+    display: none !important;
 }
 
 .pid-panel-header {
