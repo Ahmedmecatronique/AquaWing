@@ -10,14 +10,14 @@
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="/static/map.css?v=5">
+    <link rel="stylesheet" href="/static/map.css?v=8">
 </head>
 
 <body>
     <!-- Dynamic Alerts Container -->
     <div class="alerts-container" id="alerts-container" aria-live="polite" aria-atomic="false"></div>
 
-    <div id="dev-banner" aria-hidden="true" style="display:none;position:fixed;left:12px;top:10px;z-index:2000;padding:6px 10px;border-radius:8px;background:rgba(0,0,0,0.6);color:var(--muted);font-size:12px;font-weight:700;border:1px solid rgba(255,255,255,0.03);">Map CSS: v5 • Map JS: v5</div>
+    <div id="dev-banner" aria-hidden="true" style="display:none;position:fixed;left:12px;top:10px;z-index:2000;padding:6px 10px;border-radius:8px;background:rgba(0,0,0,0.6);color:var(--muted);font-size:12px;font-weight:700;border:1px solid rgba(255,255,255,0.03);">Map CSS: v8 • Map JS: v9</div>
     
     <!-- TOP BAR: Global System Status -->
     <div class="top-status-bar">
@@ -365,9 +365,9 @@
             <div class="pid-panel-header">
                 <div class="panel-title">PID SETTINGS</div>
             </div>
-            <div class="pid-settings-content">
+            <div class="pid-panel-content">
                 <!-- Roll PID -->
-                <div class="pid-settings-section">
+                <div class="settings-section">
                     <div class="settings-section-title">ROLL PID</div>
                     <div class="settings-group">
                         <label for="pid-roll-p">P (Proportional)</label>
@@ -384,7 +384,7 @@
                 </div>
 
                 <!-- Pitch PID -->
-                <div class="pid-settings-section">
+                <div class="settings-section">
                     <div class="settings-section-title">PITCH PID</div>
                     <div class="settings-group">
                         <label for="pid-pitch-p">P (Proportional)</label>
@@ -401,7 +401,7 @@
                 </div>
 
                 <!-- Yaw PID -->
-                <div class="pid-settings-section">
+                <div class="settings-section">
                     <div class="settings-section-title">YAW PID</div>
                     <div class="settings-group">
                         <label for="pid-yaw-p">P (Proportional)</label>
@@ -418,7 +418,7 @@
                 </div>
 
                 <!-- Altitude PID -->
-                <div class="pid-settings-section">
+                <div class="settings-section">
                     <div class="settings-section-title">ALTITUDE PID</div>
                     <div class="settings-group">
                         <label for="pid-alt-p">P (Proportional)</label>
@@ -435,7 +435,7 @@
                 </div>
 
                 <!-- Action Buttons -->
-                <div class="pid-actions">
+                <div class="settings-actions">
                     <button id="pid-save-btn" class="btn-primary">Save PID</button>
                     <button id="pid-reset-btn" class="btn-ghost">Reset to Default</button>
                 </div>
@@ -741,7 +741,7 @@
                     <div class="value-item"><div class="label">Time</div><div id="val-time" class="value">-</div></div>
                 </div>
 
-                <div id="pid-panel" class="telemetry-row" style="display:none;">
+                <div id="pid-panel-old" class="telemetry-row" style="display:none;">
                     <div class="hud-card" style="width:100%;">
                         <div class="hud-title">PID TUNING</div>
                         <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;padding:12px;">
@@ -1057,6 +1057,6 @@
     <div id="toast" aria-live="polite" aria-atomic="true" class="toast-container" style="display:none;"></div>
 
     <script>/* dev: stamped version */ window.__MAP_CSS_VERSION='v2'; window.__MAP_JS_VERSION='v1';</script>
-    <script defer src="/static/map.js?v=5"></script>
+    <script defer src="/static/map.js?v=9"></script>
 </body>
 </html>

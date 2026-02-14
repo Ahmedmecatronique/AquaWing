@@ -2129,6 +2129,7 @@ window.addEventListener('load', () => {
             const settingsPanel = document.getElementById('settings-panel');
             const mainContent = document.querySelector('.main-content');
             const dashboardCams = document.querySelector('.dashboard-cams');
+            const mainLayout = document.querySelector('.main-layout');
             
             if (speedControlPanel) speedControlPanel.style.display = 'none';
             if (missionsPanel) missionsPanel.style.display = 'none';
@@ -2137,13 +2138,21 @@ window.addEventListener('load', () => {
             if (opticalCamerasView) opticalCamerasView.style.display = 'none';
             // Hide Settings panel in PID view
             if (settingsPanel) settingsPanel.style.display = 'none';
-            if (pidPanel) {
-                pidPanel.style.display = 'flex';
-                console.log('PID settings panel shown');
-            }
             // Hide main content
             if (mainContent) mainContent.style.display = 'none';
             if (dashboardCams) dashboardCams.style.display = 'none';
+            
+            // Show PID panel
+            if (pidPanel) {
+                pidPanel.style.display = 'flex';
+                console.log('PID settings panel shown');
+                // Force display of default values immediately, then load from API
+                ensurePidValuesVisible();
+                // Load PID values from API (with small delay to ensure DOM is ready)
+                setTimeout(() => {
+                    loadPidSettings();
+                }, 200);
+            }
         } else if (activeEl === navSettings) {
             // Settings: show settings panel
             const speedControlPanel = document.getElementById('speed-control-panel');
@@ -2418,6 +2427,289 @@ const pidApplyBtn = document.getElementById('pid-apply');
 const pidRefreshBtn = document.getElementById('pid-refresh');
 if (pidApplyBtn) pidApplyBtn.addEventListener('click', applyPidUpdate);
 if (pidRefreshBtn) pidRefreshBtn.addEventListener('click', fetchPidGains);
+
+// Ensure PID values are visible (set defaults immediately)
+function ensurePidValuesVisible() {
+    const rollP = document.getElementById('pid-roll-p');
+    const rollI = document.getElementById('pid-roll-i');
+    const rollD = document.getElementById('pid-roll-d');
+    const pitchP = document.getElementById('pid-pitch-p');
+    const pitchI = document.getElementById('pid-pitch-i');
+    const pitchD = document.getElementById('pid-pitch-d');
+    const yawP = document.getElementById('pid-yaw-p');
+    const yawI = document.getElementById('pid-yaw-i');
+    const yawD = document.getElementById('pid-yaw-d');
+    const altP = document.getElementById('pid-alt-p');
+    const altI = document.getElementById('pid-alt-i');
+    const altD = document.getElementById('pid-alt-d');
+    
+    // Set default values immediately
+    if (rollP && (!rollP.value || rollP.value === '')) rollP.value = 4.5;
+    if (rollI && (!rollI.value || rollI.value === '')) rollI.value = 0.45;
+    if (rollD && (!rollD.value || rollD.value === '')) rollD.value = 0.05;
+    if (pitchP && (!pitchP.value || pitchP.value === '')) pitchP.value = 4.5;
+    if (pitchI && (!pitchI.value || pitchI.value === '')) pitchI.value = 0.45;
+    if (pitchD && (!pitchD.value || pitchD.value === '')) pitchD.value = 0.05;
+    if (yawP && (!yawP.value || yawP.value === '')) yawP.value = 4.5;
+    if (yawI && (!yawI.value || yawI.value === '')) yawI.value = 0.45;
+    if (yawD && (!yawD.value || yawD.value === '')) yawD.value = 0.05;
+    if (altP && (!altP.value || altP.value === '')) altP.value = 1.0;
+    if (altI && (!altI.value || altI.value === '')) altI.value = 0.1;
+    if (altD && (!altD.value || altD.value === '')) altD.value = 0.01;
+}
+
+// Load PID settings for the new PID panel
+async function loadPidSettings() {
+    console.log('Loading PID settings from API...');
+    
+    // Get all input elements first
+    const rollP = document.getElementById('pid-roll-p');
+    const rollI = document.getElementById('pid-roll-i');
+    const rollD = document.getElementById('pid-roll-d');
+    const pitchP = document.getElementById('pid-pitch-p');
+    const pitchI = document.getElementById('pid-pitch-i');
+    const pitchD = document.getElementById('pid-pitch-d');
+    const yawP = document.getElementById('pid-yaw-p');
+    const yawI = document.getElementById('pid-yaw-i');
+    const yawD = document.getElementById('pid-yaw-d');
+    const altP = document.getElementById('pid-alt-p');
+    const altI = document.getElementById('pid-alt-i');
+    const altD = document.getElementById('pid-alt-d');
+    
+    // Check if elements exist
+    if (!rollP || !rollI || !rollD || !pitchP || !pitchI || !pitchD || !yawP || !yawI || !yawD || !altP || !altI || !altD) {
+        console.warn('PID input elements not found, using default values');
+        // Set default values if elements exist
+        if (rollP) rollP.value = 4.5;
+        if (rollI) rollI.value = 0.45;
+        if (rollD) rollD.value = 0.05;
+        if (pitchP) pitchP.value = 4.5;
+        if (pitchI) pitchI.value = 0.45;
+        if (pitchD) pitchD.value = 0.05;
+        if (yawP) yawP.value = 4.5;
+        if (yawI) yawI.value = 0.45;
+        if (yawD) yawD.value = 0.05;
+        if (altP) altP.value = 1.0;
+        if (altI) altI.value = 0.1;
+        if (altD) altD.value = 0.01;
+        return;
+    }
+    
+    try {
+        const res = await fetch(API_BASE + '/api/pid');
+        if (!res.ok) {
+            throw new Error(`Failed to fetch PID gains: ${res.status}`);
+        }
+        const data = await res.json();
+        console.log('PID gains received:', data);
+        
+        // Update Roll PID
+        if (data.roll) {
+            rollP.value = data.roll.kp !== undefined ? data.roll.kp : 4.5;
+            rollI.value = data.roll.ki !== undefined ? data.roll.ki : 0.45;
+            rollD.value = data.roll.kd !== undefined ? data.roll.kd : 0.05;
+        } else {
+            rollP.value = 4.5;
+            rollI.value = 0.45;
+            rollD.value = 0.05;
+        }
+        
+        // Update Pitch PID
+        if (data.pitch) {
+            pitchP.value = data.pitch.kp !== undefined ? data.pitch.kp : 4.5;
+            pitchI.value = data.pitch.ki !== undefined ? data.pitch.ki : 0.45;
+            pitchD.value = data.pitch.kd !== undefined ? data.pitch.kd : 0.05;
+        } else {
+            pitchP.value = 4.5;
+            pitchI.value = 0.45;
+            pitchD.value = 0.05;
+        }
+        
+        // Update Yaw PID
+        if (data.yaw) {
+            yawP.value = data.yaw.kp !== undefined ? data.yaw.kp : 4.5;
+            yawI.value = data.yaw.ki !== undefined ? data.yaw.ki : 0.45;
+            yawD.value = data.yaw.kd !== undefined ? data.yaw.kd : 0.05;
+        } else {
+            yawP.value = 4.5;
+            yawI.value = 0.45;
+            yawD.value = 0.05;
+        }
+        
+        // Update Altitude PID
+        if (data.altitude) {
+            altP.value = data.altitude.kp !== undefined ? data.altitude.kp : 1.0;
+            altI.value = data.altitude.ki !== undefined ? data.altitude.ki : 0.1;
+            altD.value = data.altitude.kd !== undefined ? data.altitude.kd : 0.01;
+        } else {
+            altP.value = 1.0;
+            altI.value = 0.1;
+            altD.value = 0.01;
+        }
+        
+        console.log('PID settings loaded successfully');
+    } catch (err) {
+        console.error('Error loading PID settings:', err);
+        // Set default values on error
+        rollP.value = 4.5;
+        rollI.value = 0.45;
+        rollD.value = 0.05;
+        pitchP.value = 4.5;
+        pitchI.value = 0.45;
+        pitchD.value = 0.05;
+        yawP.value = 4.5;
+        yawI.value = 0.45;
+        yawD.value = 0.05;
+        altP.value = 1.0;
+        altI.value = 0.1;
+        altD.value = 0.01;
+        console.log('Using default PID values due to API error');
+    }
+}
+
+// Save PID settings
+async function savePidSettings() {
+    console.log('Saving PID settings...');
+    try {
+        const updates = [];
+        
+        // Roll
+        const rollP = document.getElementById('pid-roll-p');
+        const rollI = document.getElementById('pid-roll-i');
+        const rollD = document.getElementById('pid-roll-d');
+        if (rollP && rollI && rollD) {
+            updates.push({
+                axis: 'roll',
+                kp: parseFloat(rollP.value) || 0,
+                ki: parseFloat(rollI.value) || 0,
+                kd: parseFloat(rollD.value) || 0
+            });
+        }
+        
+        // Pitch
+        const pitchP = document.getElementById('pid-pitch-p');
+        const pitchI = document.getElementById('pid-pitch-i');
+        const pitchD = document.getElementById('pid-pitch-d');
+        if (pitchP && pitchI && pitchD) {
+            updates.push({
+                axis: 'pitch',
+                kp: parseFloat(pitchP.value) || 0,
+                ki: parseFloat(pitchI.value) || 0,
+                kd: parseFloat(pitchD.value) || 0
+            });
+        }
+        
+        // Yaw
+        const yawP = document.getElementById('pid-yaw-p');
+        const yawI = document.getElementById('pid-yaw-i');
+        const yawD = document.getElementById('pid-yaw-d');
+        if (yawP && yawI && yawD) {
+            updates.push({
+                axis: 'yaw',
+                kp: parseFloat(yawP.value) || 0,
+                ki: parseFloat(yawI.value) || 0,
+                kd: parseFloat(yawD.value) || 0
+            });
+        }
+        
+        // Altitude
+        const altP = document.getElementById('pid-alt-p');
+        const altI = document.getElementById('pid-alt-i');
+        const altD = document.getElementById('pid-alt-d');
+        if (altP && altI && altD) {
+            updates.push({
+                axis: 'altitude',
+                kp: parseFloat(altP.value) || 0,
+                ki: parseFloat(altI.value) || 0,
+                kd: parseFloat(altD.value) || 0
+            });
+        }
+        
+        // Send all updates
+        let successCount = 0;
+        for (const update of updates) {
+            try {
+                const res = await fetch(API_BASE + '/api/pid', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(update)
+                });
+                if (res.ok) {
+                    successCount++;
+                }
+            } catch (e) {
+                console.error(`Failed to update ${update.axis}:`, e);
+            }
+        }
+        
+        if (successCount === updates.length) {
+            showToast('PID settings saved successfully', 'success');
+        } else {
+            showToast(`Saved ${successCount}/${updates.length} PID settings`, 'warning');
+        }
+    } catch (err) {
+        console.error('Error saving PID settings:', err);
+        showToast('Failed to save PID settings', 'error');
+    }
+}
+
+// Reset PID settings to defaults
+function resetPidSettings() {
+    // Roll
+    const rollP = document.getElementById('pid-roll-p');
+    const rollI = document.getElementById('pid-roll-i');
+    const rollD = document.getElementById('pid-roll-d');
+    if (rollP && rollI && rollD) {
+        rollP.value = 4.5;
+        rollI.value = 0.45;
+        rollD.value = 0.05;
+    }
+    
+    // Pitch
+    const pitchP = document.getElementById('pid-pitch-p');
+    const pitchI = document.getElementById('pid-pitch-i');
+    const pitchD = document.getElementById('pid-pitch-d');
+    if (pitchP && pitchI && pitchD) {
+        pitchP.value = 4.5;
+        pitchI.value = 0.45;
+        pitchD.value = 0.05;
+    }
+    
+    // Yaw
+    const yawP = document.getElementById('pid-yaw-p');
+    const yawI = document.getElementById('pid-yaw-i');
+    const yawD = document.getElementById('pid-yaw-d');
+    if (yawP && yawI && yawD) {
+        yawP.value = 4.5;
+        yawI.value = 0.45;
+        yawD.value = 0.05;
+    }
+    
+    // Altitude
+    const altP = document.getElementById('pid-alt-p');
+    const altI = document.getElementById('pid-alt-i');
+    const altD = document.getElementById('pid-alt-d');
+    if (altP && altI && altD) {
+        altP.value = 1.0;
+        altI.value = 0.1;
+        altD.value = 0.01;
+    }
+    
+    showToast('PID settings reset to defaults', 'info');
+}
+
+// Wire up PID panel buttons
+document.addEventListener('DOMContentLoaded', () => {
+    const pidSaveBtn = document.getElementById('pid-save-btn');
+    const pidResetBtn = document.getElementById('pid-reset-btn');
+    
+    if (pidSaveBtn) {
+        pidSaveBtn.addEventListener('click', savePidSettings);
+    }
+    if (pidResetBtn) {
+        pidResetBtn.addEventListener('click', resetPidSettings);
+    }
+});
 
 /* 'Open PID' quick button removed (UI change) */
 

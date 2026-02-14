@@ -238,6 +238,7 @@ html, body { height: 100%; width: 100%; background: #0a0e1a; font-family: 'Outfi
     height: 100vh;
     padding-top: 48px;
     padding-bottom: 40px;
+    position: relative;
 }
 
 /* LEFT SIDEBAR */
@@ -2190,7 +2191,7 @@ body.tactical-mode * {
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* PID Settings Panel */
+/* PID Settings Panel - Same style as other panels */
 .pid-panel {
     width: 380px;
     background: rgba(8, 12, 20, 0.95);
@@ -2201,12 +2202,18 @@ body.tactical-mode * {
     overflow-y: auto;
     height: calc(100vh - 48px - 40px);
     flex-shrink: 0;
+    animation: slideInLeft 0.3s ease-out;
 }
 
-/* Hide PID panel when Optical view is active */
-.optical-cameras-view:not([style*="display: none"]) ~ .pid-panel,
-.optical-panel:not([style*="display: none"]) ~ .pid-panel {
-    display: none !important;
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }
 
 .pid-panel-header {
@@ -2215,32 +2222,10 @@ body.tactical-mode * {
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.pid-settings-content {
+.pid-panel-content {
     display: flex;
     flex-direction: column;
     gap: 20px;
-}
-
-.pid-settings-section {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
-    padding: 16px;
-}
-
-.pid-actions {
-    display: flex;
-    gap: 12px;
-    margin-top: 8px;
-}
-
-.pid-actions .btn-primary,
-.pid-actions .btn-ghost {
-    flex: 1;
-    padding: 12px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
 }
 
 /* Settings Panel */
