@@ -118,9 +118,36 @@ async def get_telemetry():
 # PID tuning endpoints (frontend -> backend -> optional MCU forward)
 # ---------------------------------------------------------------------------
 from pydantic import BaseModel as _BaseModel
-from backend.src.control.flight_controller import flight_controller as _fc
-from backend.src.uart.uart_link import UARTLink as _UARTLink
-from backend.src.uart.protocol import encode_message as _encode_message, MessageType as _MsgType
+
+# Import flight controller (required)
+try:
+    from backend.src.control.flight_controller import flight_controller as _fc
+except ImportError as e:
+    print(f"Warning: Could not import flight_controller: {e}")
+    # Create a minimal fallback
+    class _FakeFC:
+        pid_gains = {
+            "pitch": {"kp": 1.0, "ki": 0.0, "kd": 0.0},
+            "roll": {"kp": 1.0, "ki": 0.0, "kd": 0.0},
+            "yaw": {"kp": 1.0, "ki": 0.0, "kd": 0.0},
+            "altitude": {"kp": 1.0, "ki": 0.0, "kd": 0.0},
+        }
+        def set_pid_gains(self, axis, kp, ki, kd):
+            if axis in self.pid_gains:
+                self.pid_gains[axis] = {"kp": float(kp), "ki": float(ki), "kd": float(kd)}
+                return True
+            return False
+    _fc = _FakeFC()
+
+# Import UART modules (optional - may fail if hardware not available)
+_UARTLink = None
+_encode_message = None
+_MsgType = None
+try:
+    from backend.src.uart.uart_link import UARTLink as _UARTLink
+    from backend.src.uart.protocol import encode_message as _encode_message, MessageType as _MsgType
+except ImportError as e:
+    print(f"Info: UART modules not available (hardware simulation mode): {e}")
 
 
 class PIDUpdate(_BaseModel):
@@ -148,14 +175,18 @@ async def update_pid(p: PIDUpdate):
         raise HTTPException(status_code=400, detail=f"Unknown axis: {axis}")
 
     # forward to MCU (simulated when UART not present)
-    try:
-        uart = _UARTLink()
-        payload = { 'axis': axis, 'kp': p.kp, 'ki': p.ki, 'kd': p.kd }
-        data = _encode_message(_MsgType.PID_UPDATE, payload)
-        sent = uart.send(data)
-        return { 'success': True, 'sent_to_mcu': bool(sent), 'pid': _fc.pid_gains[axis] }
-    except Exception as e:
-        return { 'success': True, 'sent_to_mcu': False, 'pid': _fc.pid_gains[axis], 'warning': str(e) }
+    if _UARTLink and _encode_message and _MsgType:
+        try:
+            uart = _UARTLink()
+            payload = { 'axis': axis, 'kp': p.kp, 'ki': p.ki, 'kd': p.kd }
+            data = _encode_message(_MsgType.PID_UPDATE, payload)
+            sent = uart.send(data)
+            return { 'success': True, 'sent_to_mcu': bool(sent), 'pid': _fc.pid_gains[axis] }
+        except Exception as e:
+            return { 'success': True, 'sent_to_mcu': False, 'pid': _fc.pid_gains[axis], 'warning': str(e) }
+    else:
+        # UART not available, just update in-memory
+        return { 'success': True, 'sent_to_mcu': False, 'pid': _fc.pid_gains[axis], 'warning': 'UART not available' }
 
 
 @router.post("/command", response_model=CommandResponse)
