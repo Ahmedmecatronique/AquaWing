@@ -1,4 +1,4 @@
-# AquaWing — Drone Control System Ahmed
+# AquaWing — Drone Control System 
 
 Real-time drone tracking, telemetry, and mission control platform running on Raspberry Pi.
 
