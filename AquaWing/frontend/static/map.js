@@ -391,20 +391,7 @@ function updateTelemetry(data) {
     setText('bottom-lat', lat.toFixed(6));
     setText('bottom-lng', lon.toFixed(6));
     
-    // Update system status
-    const statusDot = document.getElementById('system-status-dot');
-    const statusText = document.getElementById('system-status-text');
-    if (statusDot && statusText) {
-        if (arm) {
-            statusDot.style.background = '#ff4d4d';
-            statusDot.style.boxShadow = '0 0 8px rgba(255, 77, 77, 0.5)';
-            statusText.textContent = 'SYSTEM ARMED';
-        } else {
-            statusDot.style.background = '#00ff88';
-            statusDot.style.boxShadow = '0 0 8px rgba(0, 255, 136, 0.5)';
-            statusText.textContent = 'SYSTEM DISARMED';
-        }
-    }
+    // System status indicator removed from UI
     
     // Update overview panel
     const setOverviewText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
@@ -416,6 +403,15 @@ function updateTelemetry(data) {
     setOverviewText('overview-heading', `${Math.round(heading)}°`);
     const distTraveled = distanceTraveled / 1000;
     setOverviewText('overview-distance', `${distTraveled.toFixed(2)} km`);
+    
+    // Update speed control panel telemetry
+    setOverviewText('speed-panel-battery', `${battery.toFixed(0)}%`);
+    setOverviewText('speed-panel-battery-volt', `${(battery * 0.168).toFixed(1)}V`);
+    setOverviewText('speed-panel-gps', `${data.gps_sats || 0} SATS`);
+    setOverviewText('speed-panel-alt', `${alt.toFixed(1)}m`);
+    setOverviewText('speed-panel-speed', `${speed.toFixed(1)} m/s`);
+    setOverviewText('speed-panel-heading', `${Math.round(heading)}°`);
+    setOverviewText('speed-panel-distance', `${distTraveled.toFixed(2)} km`);
     
     // Update Systems panel
     const setSysText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
@@ -1855,6 +1851,8 @@ window.addEventListener('load', () => {
     const navMissions = document.getElementById('nav-missions');
     const navSystems = document.getElementById('nav-systems');
     const navOptical = document.getElementById('nav-optical');
+    const navPid = document.getElementById('nav-pid');
+    const navSettings = document.getElementById('nav-settings');
     
     // Get panels from hidden dashboard-grid
     const telemetryPanel = document.querySelector('.telemetry-panel');
@@ -1863,7 +1861,7 @@ window.addEventListener('load', () => {
     const camsArea = document.querySelector('.cams-area');
     
     function setActiveNav(activeEl) {
-        [navDashboard, navMissions, navSystems, navOptical].forEach(el => {
+        [navDashboard, navMissions, navSystems, navOptical, navPid, navSettings].forEach(el => {
             if (el) {
                 el.classList.remove('nav-active');
             }
@@ -1880,7 +1878,6 @@ window.addEventListener('load', () => {
             const opticalPanel = document.getElementById('optical-panel');
             const opticalCamerasView = document.getElementById('optical-cameras-view');
             const mainContent = document.querySelector('.main-content');
-            const overviewPanel = document.querySelector('.system-overview-panel');
             const mapContainer = document.querySelector('.map-container');
             
             // Show speed control panel
@@ -1894,12 +1891,13 @@ window.addEventListener('load', () => {
             if (systemsPanel) systemsPanel.style.display = 'none';
             if (opticalPanel) opticalPanel.style.display = 'none';
             if (opticalCamerasView) opticalCamerasView.style.display = 'none';
+            const pidPanel = document.getElementById('pid-panel');
+            if (pidPanel) pidPanel.style.display = 'none';
             
             if (mainContent) {
                 mainContent.style.display = 'flex';
                 mainContent.classList.remove('missions-view');
             }
-            if (overviewPanel) overviewPanel.style.display = 'block';
             if (dashboardCams) dashboardCams.style.display = 'grid';
             if (mapContainer) {
                 mapContainer.style.display = 'block';
@@ -1919,6 +1917,10 @@ window.addEventListener('load', () => {
             if (speedControlPanel) speedControlPanel.style.display = 'none';
             if (systemsPanel) systemsPanel.style.display = 'none';
             if (opticalPanel) opticalPanel.style.display = 'none';
+            const pidPanel = document.getElementById('pid-panel');
+            if (pidPanel) pidPanel.style.display = 'none';
+            const settingsPanelMissions = document.getElementById('settings-panel');
+            if (settingsPanelMissions) settingsPanelMissions.style.display = 'none';
             
             // Show missions panel
             if (missionsPanel) {
@@ -1930,12 +1932,10 @@ window.addEventListener('load', () => {
             if (mainContent) {
                 mainContent.style.display = 'flex';
                 mainContent.classList.add('missions-view');
-                // Hide overview panel and all cameras, show only map
-                const overviewPanel = document.querySelector('.system-overview-panel');
+                // Hide all cameras, show only map
                 const dashboardCams = document.querySelector('.dashboard-cams');
                 const camsArea = document.querySelector('.cams-area');
                 const opticalCamerasView = document.getElementById('optical-cameras-view');
-                if (overviewPanel) overviewPanel.style.display = 'none';
                 if (dashboardCams) dashboardCams.style.display = 'none';
                 if (camsArea) camsArea.style.display = 'none';
                 if (opticalCamerasView) opticalCamerasView.style.display = 'none';
@@ -1986,6 +1986,10 @@ window.addEventListener('load', () => {
                 console.log('Systems panel shown');
             }
             if (opticalPanel) opticalPanel.style.display = 'none';
+            const pidPanelSystems = document.getElementById('pid-panel');
+            if (pidPanelSystems) pidPanelSystems.style.display = 'none';
+            const settingsPanelSystems = document.getElementById('settings-panel');
+            if (settingsPanelSystems) settingsPanelSystems.style.display = 'none';
             // Hide main content
             if (mainContent) mainContent.style.display = 'none';
             if (dashboardCams) dashboardCams.style.display = 'none';
@@ -2016,6 +2020,54 @@ window.addEventListener('load', () => {
             // Auto-enable cameras
             if (!videoOn) setVideo(true);
             if (!thermalOn) setThermal(true);
+        } else if (activeEl === navPid) {
+            // PID Settings: show PID settings panel
+            const speedControlPanel = document.getElementById('speed-control-panel');
+            const missionsPanel = document.getElementById('missions-panel');
+            const systemsPanel = document.getElementById('systems-panel');
+            const opticalPanel = document.getElementById('optical-panel');
+            const opticalCamerasView = document.getElementById('optical-cameras-view');
+            const pidPanel = document.getElementById('pid-panel');
+            const mainContent = document.querySelector('.main-content');
+            const dashboardCams = document.querySelector('.dashboard-cams');
+            
+            if (speedControlPanel) speedControlPanel.style.display = 'none';
+            if (missionsPanel) missionsPanel.style.display = 'none';
+            if (systemsPanel) systemsPanel.style.display = 'none';
+            if (opticalPanel) opticalPanel.style.display = 'none';
+            if (opticalCamerasView) opticalCamerasView.style.display = 'none';
+            if (pidPanel) {
+                pidPanel.style.display = 'flex';
+                console.log('PID settings panel shown');
+            }
+            // Hide main content
+            if (mainContent) mainContent.style.display = 'none';
+            if (dashboardCams) dashboardCams.style.display = 'none';
+        } else if (activeEl === navSettings) {
+            // Settings: show settings panel
+            const speedControlPanel = document.getElementById('speed-control-panel');
+            const missionsPanel = document.getElementById('missions-panel');
+            const systemsPanel = document.getElementById('systems-panel');
+            const opticalPanel = document.getElementById('optical-panel');
+            const opticalCamerasView = document.getElementById('optical-cameras-view');
+            const pidPanel = document.getElementById('pid-panel');
+            const settingsPanel = document.getElementById('settings-panel');
+            const mainContent = document.querySelector('.main-content');
+            const dashboardCams = document.querySelector('.dashboard-cams');
+            
+            if (speedControlPanel) speedControlPanel.style.display = 'none';
+            if (missionsPanel) missionsPanel.style.display = 'none';
+            if (systemsPanel) systemsPanel.style.display = 'none';
+            if (opticalPanel) opticalPanel.style.display = 'none';
+            if (opticalCamerasView) opticalCamerasView.style.display = 'none';
+            if (pidPanel) pidPanel.style.display = 'none';
+            if (settingsPanel) {
+                settingsPanel.style.display = 'flex';
+                console.log('Settings panel shown');
+            }
+            // Hide main content
+            if (mainContent) mainContent.style.display = 'none';
+            if (dashboardCams) dashboardCams.style.display = 'none';
         }
     }
     
@@ -2041,6 +2093,12 @@ window.addEventListener('load', () => {
         navOptical.addEventListener('click', () => {
             console.log('Optical clicked');
             setActiveNav(navOptical);
+        });
+    }
+    if (navPid) {
+        navPid.addEventListener('click', () => {
+            console.log('PID Settings clicked');
+            setActiveNav(navPid);
         });
     }
     
@@ -2448,3 +2506,668 @@ startPowerSimulation();
 
 
 // No auto-reconnect on visibility change — WebSocket connects lazily when needed
+
+// ============================================================================
+// AI DETECTION PANEL - Dashboard (under thermal camera)
+// ============================================================================
+
+// Simulated AI Detection Data
+const aiDetectionData = {
+    mode: 'Standby', // 'Human Search', 'Thermal Assist', 'Standby'
+    confidence: 0,
+    riskLevel: 'LOW', // 'LOW', 'MEDIUM', 'HIGH'
+    lastDetection: null
+};
+
+// Detection modes configuration
+const detectionModes = {
+    'Human Search': {
+        class: 'mode-human',
+        color: '#00ff88'
+    },
+    'Thermal Assist': {
+        class: 'mode-thermal',
+        color: '#ff9f1a'
+    },
+    'Standby': {
+        class: 'mode-standby',
+        color: '#999'
+    }
+};
+
+// Update AI Detection Panel
+function updateAIDetectionPanelDashboard() {
+    // Update Detection Mode
+    const modeText = document.getElementById('ai-mode-text-dashboard');
+    const modeBadge = document.getElementById('ai-mode-badge-dashboard');
+    if (modeText && modeBadge) {
+        modeText.textContent = aiDetectionData.mode;
+        // Remove all mode classes
+        Object.values(detectionModes).forEach(mode => {
+            modeBadge.classList.remove(mode.class);
+        });
+        // Add current mode class
+        const currentMode = detectionModes[aiDetectionData.mode];
+        if (currentMode) {
+            modeBadge.classList.add(currentMode.class);
+        }
+    }
+    
+    // Update Confidence
+    const confValue = document.getElementById('ai-confidence-value-dashboard');
+    const confFill = document.getElementById('ai-confidence-fill-dashboard');
+    if (confValue && confFill) {
+        const confidence = Math.round(aiDetectionData.confidence);
+        confValue.textContent = `${confidence}%`;
+        confFill.style.width = `${confidence}%`;
+        
+        // Update color based on confidence level
+        confFill.classList.remove('low', 'medium', 'high');
+        if (confidence < 40) {
+            confFill.classList.add('low');
+        } else if (confidence < 70) {
+            confFill.classList.add('medium');
+        } else {
+            confFill.classList.add('high');
+        }
+    }
+    
+    // Update Risk Level
+    const riskText = document.getElementById('ai-risk-text');
+    const riskBadge = document.getElementById('ai-risk-badge');
+    if (riskText && riskBadge) {
+        riskText.textContent = aiDetectionData.riskLevel;
+        // Remove all risk classes
+        riskBadge.classList.remove('risk-low', 'risk-medium', 'risk-high');
+        // Add current risk class
+        riskBadge.classList.add(`risk-${aiDetectionData.riskLevel.toLowerCase()}`);
+    }
+    
+    // Update Last Detection Timestamp
+    const timestamp = document.getElementById('ai-timestamp-dashboard');
+    if (timestamp) {
+        if (aiDetectionData.lastDetection) {
+            const date = new Date(aiDetectionData.lastDetection);
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+            timestamp.textContent = `${hours}:${minutes}:${seconds}`;
+        } else {
+            timestamp.textContent = '--:--:--';
+        }
+    }
+}
+
+// Simulate AI Detection Updates
+function simulateAIDetection() {
+    // Randomly change mode (less frequent)
+    if (Math.random() < 0.02) { // 2% chance per update
+        const modes = Object.keys(detectionModes);
+        aiDetectionData.mode = modes[Math.floor(Math.random() * modes.length)];
+    }
+    
+    // Update confidence (simulate detection activity)
+    if (aiDetectionData.mode !== 'Standby') {
+        // Simulate confidence fluctuations
+        const change = (Math.random() - 0.5) * 10; // -5 to +5
+        aiDetectionData.confidence = Math.max(0, Math.min(100, aiDetectionData.confidence + change));
+        
+        // Occasionally trigger a detection
+        if (Math.random() < 0.05 && aiDetectionData.confidence > 30) { // 5% chance if confidence > 30%
+            aiDetectionData.lastDetection = Date.now();
+            
+            // Update risk level based on confidence
+            if (aiDetectionData.confidence > 70) {
+                aiDetectionData.riskLevel = 'HIGH';
+            } else if (aiDetectionData.confidence > 40) {
+                aiDetectionData.riskLevel = 'MEDIUM';
+            } else {
+                aiDetectionData.riskLevel = 'LOW';
+            }
+            
+            // Trigger victim detection alert if confidence > 85%
+            if (aiDetectionData.confidence > 85) {
+                checkAlertConditions({ ai: { confidence: aiDetectionData.confidence } });
+            }
+        }
+    } else {
+        // In standby, gradually decrease confidence
+        aiDetectionData.confidence = Math.max(0, aiDetectionData.confidence - 2);
+        if (aiDetectionData.confidence === 0) {
+            aiDetectionData.riskLevel = 'LOW';
+        }
+    }
+    
+    // Update the panel
+    updateAIDetectionPanelDashboard();
+}
+
+// Initialize AI Detection Panel
+function initAIDetectionPanel() {
+    // Set initial values
+    aiDetectionData.mode = 'Standby';
+    aiDetectionData.confidence = 0;
+    aiDetectionData.riskLevel = 'LOW';
+    aiDetectionData.lastDetection = null;
+    
+    // Initial update
+    updateAIDetectionPanelDashboard();
+    
+    // Start simulation loop (update every 500ms)
+    setInterval(simulateAIDetection, 500);
+}
+
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAIDetectionPanel);
+} else {
+    initAIDetectionPanel();
+}
+
+// ============================================================================
+// ENHANCED DASHBOARD FEATURES - Professional Mission Control Interface
+// ============================================================================
+
+// Global System Status Bar - Health Indicators
+let systemHealth = {
+    connection: 'offline',
+    fc: 'unknown',
+    gps: 'offline',
+    battery: 'unknown'
+};
+
+function updateSystemHealth() {
+    // Connection status
+    const connDot = document.getElementById('health-connection-dot');
+    const connLabel = document.getElementById('health-connection-label');
+    if (connDot && connLabel) {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            connDot.className = 'health-dot healthy';
+            connLabel.textContent = 'CONNECTED';
+            systemHealth.connection = 'healthy';
+        } else if (ws && ws.readyState === WebSocket.CONNECTING) {
+            connDot.className = 'health-dot warning';
+            connLabel.textContent = 'CONNECTING';
+            systemHealth.connection = 'warning';
+        } else {
+            connDot.className = 'health-dot offline';
+            connLabel.textContent = 'OFFLINE';
+            systemHealth.connection = 'offline';
+        }
+    }
+    
+    // GPS status
+    const gpsDot = document.getElementById('health-gps-dot');
+    if (gpsDot) {
+        const gpsSats = parseInt(document.getElementById('speed-panel-gps')?.textContent || '0');
+        if (gpsSats >= 6) {
+            gpsDot.className = 'health-dot healthy';
+            systemHealth.gps = 'healthy';
+        } else if (gpsSats > 0) {
+            gpsDot.className = 'health-dot warning';
+            systemHealth.gps = 'warning';
+        } else {
+            gpsDot.className = 'health-dot offline';
+            systemHealth.gps = 'offline';
+        }
+    }
+    
+    // Battery status
+    const battDot = document.getElementById('health-battery-dot');
+    const battLabel = document.getElementById('health-battery-label');
+    if (battDot && battLabel) {
+        const battText = document.getElementById('speed-panel-battery')?.textContent || '100%';
+        const battPercent = parseInt(battText) || 100;
+        if (battPercent > 50) {
+            battDot.className = 'health-dot healthy';
+            systemHealth.battery = 'healthy';
+        } else if (battPercent > 20) {
+            battDot.className = 'health-dot warning';
+            systemHealth.battery = 'warning';
+        } else {
+            battDot.className = 'health-dot critical';
+            systemHealth.battery = 'critical';
+        }
+        battLabel.textContent = `${battPercent}%`;
+    }
+    
+    // FC status (simulated - would come from telemetry)
+    const fcDot = document.getElementById('health-fc-dot');
+    if (fcDot) {
+        // Assume healthy if connected
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            fcDot.className = 'health-dot healthy';
+            systemHealth.fc = 'healthy';
+        } else {
+            fcDot.className = 'health-dot offline';
+            systemHealth.fc = 'offline';
+        }
+    }
+}
+
+// Update health indicators every 2 seconds
+setInterval(updateSystemHealth, 2000);
+updateSystemHealth();
+
+// Enhanced Drone Marker with Smooth Animation
+let lastHeading = 0;
+function updateDroneMarkerAnimation(lat, lon, heading) {
+    if (!droneMarker) return;
+    
+    // Smooth heading interpolation
+    let targetHeading = heading;
+    let diff = targetHeading - lastHeading;
+    
+    // Handle wrap-around (e.g., 359 -> 1)
+    if (Math.abs(diff) > 180) {
+        if (diff > 0) diff -= 360;
+        else diff += 360;
+    }
+    
+    // Smooth interpolation
+    lastHeading += diff * 0.2; // 20% per frame for smoothness
+    if (Math.abs(diff) < 0.1) lastHeading = targetHeading;
+    
+    // Normalize heading
+    while (lastHeading < 0) lastHeading += 360;
+    while (lastHeading >= 360) lastHeading -= 360;
+    
+    // Update marker rotation with smooth transition
+    const el = droneMarker.getElement();
+    if (el) {
+        const inner = el.querySelector('.drone-icon') || el.querySelector('img');
+        if (inner) {
+            inner.style.transition = 'transform 0.2s ease-out';
+            inner.style.transform = `rotate(${lastHeading}deg)`;
+        }
+    }
+}
+
+// Mission Runtime Stats
+let missionStartTime = null;
+let missionStartLat = null;
+let missionStartLon = null;
+let missionPath = [];
+let missionArea = 0;
+
+function startMissionTimer() {
+    missionStartTime = Date.now();
+    missionStartLat = null;
+    missionStartLon = null;
+    missionPath = [];
+    missionArea = 0;
+    updateMissionRuntime();
+}
+
+function stopMissionTimer() {
+    missionStartTime = null;
+    const statsEl = document.getElementById('mission-runtime-stats');
+    if (statsEl) statsEl.style.display = 'none';
+}
+
+function updateMissionRuntime() {
+    if (!missionStartTime) return;
+    
+    const statsEl = document.getElementById('mission-runtime-stats');
+    if (!statsEl) return;
+    
+    statsEl.style.display = 'flex';
+    
+    // Update time
+    const elapsed = Date.now() - missionStartTime;
+    const hours = Math.floor(elapsed / 3600000);
+    const minutes = Math.floor((elapsed % 3600000) / 60000);
+    const seconds = Math.floor((elapsed % 60000) / 1000);
+    const timeEl = document.getElementById('runtime-time');
+    if (timeEl) {
+        timeEl.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+    
+    // Update distance
+    const distEl = document.getElementById('runtime-distance');
+    if (distEl) {
+        const dist = (distanceTraveled / 1000).toFixed(2);
+        distEl.textContent = `${dist} km`;
+    }
+    
+    // Update area (simplified - would need proper polygon calculation)
+    const areaEl = document.getElementById('runtime-area');
+    if (areaEl && missionPath.length > 2) {
+        // Simple approximation: bounding box area
+        const lats = missionPath.map(p => p.lat);
+        const lons = missionPath.map(p => p.lon);
+        const minLat = Math.min(...lats);
+        const maxLat = Math.max(...lats);
+        const minLon = Math.min(...lons);
+        const maxLon = Math.max(...lons);
+        
+        // Rough area calculation (not accurate for large distances)
+        const area = ((maxLat - minLat) * 111) * ((maxLon - minLon) * 111 * Math.cos((minLat + maxLat) / 2 * Math.PI / 180));
+        areaEl.textContent = `${Math.abs(area).toFixed(2)} km²`;
+    } else if (areaEl) {
+        areaEl.textContent = '0.00 km²';
+    }
+}
+
+// Update mission stats every second
+setInterval(updateMissionRuntime, 1000);
+
+// Track mission path
+function addMissionPathPoint(lat, lon) {
+    if (!missionStartTime) return;
+    if (missionStartLat === null) {
+        missionStartLat = lat;
+        missionStartLon = lon;
+    }
+    missionPath.push({ lat, lon });
+    // Keep only last 1000 points
+    if (missionPath.length > 1000) missionPath.shift();
+}
+
+// AI Detection Panel
+let aiDetectionState = {
+    confidence: 0,
+    mode: 'SEARCH',
+    thermalAssist: false,
+    detections: []
+};
+
+function updateAIDetectionPanel(data) {
+    // Update confidence
+    const confValue = document.getElementById('ai-confidence-value');
+    const confFill = document.getElementById('ai-confidence-fill');
+    if (confValue && confFill) {
+        const confidence = data.confidence || 0;
+        confValue.textContent = Math.round(confidence);
+        confFill.style.width = `${confidence}%`;
+        aiDetectionState.confidence = confidence;
+    }
+    
+    // Update mode
+    const modeText = document.getElementById('ai-mode-text');
+    if (modeText) {
+        const mode = data.mode || 'SEARCH';
+        modeText.textContent = mode;
+        aiDetectionState.mode = mode;
+    }
+    
+    // Update thermal assist
+    const thermalStatus = document.getElementById('ai-thermal-status');
+    const thermalText = document.getElementById('ai-thermal-text');
+    const thermalDot = thermalStatus?.querySelector('.ai-status-dot');
+    if (thermalStatus && thermalText && thermalDot) {
+        const active = data.thermalAssist || false;
+        if (active) {
+            thermalDot.classList.add('active');
+            thermalText.textContent = 'ACTIVE';
+        } else {
+            thermalDot.classList.remove('active');
+            thermalText.textContent = 'INACTIVE';
+        }
+        aiDetectionState.thermalAssist = active;
+    }
+    
+    // Update detections list
+    const detectionsList = document.getElementById('ai-detections-list');
+    if (detectionsList && data.detections) {
+        if (data.detections.length === 0) {
+            detectionsList.innerHTML = '<div class="ai-detection-item"><span class="detection-type">No detections</span></div>';
+        } else {
+            detectionsList.innerHTML = data.detections.slice(0, 5).map(det => 
+                `<div class="ai-detection-item">
+                    <span class="detection-type">${det.type || 'Unknown'}</span>
+                    <span style="color: rgba(234,242,255,0.6);"> - ${Math.round(det.confidence || 0)}%</span>
+                </div>`
+            ).join('');
+        }
+        aiDetectionState.detections = data.detections;
+    }
+}
+
+// Dynamic Alerts System - Enhanced with condition monitoring
+const alertConditions = {
+    batteryLow: { active: false, threshold: 25 },
+    gpsLost: { active: false },
+    windHigh: { active: false, threshold: 35 },
+    victimDetected: { active: false, threshold: 85 }
+};
+
+
+// Alert tracking to prevent duplicates
+const activeAlerts = new Map(); // Map<alertKey, alertElement>
+
+function showAlert(title, message, type = 'info', duration = 6000, alertKey = null) {
+    // Use alertKey to prevent duplicates, or generate from title if not provided
+    const key = alertKey || title.toLowerCase().replace(/\s+/g, '-');
+    
+    // Check if alert already exists
+    if (activeAlerts.has(key)) {
+        const existingAlert = activeAlerts.get(key);
+        // Update existing alert instead of creating duplicate
+        const messageEl = existingAlert.querySelector('.alert-message');
+        if (messageEl) messageEl.textContent = message;
+        return key;
+    }
+    
+    const container = document.getElementById('alerts-container');
+    if (!container) return null;
+    
+    const icons = {
+        info: 'ℹ️',
+        warning: '⚠️',
+        error: '❌',
+        success: '✅',
+        battery: '🔋',
+        gps: '📡',
+        wind: '💨',
+        victim: '🆘'
+    };
+    
+    // Determine icon based on title or type
+    let icon = icons[type] || icons.info;
+    const titleLower = title.toLowerCase();
+    if (titleLower.includes('battery')) icon = icons.battery;
+    else if (titleLower.includes('gps')) icon = icons.gps;
+    else if (titleLower.includes('wind')) icon = icons.wind;
+    else if (titleLower.includes('victim') || titleLower.includes('detection')) icon = icons.victim;
+    
+    const alert = document.createElement('div');
+    alert.className = `alert-toast ${type}`;
+    alert.dataset.alertKey = key;
+    alert.innerHTML = `
+        <span class="alert-icon">${icon}</span>
+        <div class="alert-content">
+            <div class="alert-title">${title}</div>
+            <div class="alert-message">${message}</div>
+        </div>
+    `;
+    
+    container.appendChild(alert);
+    activeAlerts.set(key, alert);
+    
+    // Auto-remove after duration (6 seconds default)
+    setTimeout(() => {
+        removeAlert(key);
+    }, duration);
+    
+    return key;
+}
+
+function removeAlert(alertKey) {
+    const alert = activeAlerts.get(alertKey);
+    if (!alert) return;
+    
+    alert.classList.add('removing');
+    setTimeout(() => {
+        if (alert.parentNode) {
+            alert.parentNode.removeChild(alert);
+        }
+        activeAlerts.delete(alertKey);
+    }, 400);
+}
+
+// Tactical Mode Toggle
+let tacticalMode = false;
+
+function toggleTacticalMode() {
+    tacticalMode = !tacticalMode;
+    const body = document.body;
+    const toggleBtn = document.getElementById('tactical-mode-toggle');
+    const label = document.getElementById('tactical-mode-label');
+    
+    if (tacticalMode) {
+        body.classList.add('tactical-mode');
+        if (toggleBtn) toggleBtn.classList.add('active');
+        if (label) label.textContent = 'TACTICAL ON';
+        showAlert('Tactical Mode', 'Tactical mode activated', 'warning', 3000);
+    } else {
+        body.classList.remove('tactical-mode');
+        if (toggleBtn) toggleBtn.classList.remove('active');
+        if (label) label.textContent = 'TACTICAL';
+        showAlert('Tactical Mode', 'Tactical mode deactivated', 'info', 3000);
+    }
+}
+
+// Initialize tactical mode toggle
+document.addEventListener('DOMContentLoaded', () => {
+    const tacticalBtn = document.getElementById('tactical-mode-toggle');
+    if (tacticalBtn) {
+        tacticalBtn.addEventListener('click', toggleTacticalMode);
+    }
+    
+    // Hook into mission start/stop
+    const originalStartFlight = window.startFlight;
+    if (typeof originalStartFlight === 'function') {
+        window.startFlight = function() {
+            startMissionTimer();
+            return originalStartFlight.apply(this, arguments);
+        };
+    }
+});
+
+// Enhanced telemetry update to include new features
+const originalUpdateTelemetry = updateTelemetry;
+updateTelemetry = function(data) {
+    // Call original function
+    originalUpdateTelemetry(data);
+    
+    // Update system health
+    updateSystemHealth();
+    
+    // Update drone marker with smooth animation
+    const lat = Number(data.lat || data.latitude || 0);
+    const lon = Number(data.lon || data.longitude || 0);
+    const heading = Number(data.heading || 0);
+    if (lat && lon) {
+        updateDroneMarkerAnimation(lat, lon, heading);
+        addMissionPathPoint(lat, lon);
+    }
+    
+    // Update AI detection if data available
+    if (data.ai) {
+        updateAIDetectionPanel(data.ai);
+    }
+    
+    // Alert System - Check trigger conditions
+    checkAlertConditions(data);
+};
+
+// Check alert conditions and trigger alerts
+function checkAlertConditions(data) {
+    // 1. Battery < 25%
+    const battery = Number(data.battery || 0);
+    if (battery > 0 && battery < alertConditions.batteryLow.threshold) {
+        if (!alertConditions.batteryLow.active) {
+            const severity = battery < 15 ? 'error' : 'warning';
+            showAlert(
+                'Low Battery',
+                `Battery at ${battery.toFixed(0)}% - Consider returning to base`,
+                severity,
+                6000,
+                'battery-low'
+            );
+            alertConditions.batteryLow.active = true;
+        }
+    } else {
+        alertConditions.batteryLow.active = false;
+    }
+    
+    // 2. GPS Lost (0 satellites)
+    const gpsSats = data.gps_sats || 0;
+    if (gpsSats === 0) {
+        if (!alertConditions.gpsLost.active) {
+            showAlert(
+                'GPS Signal Lost',
+                'No GPS satellites detected - Navigation may be impaired',
+                'error',
+                6000,
+                'gps-lost'
+            );
+            alertConditions.gpsLost.active = true;
+        }
+    } else {
+        alertConditions.gpsLost.active = false;
+    }
+    
+    // 3. Wind > 35 km/h (simulated from telemetry or separate data)
+    const windSpeed = data.wind_speed || data.wind || simulatedWindSpeed || 0; // km/h
+    if (windSpeed > alertConditions.windHigh.threshold) {
+        if (!alertConditions.windHigh.active) {
+            showAlert(
+                'High Wind Warning',
+                `Wind speed: ${windSpeed.toFixed(1)} km/h - Flight may be unstable`,
+                'warning',
+                6000,
+                'wind-high'
+            );
+            alertConditions.windHigh.active = true;
+        }
+    } else {
+        alertConditions.windHigh.active = false;
+    }
+    
+    // 4. AI Detects Victim > 85% confidence
+    const aiConfidence = data.ai?.confidence || aiDetectionData?.confidence || 0;
+    if (aiConfidence > alertConditions.victimDetected.threshold) {
+        if (!alertConditions.victimDetected.active) {
+            showAlert(
+                'Victim Detected',
+                `AI confidence: ${aiConfidence.toFixed(0)}% - Human detected in thermal imaging`,
+                'error',
+                6000,
+                'victim-detected'
+            );
+            alertConditions.victimDetected.active = true;
+        }
+    } else {
+        // Only reset if confidence drops significantly below threshold
+        if (aiConfidence < (alertConditions.victimDetected.threshold - 10)) {
+            alertConditions.victimDetected.active = false;
+        }
+    }
+}
+
+// Simulate wind speed for testing (would come from telemetry in real system)
+let simulatedWindSpeed = 20; // km/h
+function simulateWindSpeed() {
+    // Simulate wind fluctuations
+    const change = (Math.random() - 0.5) * 5; // -2.5 to +2.5 km/h
+    simulatedWindSpeed = Math.max(0, Math.min(50, simulatedWindSpeed + change));
+    
+    // Check wind condition
+    checkAlertConditions({ wind_speed: simulatedWindSpeed });
+}
+
+// Start wind simulation (update every 2 seconds)
+setInterval(simulateWindSpeed, 2000);
+
+// Initialize on page load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        updateSystemHealth();
+        showAlert('System Ready', 'Mission control interface initialized', 'success', 3000);
+    });
+} else {
+    updateSystemHealth();
+    showAlert('System Ready', 'Mission control interface initialized', 'success', 3000);
+}

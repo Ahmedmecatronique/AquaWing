@@ -14,19 +14,60 @@
 </head>
 
 <body>
+    <!-- Dynamic Alerts Container -->
+    <div class="alerts-container" id="alerts-container" aria-live="polite" aria-atomic="false"></div>
+
     <div id="dev-banner" aria-hidden="true" style="display:none;position:fixed;left:12px;top:10px;z-index:2000;padding:6px 10px;border-radius:8px;background:rgba(0,0,0,0.6);color:var(--muted);font-size:12px;font-weight:700;border:1px solid rgba(255,255,255,0.03);">Map CSS: v2 • Map JS: v1</div>
     
-    <!-- TOP BAR: System Status -->
+    <!-- TOP BAR: Global System Status -->
     <div class="top-status-bar">
-        <div class="status-item system-status">
-            <span class="status-dot-indicator" id="system-status-dot"></span>
-            <span id="system-status-text" class="status-value">SYSTEM DISARMED</span>
+        <!-- System Health Indicators -->
+        <div class="system-health-indicators">
+            <div class="health-indicator" id="health-connection" title="Connection Status">
+                <span class="health-dot" id="health-connection-dot"></span>
+                <span class="health-label" id="health-connection-label">CONNECTING</span>
+            </div>
+            <div class="health-indicator" id="health-fc" title="Flight Controller Status">
+                <span class="health-dot" id="health-fc-dot"></span>
+                <span class="health-label">FC</span>
+            </div>
+            <div class="health-indicator" id="health-gps" title="GPS Status">
+                <span class="health-dot" id="health-gps-dot"></span>
+                <span class="health-label" id="health-gps-label">GPS</span>
+            </div>
+            <div class="health-indicator" id="health-battery" title="Battery Status">
+                <span class="health-dot" id="health-battery-dot"></span>
+                <span class="health-label" id="health-battery-label">BATT</span>
+            </div>
         </div>
-        <button id="ai-advisor-btn" class="ai-advisor-btn" title="Conseiller IA : Analyse et recommandations pour le vol">
+        
+        <!-- Mission Runtime Stats (when active) -->
+        <div class="mission-runtime-stats" id="mission-runtime-stats" style="display:none;">
+            <div class="runtime-item">
+                <span class="runtime-label">TIME:</span>
+                <span class="runtime-value" id="runtime-time">00:00:00</span>
+            </div>
+            <div class="runtime-item">
+                <span class="runtime-label">DIST:</span>
+                <span class="runtime-value" id="runtime-distance">0.00 km</span>
+            </div>
+            <div class="runtime-item">
+                <span class="runtime-label">AREA:</span>
+                <span class="runtime-value" id="runtime-area">0.00 km²</span>
+            </div>
+        </div>
+        
+        <!-- AI Advisor Button -->
+        <button id="ai-advisor-btn" class="ai-advisor-btn" title="Conseiller IA : Analyse et recommandations pour le vol" style="margin-left: auto;">
             <span class="ai-icon">⚡</span>
             <span>AI ADVISOR</span>
         </button>
-        <div class="top-brand">AQUAWING</div>
+        
+        <!-- Tactical Mode Toggle -->
+        <button id="tactical-mode-toggle" class="tactical-mode-btn" title="Toggle Tactical Mode">
+            <span class="tactical-icon">🎯</span>
+            <span id="tactical-mode-label">TACTICAL</span>
+        </button>
     </div>
 
     <div class="main-layout">
@@ -34,7 +75,7 @@
         <aside class="left-sidebar">
             <div class="sidebar-header">
                 <div class="logo-text">
-                    <div class="logo-title">DRONE CONTROL OS</div>
+                    <div class="logo-title">AquaWing control panel</div>
                 </div>
             </div>
             
@@ -54,6 +95,14 @@
                 <button id="nav-optical" class="nav-item">
                     <span class="nav-icon">📷</span>
                     <span>Optical</span>
+                </button>
+                <button id="nav-pid" class="nav-item">
+                    <span class="nav-icon">⚙️</span>
+                    <span>PID Settings</span>
+                </button>
+                <button id="nav-settings" class="nav-item">
+                    <span class="nav-icon">🔧</span>
+                    <span>Settings</span>
                 </button>
             </nav>
 
@@ -77,6 +126,32 @@
                     <input id="speed-control-sidebar" type="range" min="0" max="10" step="0.1" value="0">
                     <div class="speed-value-display">
                         <span id="speed-value-display">0.0</span> m/s
+                    </div>
+                </div>
+                
+                <!-- Telemetry Overview (BATTERY, GPS, ALTITUDE, HEADING) -->
+                <div class="system-overview-panel speed-panel-telemetry">
+                    <div class="overview-grid">
+                        <div class="overview-card">
+                            <div class="overview-label">Battery</div>
+                            <div class="overview-value" id="speed-panel-battery">100%</div>
+                            <div class="overview-sub" id="speed-panel-battery-volt">16.8V</div>
+                        </div>
+                        <div class="overview-card">
+                            <div class="overview-label">GPS</div>
+                            <div class="overview-value" id="speed-panel-gps">0 SATS</div>
+                            <div class="overview-sub">3D FIX</div>
+                        </div>
+                        <div class="overview-card">
+                            <div class="overview-label">Altitude</div>
+                            <div class="overview-value" id="speed-panel-alt">0.0m</div>
+                            <div class="overview-sub" id="speed-panel-speed">0.0 m/s</div>
+                        </div>
+                        <div class="overview-card">
+                            <div class="overview-label">Heading</div>
+                            <div class="overview-value" id="speed-panel-heading">0°</div>
+                            <div class="overview-sub" id="speed-panel-distance">0.00 km</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -285,6 +360,160 @@
             </div>
         </div>
 
+        <!-- PID Settings Panel (shown when PID Settings tab is active) -->
+        <div class="pid-panel" id="pid-panel" style="display:none;">
+            <div class="pid-panel-header">
+                <div class="panel-title">PID SETTINGS</div>
+            </div>
+            <div class="pid-settings-content">
+                <!-- Roll PID -->
+                <div class="pid-settings-section">
+                    <div class="settings-section-title">ROLL PID</div>
+                    <div class="settings-group">
+                        <label for="pid-roll-p">P (Proportional)</label>
+                        <input type="number" id="pid-roll-p" min="0" max="10" step="0.01" value="4.5">
+                    </div>
+                    <div class="settings-group">
+                        <label for="pid-roll-i">I (Integral)</label>
+                        <input type="number" id="pid-roll-i" min="0" max="10" step="0.01" value="0.45">
+                    </div>
+                    <div class="settings-group">
+                        <label for="pid-roll-d">D (Derivative)</label>
+                        <input type="number" id="pid-roll-d" min="0" max="10" step="0.01" value="0.05">
+                    </div>
+                </div>
+
+                <!-- Pitch PID -->
+                <div class="pid-settings-section">
+                    <div class="settings-section-title">PITCH PID</div>
+                    <div class="settings-group">
+                        <label for="pid-pitch-p">P (Proportional)</label>
+                        <input type="number" id="pid-pitch-p" min="0" max="10" step="0.01" value="4.5">
+                    </div>
+                    <div class="settings-group">
+                        <label for="pid-pitch-i">I (Integral)</label>
+                        <input type="number" id="pid-pitch-i" min="0" max="10" step="0.01" value="0.45">
+                    </div>
+                    <div class="settings-group">
+                        <label for="pid-pitch-d">D (Derivative)</label>
+                        <input type="number" id="pid-pitch-d" min="0" max="10" step="0.01" value="0.05">
+                    </div>
+                </div>
+
+                <!-- Yaw PID -->
+                <div class="pid-settings-section">
+                    <div class="settings-section-title">YAW PID</div>
+                    <div class="settings-group">
+                        <label for="pid-yaw-p">P (Proportional)</label>
+                        <input type="number" id="pid-yaw-p" min="0" max="10" step="0.01" value="4.5">
+                    </div>
+                    <div class="settings-group">
+                        <label for="pid-yaw-i">I (Integral)</label>
+                        <input type="number" id="pid-yaw-i" min="0" max="10" step="0.01" value="0.45">
+                    </div>
+                    <div class="settings-group">
+                        <label for="pid-yaw-d">D (Derivative)</label>
+                        <input type="number" id="pid-yaw-d" min="0" max="10" step="0.01" value="0.05">
+                    </div>
+                </div>
+
+                <!-- Altitude PID -->
+                <div class="pid-settings-section">
+                    <div class="settings-section-title">ALTITUDE PID</div>
+                    <div class="settings-group">
+                        <label for="pid-alt-p">P (Proportional)</label>
+                        <input type="number" id="pid-alt-p" min="0" max="10" step="0.01" value="1.0">
+                    </div>
+                    <div class="settings-group">
+                        <label for="pid-alt-i">I (Integral)</label>
+                        <input type="number" id="pid-alt-i" min="0" max="10" step="0.01" value="0.1">
+                    </div>
+                    <div class="settings-group">
+                        <label for="pid-alt-d">D (Derivative)</label>
+                        <input type="number" id="pid-alt-d" min="0" max="10" step="0.01" value="0.01">
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="pid-actions">
+                    <button id="pid-save-btn" class="btn-primary">Save PID</button>
+                    <button id="pid-reset-btn" class="btn-ghost">Reset to Default</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Panel (shown when Settings tab is active) -->
+        <div class="settings-panel" id="settings-panel" style="display:none;">
+            <div class="settings-panel-header">
+                <div class="panel-title">SETTINGS</div>
+            </div>
+            <div class="settings-panel-content">
+                <!-- General Settings -->
+                <div class="settings-section">
+                    <div class="settings-section-title">GENERAL</div>
+                    <div class="settings-group">
+                        <label>
+                            <input type="checkbox" id="settings-auto-connect" checked> Auto Connect on Startup
+                        </label>
+                    </div>
+                    <div class="settings-group">
+                        <label>
+                            <input type="checkbox" id="settings-show-notifications" checked> Show Notifications
+                        </label>
+                    </div>
+                    <div class="settings-group">
+                        <label for="settings-language">Language</label>
+                        <select id="settings-language">
+                            <option value="en" selected>English</option>
+                            <option value="fr">Français</option>
+                            <option value="ar">العربية</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Display Settings -->
+                <div class="settings-section">
+                    <div class="settings-section-title">DISPLAY</div>
+                    <div class="settings-group">
+                        <label for="settings-theme">Theme</label>
+                        <select id="settings-theme">
+                            <option value="dark" selected>Dark</option>
+                            <option value="light">Light</option>
+                            <option value="auto">Auto</option>
+                        </select>
+                    </div>
+                    <div class="settings-group">
+                        <label for="settings-map-style">Map Style</label>
+                        <select id="settings-map-style">
+                            <option value="standard" selected>Standard</option>
+                            <option value="satellite">Satellite</option>
+                            <option value="terrain">Terrain</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Telemetry Settings -->
+                <div class="settings-section">
+                    <div class="settings-section-title">TELEMETRY</div>
+                    <div class="settings-group">
+                        <label for="settings-update-rate">Update Rate (Hz)</label>
+                        <input type="number" id="settings-update-rate" min="1" max="50" value="10">
+                    </div>
+                    <div class="settings-group">
+                        <label>
+                            <input type="checkbox" id="settings-record-telemetry" checked> Record Telemetry
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="settings-actions">
+                    <button id="settings-save-btn" class="btn-primary">Save Settings</button>
+                    <button id="settings-reset-btn" class="btn-ghost">Reset to Default</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Optical Cameras View (shown when Optical tab is active) -->
         <div class="optical-cameras-view" id="optical-cameras-view" style="display:none;">
             <div class="optical-cameras-grid">
@@ -338,32 +567,43 @@
 
         <!-- MAIN CONTENT: Dashboard View -->
         <main class="main-content">
-            <!-- System Overview Panel (Top) -->
-            <div class="system-overview-panel">
-                <div class="overview-grid">
-                    <div class="overview-card">
-                        <div class="overview-label">Battery</div>
-                        <div class="overview-value" id="overview-battery">100%</div>
-                        <div class="overview-sub" id="overview-battery-volt">16.8V</div>
+            <!-- AI Detection Panel (Dashboard) -->
+            <div class="ai-detection-panel" id="ai-detection-panel">
+                <div class="ai-panel-header">
+                    <div class="panel-title">AI DETECTION</div>
+                </div>
+                <div class="ai-panel-content">
+                    <div class="ai-metric">
+                        <div class="ai-metric-label">Confidence</div>
+                        <div class="ai-metric-value">
+                            <span id="ai-confidence-value">0</span>%
+                        </div>
+                        <div class="ai-confidence-bar">
+                            <div class="ai-confidence-fill" id="ai-confidence-fill" style="width: 0%"></div>
+                        </div>
                     </div>
-                    <div class="overview-card">
-                        <div class="overview-label">GPS</div>
-                        <div class="overview-value" id="overview-gps">0 SATS</div>
-                        <div class="overview-sub">3D FIX</div>
+                    <div class="ai-metric">
+                        <div class="ai-metric-label">Mode</div>
+                        <div class="ai-mode-badge" id="ai-mode-badge">
+                            <span class="ai-mode-icon">🔍</span>
+                            <span id="ai-mode-text">SEARCH</span>
+                        </div>
                     </div>
-                    <div class="overview-card">
-                        <div class="overview-label">Altitude</div>
-                        <div class="overview-value" id="overview-alt">0.0m</div>
-                        <div class="overview-sub" id="overview-speed">0.0 m/s</div>
+                    <div class="ai-metric">
+                        <div class="ai-metric-label">Thermal Assist</div>
+                        <div class="ai-thermal-status" id="ai-thermal-status">
+                            <span class="ai-status-dot"></span>
+                            <span id="ai-thermal-text">INACTIVE</span>
+                        </div>
                     </div>
-                    <div class="overview-card">
-                        <div class="overview-label">Heading</div>
-                        <div class="overview-value" id="overview-heading">0°</div>
-                        <div class="overview-sub" id="overview-distance">0.00 km</div>
+                    <div class="ai-detections-list" id="ai-detections-list">
+                        <div class="ai-detection-item">
+                            <span class="detection-type">No detections</span>
+                        </div>
                     </div>
                 </div>
             </div>
-
+            
             <!-- Map Container -->
             <div class="map-container">
                 <div id="map" class="map-canvas"></div>
@@ -417,6 +657,47 @@
                         <div class="camera-stats small">
                             <span id="thermal-res">--</span> • <span id="thermal-fps">0 fps</span>
                             <span id="thermal-ai" class="ai-comment" style="margin-left:10px;color:var(--accent);font-weight:700"></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- AI Detection Panel (under thermal camera) -->
+                <div class="ai-detection-panel-dashboard card" id="ai-detection-panel-dashboard">
+                    <div class="ai-panel-header-dashboard">
+                        <div class="panel-title">AI DETECTION</div>
+                    </div>
+                    <div class="ai-panel-content-dashboard">
+                        <!-- Detection Mode -->
+                        <div class="ai-detection-item">
+                            <div class="ai-detection-label">Detection Mode</div>
+                            <div class="ai-mode-badge-dashboard" id="ai-mode-badge-dashboard">
+                                <span id="ai-mode-text-dashboard">Standby</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Confidence -->
+                        <div class="ai-detection-item">
+                            <div class="ai-detection-label">Confidence</div>
+                            <div class="ai-confidence-container">
+                                <div class="ai-confidence-value" id="ai-confidence-value-dashboard">0%</div>
+                                <div class="ai-confidence-bar-dashboard">
+                                    <div class="ai-confidence-fill-dashboard" id="ai-confidence-fill-dashboard" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Risk Level -->
+                        <div class="ai-detection-item">
+                            <div class="ai-detection-label">Risk Level</div>
+                            <div class="ai-risk-badge" id="ai-risk-badge">
+                                <span id="ai-risk-text">LOW</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Last Detection Timestamp -->
+                        <div class="ai-detection-item">
+                            <div class="ai-detection-label">Last Detection</div>
+                            <div class="ai-timestamp" id="ai-timestamp-dashboard">--:--:--</div>
                         </div>
                     </div>
                 </div>
