@@ -283,6 +283,10 @@ function stopDemo(){
         stopMissionTimer();
         flightStarted = false;
         updateFlightControls();
+        // Stop heatmap scan when mission ends
+        if (isScanning) {
+            stopHeatmapScan();
+        }
     }
     demoPaused = false;
     // disable pause/resume controls when stopped
@@ -336,6 +340,7 @@ let heatmapMap = null;
 let heatmapMarkers = [];
 let heatmapScanInterval = null;
 let isScanning = false;
+let heatmapHistory = []; // Array of {lat, lon, isDrowning, timestamp}
 
 function initHeatmapMap() {
     const heatmapMapContainer = document.getElementById('heatmap-map');
@@ -370,13 +375,10 @@ function initHeatmapMap() {
 
 function startHeatmapScan() {
     if (isScanning) {
-        stopHeatmapScan();
-        return;
+        return; // Already scanning
     }
     
     isScanning = true;
-    const scanBtn = document.getElementById('heatmap-scan-btn');
-    if (scanBtn) scanBtn.textContent = 'Stop Scan';
     
     // Simulate scanning - in production, this would call an API
     heatmapScanInterval = setInterval(() => {
@@ -390,8 +392,6 @@ function stopHeatmapScan() {
         clearInterval(heatmapScanInterval);
         heatmapScanInterval = null;
     }
-    const scanBtn = document.getElementById('heatmap-scan-btn');
-    if (scanBtn) scanBtn.textContent = 'Start Scan';
 }
 
 function simulateDetection() {
@@ -433,8 +433,19 @@ function addHeatmapMarker(lat, lon, isDrowning) {
     
     heatmapMarkers.push({ marker, isDrowning });
     
-    // Update statistics
+    // Add to history
+    const now = new Date();
+    const historyItem = {
+        lat: lat,
+        lon: lon,
+        isDrowning: isDrowning,
+        timestamp: now
+    };
+    heatmapHistory.unshift(historyItem); // Add to beginning
+    
+    // Update statistics and history display
     updateHeatmapStats();
+    updateHeatmapHistory();
 }
 
 function clearHeatmapPoints() {
@@ -444,8 +455,80 @@ function clearHeatmapPoints() {
     });
     heatmapMarkers = [];
     
-    // Update statistics
+    // Clear history
+    heatmapHistory = [];
+    
+    // Update statistics and history display
     updateHeatmapStats();
+    updateHeatmapHistory();
+}
+
+function clearHeatmapHistory() {
+    heatmapHistory = [];
+    updateHeatmapHistory();
+}
+
+function updateHeatmapHistory() {
+    const historyContent = document.getElementById('heatmap-history-content');
+    if (!historyContent) return;
+    
+    if (heatmapHistory.length === 0) {
+        historyContent.innerHTML = '<div class="history-empty">Aucun cas enregistré</div>';
+        return;
+    }
+    
+    let html = '';
+    heatmapHistory.forEach((item, index) => {
+        const date = new Date(item.timestamp);
+        const dateStr = date.toLocaleDateString('fr-FR', { 
+            day: '2-digit', 
+            month: '2-digit', 
+            year: 'numeric' 
+        });
+        const timeStr = date.toLocaleTimeString('fr-FR', { 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            second: '2-digit' 
+        });
+        
+        const typeClass = item.isDrowning ? 'drowning' : 'normal';
+        const typeText = item.isDrowning ? '⚠️ NOYADE' : '✓ PERSONNE NORMALE';
+        
+        html += `
+            <div class="history-item ${typeClass}" data-index="${index}">
+                <div class="history-item-header">
+                    <span class="history-item-type ${typeClass}">${typeText}</span>
+                    <span class="history-item-time">${dateStr} ${timeStr}</span>
+                </div>
+                <div class="history-item-position">
+                    <div class="history-item-coords">
+                        <span class="history-item-coord">LAT: ${item.lat.toFixed(6)}</span>
+                        <span class="history-item-coord">LON: ${item.lon.toFixed(6)}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    historyContent.innerHTML = html;
+    
+    // Add click handlers to center map on item
+    historyContent.querySelectorAll('.history-item').forEach((itemEl, index) => {
+        itemEl.addEventListener('click', () => {
+            const historyItem = heatmapHistory[index];
+            if (heatmapMap && historyItem) {
+                heatmapMap.setView([historyItem.lat, historyItem.lon], 18);
+                // Find and open marker popup
+                const markerData = heatmapMarkers.find(m => 
+                    Math.abs(m.marker.getLatLng().lat - historyItem.lat) < 0.0001 &&
+                    Math.abs(m.marker.getLatLng().lng - historyItem.lon) < 0.0001
+                );
+                if (markerData && markerData.marker) {
+                    markerData.marker.openPopup();
+                }
+            }
+        });
+    });
 }
 
 function updateHeatmapStats() {
@@ -1207,6 +1290,10 @@ if (startFlightBtn) {
         flightStarted = true;
         updateFlightControls();
         startMissionTimer(); // Start mission statistics tracking
+        // Start heatmap scan automatically when mission starts
+        if (!isScanning) {
+            startHeatmapScan();
+        }
         showToast('Mission started — drone is flying the trajectory', 'success');
     });
 }
@@ -1273,6 +1360,10 @@ if (waitBtn) {
         // Stop the demo simulation
         stopDemo();
         missionLocked = true;
+        // Stop heatmap scan when mission ends
+        if (isScanning) {
+            stopHeatmapScan();
+        }
         // VISUAL ONLY: mark mission area locked and disable mission-related controls
         const telemetryPanel = document.querySelector('.telemetry-panel');
         if (telemetryPanel) telemetryPanel.classList.add('mission-locked');
@@ -1325,6 +1416,10 @@ if (pauseMissionBtn) {
         if (resumeMissionBtn) resumeMissionBtn.disabled = false;
         flightStarted = false;
         updateFlightControls();
+        // Stop heatmap scan when mission is paused
+        if (isScanning) {
+            stopHeatmapScan();
+        }
         showToast('Mission paused', 'info');
     });
 }
@@ -1339,6 +1434,10 @@ if (resumeMissionBtn) {
         // Resume mission timer if it was stopped
         if (!missionStartTime) {
             startMissionTimer();
+        }
+        // Resume heatmap scan when mission resumes
+        if (!isScanning) {
+            startHeatmapScan();
         }
         showToast('Mission resumed', 'success');
     });
@@ -2461,18 +2560,18 @@ window.addEventListener('load', () => {
     setTimeout(()=>{ try { if (map && typeof map.invalidateSize === 'function') map.invalidateSize(); } catch(e){} }, 250);
     
     // Heatmap panel controls
-    const heatmapScanBtn = document.getElementById('heatmap-scan-btn');
     const heatmapClearBtn = document.getElementById('heatmap-clear-btn');
-    
-    if (heatmapScanBtn) {
-        heatmapScanBtn.addEventListener('click', () => {
-            startHeatmapScan();
-        });
-    }
     
     if (heatmapClearBtn) {
         heatmapClearBtn.addEventListener('click', () => {
             clearHeatmapPoints();
+        });
+    }
+    
+    const heatmapClearHistoryBtn = document.getElementById('heatmap-clear-history-btn');
+    if (heatmapClearHistoryBtn) {
+        heatmapClearHistoryBtn.addEventListener('click', () => {
+            clearHeatmapHistory();
         });
     }
 });

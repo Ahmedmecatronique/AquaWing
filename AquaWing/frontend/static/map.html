@@ -10,7 +10,7 @@
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="/static/map.css?v=12">
+    <link rel="stylesheet" href="/static/map.css?v=14">
 </head>
 
 <body>
@@ -446,7 +446,6 @@
             <div class="heatmap-panel-header">
                 <div class="panel-title">HEATMAP - DROWNING DETECTION</div>
                 <div class="heatmap-controls">
-                    <button id="heatmap-scan-btn" class="btn-primary">Start Scan</button>
                     <button id="heatmap-clear-btn" class="btn-ghost">Clear Points</button>
                 </div>
             </div>
@@ -465,7 +464,18 @@
                         <span class="heatmap-stat-value normal" id="heatmap-normal-count">0</span>
                     </div>
                 </div>
-                <div id="heatmap-map" class="heatmap-map-canvas"></div>
+                <div class="heatmap-main-area">
+                    <div id="heatmap-map" class="heatmap-map-canvas"></div>
+                    <div class="heatmap-history-panel">
+                        <div class="heatmap-history-header">
+                            <div class="history-title">HISTORIQUE DES CAS</div>
+                            <button id="heatmap-clear-history-btn" class="btn-ghost btn-small">Effacer</button>
+                        </div>
+                        <div class="heatmap-history-content" id="heatmap-history-content">
+                            <div class="history-empty">Aucun cas enregistré</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1080,6 +1090,6 @@
     <div id="toast" aria-live="polite" aria-atomic="true" class="toast-container" style="display:none;"></div>
 
     <script>/* dev: stamped version */ window.__MAP_CSS_VERSION='v2'; window.__MAP_JS_VERSION='v1';</script>
-    <script defer src="/static/map.js?v=12"></script>
+    <script defer src="/static/map.js?v=14"></script>
 </body>
 </html>
