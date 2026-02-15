@@ -7,8 +7,8 @@ git add .
 if git diff --cached --quiet; then
     echo "✅ Nothing to commit."
 else
-    echo "📝 Committing..."
-    git commit -m "auto update $(date '+%Y-%m-%d %H:%M:%S')"
+echo "📝 Committing..."
+git commit -m "auto update $(date '+%Y-%m-%d %H:%M:%S')"
 fi
 
 echo "🔄 Fetching latest changes from remote..."

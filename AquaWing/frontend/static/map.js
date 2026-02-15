@@ -328,6 +328,140 @@ function initMap() {
     }catch(e){ console.warn('Could not reposition zoom control', e); }
 }
 
+// ============================================================================
+// HEATMAP MAP INITIALIZATION
+// ============================================================================
+
+let heatmapMap = null;
+let heatmapMarkers = [];
+let heatmapScanInterval = null;
+let isScanning = false;
+
+function initHeatmapMap() {
+    const heatmapMapContainer = document.getElementById('heatmap-map');
+    if (!heatmapMapContainer) return;
+    
+    // If map already exists, just invalidate size
+    if (heatmapMap) {
+        setTimeout(() => {
+            try { heatmapMap.invalidateSize(); } catch(e) {}
+        }, 100);
+        return;
+    }
+    
+    // Create heatmap map centered on Tunis
+    heatmapMap = L.map('heatmap-map').setView(MAP_CENTER, 15);
+    
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19
+    }).addTo(heatmapMap);
+    
+    // Move Leaflet zoom control to bottom-right
+    try{
+        if (heatmapMap && heatmapMap.zoomControl) heatmapMap.zoomControl.setPosition('bottomright');
+    }catch(e){ console.warn('Could not reposition heatmap zoom control', e); }
+}
+
+// ============================================================================
+// HEATMAP DETECTION FUNCTIONS
+// ============================================================================
+
+function startHeatmapScan() {
+    if (isScanning) {
+        stopHeatmapScan();
+        return;
+    }
+    
+    isScanning = true;
+    const scanBtn = document.getElementById('heatmap-scan-btn');
+    if (scanBtn) scanBtn.textContent = 'Stop Scan';
+    
+    // Simulate scanning - in production, this would call an API
+    heatmapScanInterval = setInterval(() => {
+        simulateDetection();
+    }, 3000); // Scan every 3 seconds
+}
+
+function stopHeatmapScan() {
+    isScanning = false;
+    if (heatmapScanInterval) {
+        clearInterval(heatmapScanInterval);
+        heatmapScanInterval = null;
+    }
+    const scanBtn = document.getElementById('heatmap-scan-btn');
+    if (scanBtn) scanBtn.textContent = 'Start Scan';
+}
+
+function simulateDetection() {
+    if (!heatmapMap) return;
+    
+    // Get current map bounds
+    const bounds = heatmapMap.getBounds();
+    const center = bounds.getCenter();
+    
+    // Generate random position within visible map area
+    const lat = center.lat + (Math.random() - 0.5) * (bounds.getNorth() - bounds.getSouth()) * 0.8;
+    const lon = center.lng + (Math.random() - 0.5) * (bounds.getEast() - bounds.getWest()) * 0.8;
+    
+    // Randomly determine if it's a drowning case (30% chance) or normal person (70% chance)
+    const isDrowning = Math.random() < 0.3;
+    
+    addHeatmapMarker(lat, lon, isDrowning);
+}
+
+function addHeatmapMarker(lat, lon, isDrowning) {
+    if (!heatmapMap) return;
+    
+    // Create marker with appropriate color
+    const color = isDrowning ? '#ff4d4d' : '#00ff88';
+    const icon = L.divIcon({
+        className: 'heatmap-marker',
+        html: `<div style="width: 16px; height: 16px; border-radius: 50%; background: ${color}; border: 2px solid white; box-shadow: 0 0 8px ${color};"></div>`,
+        iconSize: [16, 16],
+        iconAnchor: [8, 8]
+    });
+    
+    const marker = L.marker([lat, lon], { icon: icon }).addTo(heatmapMap);
+    
+    // Add popup with detection info
+    const popupText = isDrowning 
+        ? '<strong style="color: #ff4d4d;">⚠️ DROWNING CASE DETECTED</strong><br>Location: ' + lat.toFixed(6) + ', ' + lon.toFixed(6)
+        : '<strong style="color: #00ff88;">✓ Normal Person</strong><br>Location: ' + lat.toFixed(6) + ', ' + lon.toFixed(6);
+    marker.bindPopup(popupText);
+    
+    heatmapMarkers.push({ marker, isDrowning });
+    
+    // Update statistics
+    updateHeatmapStats();
+}
+
+function clearHeatmapPoints() {
+    // Remove all markers
+    heatmapMarkers.forEach(({ marker }) => {
+        if (heatmapMap) heatmapMap.removeLayer(marker);
+    });
+    heatmapMarkers = [];
+    
+    // Update statistics
+    updateHeatmapStats();
+}
+
+function updateHeatmapStats() {
+    const total = heatmapMarkers.length;
+    const drowning = heatmapMarkers.filter(m => m.isDrowning).length;
+    const normal = total - drowning;
+    
+    const totalEl = document.getElementById('heatmap-total-detections');
+    const drowningEl = document.getElementById('heatmap-drowning-count');
+    const normalEl = document.getElementById('heatmap-normal-count');
+    
+    if (totalEl) totalEl.textContent = total;
+    if (drowningEl) drowningEl.textContent = drowning;
+    if (normalEl) normalEl.textContent = normal;
+}
+
 function createDroneMarker(lat = MAP_CENTER[0], lon = MAP_CENTER[1], heading = 0) {
     // If exists, update position and heading smoothly
     if (droneMarker) {
@@ -443,7 +577,7 @@ function updateTelemetry(data) {
     setSysText('sys-compass', 'OK');
     
     // Update motor statuses (simulated)
-    for (let i = 1; i <= 4; i++) {
+    for (let i = 1; i <= 3; i++) {
         setSysText(`sys-motor-${i}`, 'OK');
         setSysText(`sys-motor-${i}-temp`, `${(45 + Math.random() * 5).toFixed(0)}°C`);
     }
@@ -452,7 +586,6 @@ function updateTelemetry(data) {
     const setBottomText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
     setBottomText('bottom-uart', 'OK');
     setBottomText('bottom-rpi-temp', '42°C');
-    setBottomText('bottom-fc', 'PIXHAWK6X');
     setBottomText('bottom-mag', 'CALIBRATED');
 
     // Arm & mode
@@ -1961,6 +2094,7 @@ window.addEventListener('load', () => {
     const navSystems = document.getElementById('nav-systems');
     const navOptical = document.getElementById('nav-optical');
     const navPid = document.getElementById('nav-pid');
+    const navHeatmap = document.getElementById('nav-heatmap');
     const navSettings = document.getElementById('nav-settings');
     
     // Get panels from hidden dashboard-grid
@@ -1970,7 +2104,7 @@ window.addEventListener('load', () => {
     const camsArea = document.querySelector('.cams-area');
     
     function setActiveNav(activeEl) {
-        [navDashboard, navMissions, navSystems, navOptical, navPid, navSettings].forEach(el => {
+        [navDashboard, navMissions, navSystems, navOptical, navPid, navHeatmap, navSettings].forEach(el => {
             if (el) {
                 el.classList.remove('nav-active');
             }
@@ -2004,6 +2138,8 @@ window.addEventListener('load', () => {
             if (pidPanel) pidPanel.style.display = 'none';
             const settingsPanel = document.getElementById('settings-panel');
             if (settingsPanel) settingsPanel.style.display = 'none';
+            const heatmapPanel = document.getElementById('heatmap-panel');
+            if (heatmapPanel) heatmapPanel.style.display = 'none';
             
             if (mainContent) {
                 mainContent.style.display = 'flex';
@@ -2032,6 +2168,8 @@ window.addEventListener('load', () => {
             if (pidPanel) pidPanel.style.display = 'none';
             const settingsPanelMissions = document.getElementById('settings-panel');
             if (settingsPanelMissions) settingsPanelMissions.style.display = 'none';
+            const heatmapPanelMissions = document.getElementById('heatmap-panel');
+            if (heatmapPanelMissions) heatmapPanelMissions.style.display = 'none';
             
             // Show missions panel
             if (missionsPanel) {
@@ -2101,6 +2239,8 @@ window.addEventListener('load', () => {
             if (pidPanelSystems) pidPanelSystems.style.display = 'none';
             const settingsPanelSystems = document.getElementById('settings-panel');
             if (settingsPanelSystems) settingsPanelSystems.style.display = 'none';
+            const heatmapPanelSystems = document.getElementById('heatmap-panel');
+            if (heatmapPanelSystems) heatmapPanelSystems.style.display = 'none';
             // Hide main content
             if (mainContent) mainContent.style.display = 'none';
             if (dashboardCams) dashboardCams.style.display = 'none';
@@ -2123,6 +2263,8 @@ window.addEventListener('load', () => {
             if (pidPanel) pidPanel.style.display = 'none';
             // Hide Settings panel in Optical view
             if (settingsPanel) settingsPanel.style.display = 'none';
+            const heatmapPanelOptical = document.getElementById('heatmap-panel');
+            if (heatmapPanelOptical) heatmapPanelOptical.style.display = 'none';
             if (opticalPanel) {
                 opticalPanel.style.display = 'flex';
                 console.log('Optical settings panel shown');
@@ -2157,6 +2299,8 @@ window.addEventListener('load', () => {
             if (opticalCamerasView) opticalCamerasView.style.display = 'none';
             // Hide Settings panel in PID view
             if (settingsPanel) settingsPanel.style.display = 'none';
+            const heatmapPanelPid = document.getElementById('heatmap-panel');
+            if (heatmapPanelPid) heatmapPanelPid.style.display = 'none';
             // Hide main content
             if (mainContent) mainContent.style.display = 'none';
             if (dashboardCams) dashboardCams.style.display = 'none';
@@ -2171,6 +2315,44 @@ window.addEventListener('load', () => {
                 setTimeout(() => {
                     loadPidSettings();
                 }, 200);
+            }
+        } else if (activeEl === navHeatmap) {
+            // Heatmap: show heatmap panel with map
+            const speedControlPanel = document.getElementById('speed-control-panel');
+            const missionsPanel = document.getElementById('missions-panel');
+            const systemsPanel = document.getElementById('systems-panel');
+            const opticalPanel = document.getElementById('optical-panel');
+            const opticalCamerasView = document.getElementById('optical-cameras-view');
+            const pidPanel = document.getElementById('pid-panel');
+            const settingsPanel = document.getElementById('settings-panel');
+            const heatmapPanel = document.getElementById('heatmap-panel');
+            const mainContent = document.querySelector('.main-content');
+            const dashboardCams = document.querySelector('.dashboard-cams');
+            
+            if (speedControlPanel) speedControlPanel.style.display = 'none';
+            if (missionsPanel) missionsPanel.style.display = 'none';
+            if (systemsPanel) systemsPanel.style.display = 'none';
+            if (opticalPanel) opticalPanel.style.display = 'none';
+            if (opticalCamerasView) opticalCamerasView.style.display = 'none';
+            if (pidPanel) pidPanel.style.display = 'none';
+            if (settingsPanel) settingsPanel.style.display = 'none';
+            // Hide main content
+            if (mainContent) mainContent.style.display = 'none';
+            if (dashboardCams) dashboardCams.style.display = 'none';
+            
+            // Show heatmap panel
+            if (heatmapPanel) {
+                heatmapPanel.style.display = 'flex';
+                console.log('Heatmap panel shown');
+                // Ensure it's in the main layout
+                const mainLayout = document.querySelector('.main-layout');
+                if (mainLayout && !mainLayout.contains(heatmapPanel)) {
+                    mainLayout.appendChild(heatmapPanel);
+                }
+                // Initialize heatmap map if not already initialized
+                setTimeout(() => {
+                    initHeatmapMap();
+                }, 100);
             }
         } else if (activeEl === navSettings) {
             // Settings: show settings panel
@@ -2190,6 +2372,8 @@ window.addEventListener('load', () => {
             if (opticalPanel) opticalPanel.style.display = 'none';
             if (opticalCamerasView) opticalCamerasView.style.display = 'none';
             if (pidPanel) pidPanel.style.display = 'none';
+            const heatmapPanelSettings = document.getElementById('heatmap-panel');
+            if (heatmapPanelSettings) heatmapPanelSettings.style.display = 'none';
             if (settingsPanel) {
                 settingsPanel.style.display = 'flex';
                 console.log('Settings panel shown');
@@ -2228,6 +2412,12 @@ window.addEventListener('load', () => {
         navPid.addEventListener('click', () => {
             console.log('PID Settings clicked');
             setActiveNav(navPid);
+        });
+    }
+    if (navHeatmap) {
+        navHeatmap.addEventListener('click', () => {
+            console.log('Heatmap clicked');
+            setActiveNav(navHeatmap);
         });
     }
     if (navSettings) {
@@ -2269,6 +2459,22 @@ window.addEventListener('load', () => {
 
     // ensure leaflet map is correctly sized after layout changes
     setTimeout(()=>{ try { if (map && typeof map.invalidateSize === 'function') map.invalidateSize(); } catch(e){} }, 250);
+    
+    // Heatmap panel controls
+    const heatmapScanBtn = document.getElementById('heatmap-scan-btn');
+    const heatmapClearBtn = document.getElementById('heatmap-clear-btn');
+    
+    if (heatmapScanBtn) {
+        heatmapScanBtn.addEventListener('click', () => {
+            startHeatmapScan();
+        });
+    }
+    
+    if (heatmapClearBtn) {
+        heatmapClearBtn.addEventListener('click', () => {
+            clearHeatmapPoints();
+        });
+    }
 });
 
 // Simulation state with smoothing helper (must be declared before use)

@@ -10,7 +10,7 @@
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="/static/map.css?v=9">
+    <link rel="stylesheet" href="/static/map.css?v=12">
 </head>
 
 <body>
@@ -75,7 +75,7 @@
         <aside class="left-sidebar">
             <div class="sidebar-header">
                 <div class="logo-text">
-                    <div class="logo-title">AquaWing control panel</div>
+                    <img src="/static/aquawing-logo.png" alt="AquaWing" class="logo-image">
                 </div>
             </div>
             
@@ -99,6 +99,10 @@
                 <button id="nav-pid" class="nav-item">
                     <span class="nav-icon">⚙️</span>
                     <span>PID Settings</span>
+                </button>
+                <button id="nav-heatmap" class="nav-item">
+                    <span class="nav-icon">🔥</span>
+                    <span>Heatmap</span>
                 </button>
                 <button id="nav-settings" class="nav-item">
                     <span class="nav-icon">🔧</span>
@@ -232,11 +236,6 @@
                             <div class="motor-label">Motor 3</div>
                             <div class="motor-status" id="sys-motor-3">OK</div>
                             <div class="motor-temp" id="sys-motor-3-temp">45°C</div>
-                        </div>
-                        <div class="systems-motor-card">
-                            <div class="motor-label">Motor 4</div>
-                            <div class="motor-status" id="sys-motor-4">OK</div>
-                            <div class="motor-temp" id="sys-motor-4-temp">45°C</div>
                         </div>
                     </div>
                 </div>
@@ -439,6 +438,34 @@
                     <button id="pid-save-btn" class="btn-primary">Save PID</button>
                     <button id="pid-reset-btn" class="btn-ghost">Reset to Default</button>
                 </div>
+            </div>
+        </div>
+
+        <!-- Heatmap Panel (shown when Heatmap tab is active) -->
+        <div class="heatmap-panel" id="heatmap-panel" style="display:none;">
+            <div class="heatmap-panel-header">
+                <div class="panel-title">HEATMAP - DROWNING DETECTION</div>
+                <div class="heatmap-controls">
+                    <button id="heatmap-scan-btn" class="btn-primary">Start Scan</button>
+                    <button id="heatmap-clear-btn" class="btn-ghost">Clear Points</button>
+                </div>
+            </div>
+            <div class="heatmap-panel-content">
+                <div class="heatmap-stats">
+                    <div class="heatmap-stat">
+                        <span class="heatmap-stat-label">Total Detections:</span>
+                        <span class="heatmap-stat-value" id="heatmap-total-detections">0</span>
+                    </div>
+                    <div class="heatmap-stat">
+                        <span class="heatmap-stat-label">Drowning Cases:</span>
+                        <span class="heatmap-stat-value drowning" id="heatmap-drowning-count">0</span>
+                    </div>
+                    <div class="heatmap-stat">
+                        <span class="heatmap-stat-label">Normal Persons:</span>
+                        <span class="heatmap-stat-value normal" id="heatmap-normal-count">0</span>
+                    </div>
+                </div>
+                <div id="heatmap-map" class="heatmap-map-canvas"></div>
             </div>
         </div>
 
@@ -673,10 +700,6 @@
         <div class="telemetry-item">
             <span class="telemetry-label">RPI4:</span>
             <span id="bottom-rpi-temp" class="telemetry-value">42°C</span>
-        </div>
-        <div class="telemetry-item">
-            <span class="telemetry-label">FC:</span>
-            <span id="bottom-fc" class="telemetry-value">PIXHAWK6X</span>
         </div>
         <div class="telemetry-item">
             <span class="telemetry-label">MAG:</span>
@@ -1057,6 +1080,6 @@
     <div id="toast" aria-live="polite" aria-atomic="true" class="toast-container" style="display:none;"></div>
 
     <script>/* dev: stamped version */ window.__MAP_CSS_VERSION='v2'; window.__MAP_JS_VERSION='v1';</script>
-    <script defer src="/static/map.js?v=10"></script>
+    <script defer src="/static/map.js?v=12"></script>
 </body>
 </html>

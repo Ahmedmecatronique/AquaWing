@@ -257,6 +257,7 @@ html, body { height: 100%; width: 100%; background: #0a0e1a; font-family: 'Outfi
 .sidebar-header {
     display: flex;
     align-items: center;
+    justify-content: center;
     padding-bottom: 20px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
@@ -264,6 +265,9 @@ html, body { height: 100%; width: 100%; background: #0a0e1a; font-family: 'Outfi
 .logo-text {
     display: flex;
     flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
 }
 
 .logo-title {
@@ -272,6 +276,16 @@ html, body { height: 100%; width: 100%; background: #0a0e1a; font-family: 'Outfi
     color: var(--accent); /* Orange accent color from palette */
     letter-spacing: 1px;
     text-transform: uppercase;
+}
+
+.logo-image {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    max-height: 45px;
+    width: auto;
+    object-fit: contain;
+    margin: 0 auto;
 }
 
 .top-brand {
@@ -2227,6 +2241,99 @@ body.tactical-mode * {
     display: flex;
     flex-direction: column;
     gap: 20px;
+}
+
+/* Heatmap Panel */
+.heatmap-panel {
+    width: 100%;
+    background: rgba(8, 12, 20, 0.95);
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    overflow: hidden;
+    height: calc(100vh - 48px);
+    flex: 1;
+    animation: slideInLeft 0.3s ease-out;
+}
+
+.heatmap-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    flex-shrink: 0;
+}
+
+.heatmap-controls {
+    display: flex;
+    gap: 12px;
+}
+
+.heatmap-panel-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+    padding: 20px;
+    gap: 16px;
+}
+
+.heatmap-stats {
+    display: flex;
+    gap: 20px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+.heatmap-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.heatmap-stat-label {
+    font-size: 11px;
+    color: rgba(234, 242, 255, 0.5);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.heatmap-stat-value {
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--text);
+}
+
+.heatmap-stat-value.drowning {
+    color: #ff4d4d;
+}
+
+.heatmap-stat-value.normal {
+    color: #00ff88;
+}
+
+.heatmap-map-canvas {
+    flex: 1;
+    min-height: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Black and white filter for heatmap map tiles */
+.heatmap-map-canvas .leaflet-tile-container img {
+    filter: grayscale(100%) contrast(1.2);
+}
+
+/* Keep markers colored (red and green) */
+.heatmap-map-canvas .leaflet-marker-icon {
+    filter: none !important;
 }
 
 /* Settings Panel */
