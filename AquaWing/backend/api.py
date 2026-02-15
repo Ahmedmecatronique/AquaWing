@@ -117,8 +117,6 @@ async def get_telemetry():
 # ---------------------------------------------------------------------------
 # PID tuning endpoints (frontend -> backend -> optional MCU forward)
 # ---------------------------------------------------------------------------
-from pydantic import BaseModel as _BaseModel
-
 # Import flight controller (required)
 try:
     from backend.src.control.flight_controller import flight_controller as _fc
@@ -150,7 +148,7 @@ except ImportError as e:
     print(f"Info: UART modules not available (hardware simulation mode): {e}")
 
 
-class PIDUpdate(_BaseModel):
+class PIDUpdate(BaseModel):
     axis: str
     kp: float
     ki: float

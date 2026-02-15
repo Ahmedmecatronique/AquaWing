@@ -15,6 +15,7 @@ AquaWing enables:
 * 🎥 **Dual camera streaming** (RGB + Thermal) with MJPEG support
 * 🤖 **AI-powered object detection** with confidence scoring
 * ⚙️ **Advanced PID tuning** for flight controller optimization
+* 🔥 **Heatmap detection system** for drowning case monitoring
 * 🔐 **Secure session-based authentication** with user management
 * 🎨 **Tactical mode** with military-style UI theme
 * 📊 **Mission statistics** tracking (time, distance, area scanned)
@@ -238,6 +239,35 @@ Password: admin123
 * **Real-time updates** via API
 * **Save & Reset** functionality
 * **Default values** restoration
+
+### 🔥 Heatmap - Drowning Detection Panel
+
+* **Interactive Map Display**:
+  * Black and white map view for enhanced visibility
+  * Full-screen map with zoom and pan controls
+  * Real-time detection point visualization
+  
+* **Detection System**:
+  * **Start/Stop Scan** button for continuous monitoring
+  * **Clear Points** button to reset all detections
+  * Automatic scanning every 3 seconds (configurable)
+  
+* **Visual Indicators**:
+  * 🔴 **Red markers** for drowning cases detected
+  * 🟢 **Green markers** for normal persons detected
+  * Clickable markers with location details in popups
+  
+* **Real-time Statistics**:
+  * Total detections count
+  * Drowning cases count (red)
+  * Normal persons count (green)
+  * Auto-updating counters
+  
+* **Map Features**:
+  * Grayscale map tiles for better contrast
+  * Leaflet-based interactive map
+  * GPS coordinate display on markers
+  * Responsive layout
 
 ### 🎨 Speed Control Panel
 
