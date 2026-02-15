@@ -10,7 +10,7 @@
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="/static/map.css?v=18">
+    <link rel="stylesheet" href="/static/map.css?v=21">
 </head>
 
 <body>
@@ -58,10 +58,77 @@
         </div>
         
         <!-- AI Advisor Button -->
-        <button id="ai-advisor-btn" class="ai-advisor-btn" title="Conseiller IA : Analyse et recommandations pour le vol" style="margin-left: auto;">
-            <span class="ai-icon">⚡</span>
-            <span>AI ADVISOR</span>
-        </button>
+        <div style="position: relative; margin-left: auto;">
+            <button id="ai-advisor-btn" class="ai-advisor-btn" title="Conseiller IA : Analyse et recommandations pour le vol">
+                <span class="ai-icon">⚡</span>
+                <span>AI ADVISOR</span>
+            </button>
+            
+            <!-- AI Advisor Panel - Floating HUD -->
+            <div class="ai-advisor-panel" id="ai-advisor-panel" style="display:none;">
+                <div class="ai-advisor-header">
+                    <span class="ai-icon">⚡</span>
+                    <span>AI ADVISOR</span>
+                    <button class="ai-advisor-close" id="ai-advisor-close" title="Fermer">✕</button>
+                </div>
+                <div class="ai-advisor-body">
+                    <div class="advisor-list">
+                        <div class="advisor-list-item">
+                            <span class="advisor-bullet">•</span>
+                            <span class="advisor-text">Battery: <span class="advisor-value" id="advisor-battery">--</span></span>
+                        </div>
+                        <div class="advisor-list-item">
+                            <span class="advisor-bullet">•</span>
+                            <span class="advisor-text">Estimated Flight Time: <span class="advisor-value" id="advisor-flight-time">--</span></span>
+                        </div>
+                        <div class="advisor-list-item">
+                            <span class="advisor-bullet">•</span>
+                            <span class="advisor-text">Wind Status: <span class="advisor-value" id="advisor-wind">--</span></span>
+                        </div>
+                        <div class="advisor-list-item">
+                            <span class="advisor-bullet">•</span>
+                            <span class="advisor-text">Mission Feasible: <span class="advisor-value" id="advisor-feasibility">--</span></span>
+                        </div>
+                    </div>
+                    
+                    <div class="advisor-section-title">AI Vision:</div>
+                    <div class="advisor-list">
+                        <div class="advisor-list-item">
+                            <span class="advisor-bullet">•</span>
+                            <span class="advisor-text">RGB: <span class="advisor-value" id="advisor-rgb-detections">--</span></span>
+                        </div>
+                        <div class="advisor-list-item">
+                            <span class="advisor-bullet">•</span>
+                            <span class="advisor-text">Thermal: <span class="advisor-value" id="advisor-thermal">--</span></span>
+                        </div>
+                    </div>
+                    
+                    <div class="advisor-section-title">System:</div>
+                    <div class="advisor-list">
+                        <div class="advisor-list-item">
+                            <span class="advisor-bullet">•</span>
+                            <span class="advisor-text">Motor Temp: <span class="advisor-value" id="advisor-motors">--</span></span>
+                        </div>
+                        <div class="advisor-list-item">
+                            <span class="advisor-bullet">•</span>
+                            <span class="advisor-text">GPS: <span class="advisor-value" id="advisor-gps">--</span></span>
+                        </div>
+                        <div class="advisor-list-item">
+                            <span class="advisor-bullet">•</span>
+                            <span class="advisor-text">IMU: <span class="advisor-value" id="advisor-imu">--</span></span>
+                        </div>
+                    </div>
+                    
+                    <div class="advisor-section-title">Recommendation:</div>
+                    <div class="advisor-list">
+                        <div class="advisor-list-item">
+                            <span class="advisor-bullet">•</span>
+                            <span class="advisor-text"><span class="advisor-value" id="advisor-recommendation">--</span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         
         <!-- Tactical Mode Toggle -->
         <button id="tactical-mode-toggle" class="tactical-mode-btn" title="Toggle Tactical Mode">
@@ -1099,6 +1166,6 @@
     <div id="toast" aria-live="polite" aria-atomic="true" class="toast-container" style="display:none;"></div>
 
     <script>/* dev: stamped version */ window.__MAP_CSS_VERSION='v2'; window.__MAP_JS_VERSION='v1';</script>
-    <script defer src="/static/map.js?v=14"></script>
+    <script defer src="/static/map.js?v=16"></script>
 </body>
 </html>

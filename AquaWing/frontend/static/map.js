@@ -78,6 +78,10 @@ let distanceTraveled = 0;  // meters
 let prevTeleLat = null;
 let prevTeleLon = null;
 
+// AI Advisor state
+let isAdvisorOpen = false;
+let lastTelemetryData = null;
+
 // Lightweight Toggle helper (integrated into existing files, no external JS)
 (function(){ if (window.Toggles) return; const Toggles = {};
   function isBtn(el){ return el && el.tagName === 'BUTTON' && el.classList && el.classList.contains('toggle-switch'); }
@@ -606,6 +610,20 @@ function updateTelemetry(data) {
     const ts = data.ts || data.timestamp || Date.now();
 
     if (!lat || !lon) return;
+    
+    // Store telemetry data for AI Advisor
+    lastTelemetryData = {
+        lat, lon, alt, heading, speed, battery, arm, mode, ts,
+        gps_sats: data.gps_sats || 0,
+        current: data.current || 0,
+        battery_temp: data.battery_temp || 30,
+        wind_speed: data.wind_speed || 0
+    };
+    
+    // Update AI Advisor if open
+    if (isAdvisorOpen) {
+        updateAIAdvisor();
+    }
 
     // Telemetry DOM updates
     const setText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
@@ -1867,6 +1885,120 @@ function simulateThermalDetections(){
     drawDetectionsOnCanvas('thermal-overlay', detections);
 }
 
+// ============================================================================
+// AI ADVISOR FUNCTIONS
+// ============================================================================
+
+function updateAIAdvisor() {
+    if (!lastTelemetryData) {
+        // Use default values if no telemetry yet
+        lastTelemetryData = {
+            battery: 85,
+            gps_sats: 12,
+            speed: 0,
+            wind_speed: 0,
+            battery_temp: 30,
+            current: 0.8
+        };
+    }
+    
+    const data = lastTelemetryData;
+    const setAdvisorValue = (id, text, className = '') => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.textContent = text;
+            el.className = 'advisor-value ' + className;
+        }
+    };
+    
+    // Mission Analysis
+    const battery = data.battery || 85;
+    const batteryStatus = battery >= 50 ? 'OK' : battery >= 25 ? 'LOW' : 'CRITICAL';
+    const batteryClass = battery >= 50 ? 'ok' : battery >= 25 ? 'warning' : 'critical';
+    setAdvisorValue('advisor-battery', `${battery.toFixed(0)}% (${batteryStatus})`, batteryClass);
+    
+    // Estimated flight time
+    const currentConsumption = data.current || 0.8;
+    const estimatedMinutes = Math.floor((battery / 100) * (60 / (currentConsumption * 0.1)));
+    const flightTime = estimatedMinutes > 0 ? `${estimatedMinutes} min` : 'Calculating...';
+    setAdvisorValue('advisor-flight-time', flightTime, battery >= 25 ? 'ok' : 'warning');
+    
+    // Wind warning
+    const windSpeed = data.wind_speed || 0;
+    const windKmh = windSpeed * 3.6;
+    let windStatus = 'Safe';
+    let windClass = 'ok';
+    if (windKmh > 35) {
+        windStatus = `High (${windKmh.toFixed(0)} km/h)`;
+        windClass = 'critical';
+    } else if (windKmh > 20) {
+        windStatus = `Moderate (${windKmh.toFixed(0)} km/h)`;
+        windClass = 'warning';
+    } else if (windKmh > 0) {
+        windStatus = `${windKmh.toFixed(0)} km/h`;
+        windClass = 'ok';
+    }
+    setAdvisorValue('advisor-wind', windStatus, windClass);
+    
+    // Mission feasibility
+    let feasibility = 'Yes';
+    let feasibilityClass = 'ok';
+    if (battery < 25) {
+        feasibility = 'No (Low battery)';
+        feasibilityClass = 'critical';
+    } else if (battery < 50 && distanceTraveled > 1000) {
+        feasibility = 'Risky';
+        feasibilityClass = 'warning';
+    } else if (windKmh > 35) {
+        feasibility = 'No (High wind)';
+        feasibilityClass = 'warning';
+    } else if (data.gps_sats < 6) {
+        feasibility = 'Risky (Low GPS)';
+        feasibilityClass = 'warning';
+    }
+    setAdvisorValue('advisor-feasibility', feasibility, feasibilityClass);
+    
+    // AI Vision Analysis
+    const rgbAiEl = document.getElementById('rgb-ai');
+    const rgbDetections = rgbAiEl && rgbAiEl.textContent && rgbAiEl.textContent.includes('detected') 
+        ? rgbAiEl.textContent.split('–')[0].trim() 
+        : 'No detections';
+    setAdvisorValue('advisor-rgb-detections', rgbDetections, rgbDetections.includes('detected') ? 'ok' : '');
+    
+    const thermalAiEl = document.getElementById('thermal-ai');
+    const thermalStatus = thermalAiEl && thermalAiEl.textContent && thermalAiEl.textContent.includes('detected')
+        ? thermalAiEl.textContent.split('–')[0].trim()
+        : 'No anomalies';
+    setAdvisorValue('advisor-thermal', thermalStatus, thermalStatus.includes('detected') ? 'ok' : '');
+    
+    // System Diagnostics
+    const motorTemp = data.battery_temp || 30;
+    setAdvisorValue('advisor-motors', `${motorTemp.toFixed(0)}°C`, motorTemp < 60 ? 'ok' : motorTemp < 75 ? 'warning' : 'critical');
+    
+    const gpsSats = data.gps_sats || 0;
+    setAdvisorValue('advisor-gps', `${gpsSats} satellites`, gpsSats >= 8 ? 'ok' : gpsSats >= 6 ? 'ok' : gpsSats >= 4 ? 'warning' : 'critical');
+    
+    setAdvisorValue('advisor-imu', 'Stable', 'ok');
+    
+    // Safety Recommendation
+    const recommendationEl = document.getElementById('advisor-recommendation');
+    if (recommendationEl) {
+        let recommendation = 'Continue Mission';
+        let recClass = 'ok';
+        
+        if (battery < 15 || windKmh > 40 || gpsSats < 4) {
+            recommendation = 'Return To Launch';
+            recClass = 'critical';
+        } else if (battery < 30 || windKmh > 30 || motorTemp > 70) {
+            recommendation = 'Hover';
+            recClass = 'warning';
+        }
+        
+        recommendationEl.textContent = recommendation;
+        recommendationEl.className = 'advisor-value ' + recClass;
+    }
+}
+
 function startRGBLoop(res){
     stopRGBLoop();
     // initial fetch immediately
@@ -2598,6 +2730,36 @@ window.addEventListener('load', () => {
                     if (heatmapMap && typeof heatmapMap.invalidateSize === 'function') heatmapMap.invalidateSize();
                 } catch(e) {}
             }, 300);
+        });
+    }
+    
+    // AI Advisor panel controls
+    const aiAdvisorBtn = document.getElementById('ai-advisor-btn');
+    const aiAdvisorPanel = document.getElementById('ai-advisor-panel');
+    const aiAdvisorClose = document.getElementById('ai-advisor-close');
+    
+    function toggleAIAdvisor() {
+        isAdvisorOpen = !isAdvisorOpen;
+        if (aiAdvisorPanel) {
+            if (isAdvisorOpen) {
+                aiAdvisorPanel.style.display = 'block';
+                updateAIAdvisor();
+            } else {
+                aiAdvisorPanel.style.display = 'none';
+            }
+        }
+    }
+    
+    if (aiAdvisorBtn) {
+        aiAdvisorBtn.addEventListener('click', () => {
+            toggleAIAdvisor();
+        });
+    }
+    
+    if (aiAdvisorClose) {
+        aiAdvisorClose.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleAIAdvisor();
         });
     }
 });

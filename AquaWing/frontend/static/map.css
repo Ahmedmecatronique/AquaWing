@@ -297,6 +297,139 @@ html, body { height: 100%; width: 100%; background: #0a0e1a; font-family: 'Outfi
     font-size: 14px;
 }
 
+/* AI Advisor Panel - Floating HUD */
+.ai-advisor-panel {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 320px;
+    max-height: calc(100vh - 120px);
+    background: rgba(10, 20, 30, 0.5);
+    border: 1px solid rgba(0, 255, 200, 0.15);
+    border-radius: 8px;
+    z-index: 2000;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    pointer-events: auto;
+    backdrop-filter: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Ensure parent container is relative for absolute positioning */
+.top-status-bar > div[style*="position: relative"] {
+    position: relative;
+}
+
+.ai-advisor-panel[style*="display: block"] {
+    display: flex !important;
+}
+
+.ai-advisor-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(0, 255, 200, 0.1);
+    background: rgba(0, 255, 200, 0.05);
+    gap: 8px;
+}
+
+.ai-advisor-header .ai-icon {
+    font-size: 14px;
+}
+
+.ai-advisor-header span:not(.ai-icon) {
+    font-size: 13px;
+    font-weight: 800;
+    color: #00ffc8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    flex: 1;
+}
+
+.ai-advisor-close {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: rgba(234, 242, 255, 0.6);
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+    line-height: 1;
+}
+
+.ai-advisor-close:hover {
+    color: #ff7a18;
+}
+
+.ai-advisor-body {
+    padding: 12px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: calc(100vh - 120px);
+}
+
+.advisor-section-title {
+    font-size: 12px;
+    font-weight: 800;
+    color: #00ffc8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+    margin-bottom: 4px;
+}
+
+.advisor-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.advisor-list-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 12px;
+    color: rgba(234, 242, 255, 0.8);
+    line-height: 1.5;
+}
+
+.advisor-bullet {
+    color: #00ffc8;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.advisor-text {
+    flex: 1;
+    color: rgba(234, 242, 255, 0.8);
+}
+
+.advisor-value {
+    font-weight: 700;
+    color: var(--text);
+}
+
+.advisor-value.ok {
+    color: #00ff88;
+}
+
+.advisor-value.warning {
+    color: #ff9f1a;
+}
+
+.advisor-value.critical {
+    color: #ff4d4d;
+}
+
 /* MAIN LAYOUT */
 .main-layout {
     display: flex;
