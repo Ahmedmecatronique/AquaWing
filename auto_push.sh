@@ -35,11 +35,17 @@ else
 fi
 
 echo "🚀 Pushing to origin/main..."
-git push origin main
-
-if [ $? -eq 0 ]; then
+if git push origin main 2>&1; then
     echo "✅ Push successful!"
 else
+    EXIT_CODE=$?
     echo "❌ Push failed!"
-    exit 1
+    echo ""
+    echo "💡 Possible solutions:"
+    echo "   1. Configure Git credentials:"
+    echo "      git config --global credential.helper store"
+    echo "   2. Use SSH instead of HTTPS:"
+    echo "      git remote set-url origin git@github.com:Ahmedmecatronique/AquaWing.git"
+    echo "   3. Push manually with: git push origin main"
+    exit $EXIT_CODE
 fi
