@@ -1317,16 +1317,28 @@ function initPlaceholderTimer(placeholderElement) {
         placeholderTimers.delete(placeholderElement);
     }
     
+    // Detect if this is an RGB camera placeholder
+    const isRgbPlaceholder = placeholderElement.id === 'video-placeholder' || 
+                              placeholderElement.id === 'optical-video-placeholder';
+    
     // Reset text to initial state
     const textEl = placeholderElement.querySelector('.video-placeholder-text');
     if (textEl) {
-        textEl.textContent = 'Connecting to Camera...';
+        if (isRgbPlaceholder) {
+            textEl.textContent = 'Connecting to RGB Camera...';
+        } else {
+            textEl.textContent = 'Connecting to Camera...';
+        }
     }
     
     // Set timer to change text after 5 seconds
     const timer = setTimeout(() => {
         if (textEl && placeholderElement.style.display !== 'none') {
-            textEl.textContent = 'Awaiting Signal...';
+            if (isRgbPlaceholder) {
+                textEl.textContent = 'Awaiting video signal...';
+            } else {
+                textEl.textContent = 'Awaiting Signal...';
+            }
         }
         placeholderTimers.delete(placeholderElement);
     }, 5000);
@@ -1341,10 +1353,17 @@ function clearPlaceholderTimer(placeholderElement) {
         clearTimeout(placeholderTimers.get(placeholderElement));
         placeholderTimers.delete(placeholderElement);
     }
+    // Detect if this is an RGB camera placeholder
+    const isRgbPlaceholder = placeholderElement.id === 'video-placeholder' || 
+                              placeholderElement.id === 'optical-video-placeholder';
     // Reset text to initial state
     const textEl = placeholderElement.querySelector('.video-placeholder-text');
     if (textEl) {
-        textEl.textContent = 'Connecting to Camera...';
+        if (isRgbPlaceholder) {
+            textEl.textContent = 'Connecting to RGB Camera...';
+        } else {
+            textEl.textContent = 'Connecting to Camera...';
+        }
     }
 }
 const rgbResolutionSelect = document.getElementById('rgb-resolution');

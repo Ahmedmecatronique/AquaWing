@@ -10,14 +10,14 @@
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="/static/map.css?v=8">
+    <link rel="stylesheet" href="/static/map.css?v=9">
 </head>
 
 <body>
     <!-- Dynamic Alerts Container -->
     <div class="alerts-container" id="alerts-container" aria-live="polite" aria-atomic="false"></div>
 
-    <div id="dev-banner" aria-hidden="true" style="display:none;position:fixed;left:12px;top:10px;z-index:2000;padding:6px 10px;border-radius:8px;background:rgba(0,0,0,0.6);color:var(--muted);font-size:12px;font-weight:700;border:1px solid rgba(255,255,255,0.03);">Map CSS: v8 • Map JS: v9</div>
+    <div id="dev-banner" aria-hidden="true" style="display:none;position:fixed;left:12px;top:10px;z-index:2000;padding:6px 10px;border-radius:8px;background:rgba(0,0,0,0.6);color:var(--muted);font-size:12px;font-weight:700;border:1px solid rgba(255,255,255,0.03);">Map CSS: v9 • Map JS: v10</div>
     
     <!-- TOP BAR: Global System Status -->
     <div class="top-status-bar">
@@ -541,7 +541,7 @@
                         <canvas id="optical-rgb-overlay" class="video-overlay" aria-hidden="true"></canvas>
                         <div id="optical-video-placeholder" class="video-placeholder">
                             <div class="video-loader"></div>
-                            <div class="video-placeholder-text">Connecting to Camera...</div>
+                            <div class="video-placeholder-text">Connecting to RGB Camera...</div>
                         </div>
                     </div>
                 </div>
@@ -630,7 +630,7 @@
                         <canvas id="rgb-overlay" class="video-overlay" aria-hidden="true"></canvas>
                         <div id="video-placeholder" class="video-placeholder">
                             <div class="video-loader"></div>
-                            <div class="video-placeholder-text">Connecting to Camera...</div>
+                            <div class="video-placeholder-text">Connecting to RGB Camera...</div>
                         </div>
                         <div class="camera-stats small">
                             <span id="rgb-res">1280×720</span> • <span id="rgb-bitrate">0 kb/s</span>
@@ -1008,7 +1008,7 @@
                         <canvas id="rgb-overlay" class="video-overlay" aria-hidden="true"></canvas>
                         <div id="video-placeholder" class="video-placeholder">
                             <div class="video-loader"></div>
-                            <div class="video-placeholder-text">Connecting to Camera...</div>
+                            <div class="video-placeholder-text">Connecting to RGB Camera...</div>
                         </div>
                         <div class="camera-stats small">
                             <span id="rgb-res">1280×720</span> • <span id="rgb-bitrate">0 kb/s</span>
@@ -1057,6 +1057,6 @@
     <div id="toast" aria-live="polite" aria-atomic="true" class="toast-container" style="display:none;"></div>
 
     <script>/* dev: stamped version */ window.__MAP_CSS_VERSION='v2'; window.__MAP_JS_VERSION='v1';</script>
-    <script defer src="/static/map.js?v=9"></script>
+    <script defer src="/static/map.js?v=10"></script>
 </body>
 </html>
