@@ -2574,6 +2574,32 @@ window.addEventListener('load', () => {
             clearHeatmapHistory();
         });
     }
+    
+    // Menu toggle button
+    const menuToggleBtn = document.getElementById('menu-toggle-btn');
+    if (menuToggleBtn) {
+        menuToggleBtn.addEventListener('click', () => {
+            const sidebar = document.querySelector('.left-sidebar');
+            if (!sidebar) return;
+            
+            const isHidden = sidebar.classList.contains('hidden');
+            if (isHidden) {
+                sidebar.classList.remove('hidden');
+                menuToggleBtn.classList.remove('active');
+            } else {
+                sidebar.classList.add('hidden');
+                menuToggleBtn.classList.add('active');
+            }
+            
+            // Invalidate map size after sidebar toggle
+            setTimeout(() => {
+                try {
+                    if (map && typeof map.invalidateSize === 'function') map.invalidateSize();
+                    if (heatmapMap && typeof heatmapMap.invalidateSize === 'function') heatmapMap.invalidateSize();
+                } catch(e) {}
+            }, 300);
+        });
+    }
 });
 
 // Simulation state with smoothing helper (must be declared before use)
