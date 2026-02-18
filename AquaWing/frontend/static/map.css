@@ -431,32 +431,69 @@ html, body { height: 100%; width: 100%; background: #0a0e1a; font-family: 'Outfi
 }
 
 /* MAIN LAYOUT */
-.main-layout {
+/* ============================================================================
+   GLOBAL APP LAYOUT - Responsive Flexbox System
+   ============================================================================ */
+
+.app-layout {
     display: flex;
+    width: 100%;
     height: 100vh;
+    overflow: hidden;
     padding-top: 48px;
     padding-bottom: 40px;
     position: relative;
 }
 
-/* LEFT SIDEBAR */
-.left-sidebar {
-    width: 380px;
-    background: rgba(5, 11, 20, 0.98); /* Darker background for better contrast */
-    border-right: 1px solid rgba(255, 122, 24, 0.15); /* Orange border to match accent */
+/* SIDEBAR - Collapsible Navigation */
+.sidebar {
+    width: 250px;
+    background: rgba(5, 11, 20, 0.98);
+    border-right: 1px solid rgba(255, 122, 24, 0.15);
     display: flex;
     flex-direction: column;
     padding: 20px;
     gap: 24px;
     overflow-y: auto;
-    overflow-x: visible;
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3); /* Subtle shadow for depth */
-    transition: transform 0.3s ease;
+    overflow-x: hidden;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
+    transition: width 0.3s ease, padding 0.3s ease;
+    flex-shrink: 0;
     position: relative;
 }
 
-.left-sidebar.hidden {
-    transform: translateX(-100%);
+.sidebar.collapsed {
+    width: 0;
+    padding-left: 0;
+    padding-right: 0;
+    border-right: none;
+    overflow: hidden;
+}
+
+/* Legacy class support for backward compatibility */
+.left-sidebar {
+    width: 250px;
+    background: rgba(5, 11, 20, 0.98);
+    border-right: 1px solid rgba(255, 122, 24, 0.15);
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    gap: 24px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
+    transition: width 0.3s ease, padding 0.3s ease;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.left-sidebar.hidden,
+.left-sidebar.collapsed {
+    width: 0;
+    padding-left: 0;
+    padding-right: 0;
+    border-right: none;
+    overflow: hidden;
 }
 
 .sidebar-header {
@@ -796,8 +833,10 @@ html, body { height: 100%; width: 100%; background: #0a0e1a; font-family: 'Outfi
 }
 
 /* MAIN CONTENT */
+/* MAIN CONTENT - Auto-resizable */
 .main-content {
     flex: 1;
+    min-width: 0; /* Critical for flexbox shrinking */
     display: flex;
     flex-direction: row;
     background: #0a0e1a;
@@ -805,6 +844,8 @@ html, body { height: 100%; width: 100%; background: #0a0e1a; font-family: 'Outfi
     gap: 12px;
     padding: 12px;
     overflow-y: auto;
+    overflow-x: hidden;
+    transition: all 0.3s ease;
 }
 
 /* AI Detection Panel */
@@ -1322,11 +1363,14 @@ body.tactical-mode * {
 }
 
 .map-container {
-    flex: 1.5; /* Increased from 1 to make map larger */
+    flex: 1.5;
+    min-width: 0; /* Critical for flexbox shrinking */
     min-height: 400px;
     position: relative;
     overflow: hidden;
     border-radius: 8px;
+    width: 100%;
+    height: 100%;
     border: 1px solid rgba(0, 255, 200, 0.1);
 }
 
@@ -2071,7 +2115,8 @@ body.tactical-mode * {
 
 /* Speed Control Panel */
 .speed-control-panel {
-    width: 380px;
+    width: 250px;
+    min-width: 0;
     background: rgba(8, 12, 20, 0.95);
     border-right: 1px solid rgba(0, 255, 200, 0.1);
     display: flex;
@@ -2141,7 +2186,8 @@ body.tactical-mode * {
 
 /* Missions Panel */
 .missions-panel {
-    width: 380px;
+    width: 250px;
+    min-width: 0;
     background: rgba(8, 12, 20, 0.95);
     border-right: 1px solid rgba(0, 255, 200, 0.1);
     display: flex;
@@ -2166,7 +2212,8 @@ body.tactical-mode * {
 
 /* Systems Panel */
 .systems-panel {
-    width: 380px;
+    width: 250px;
+    min-width: 0;
     background: rgba(8, 12, 20, 0.95);
     border-right: 1px solid rgba(0, 255, 200, 0.1);
     display: flex;
@@ -2265,7 +2312,8 @@ body.tactical-mode * {
 
 /* Optical Panel - Settings */
 .optical-panel {
-    width: 380px;
+    width: 250px;
+    min-width: 0;
     background: rgba(8, 12, 20, 0.95);
     border-right: 1px solid rgba(0, 255, 200, 0.1);
     display: flex;
@@ -2414,7 +2462,8 @@ body.tactical-mode * {
 
 /* PID Settings Panel - Same style as other panels */
 .pid-panel {
-    width: 380px;
+    width: 250px;
+    min-width: 0;
     background: rgba(8, 12, 20, 0.95);
     border-right: 1px solid rgba(0, 255, 200, 0.1);
     display: flex;
@@ -2552,7 +2601,8 @@ body.tactical-mode * {
 
 /* History Panel */
 .heatmap-history-panel {
-    width: 380px;
+    width: 250px;
+    min-width: 0;
     flex-shrink: 0;
     background: rgba(8, 12, 20, 0.95);
     border: 1px solid rgba(255, 255, 255, 0.05);
@@ -2674,7 +2724,8 @@ body.tactical-mode * {
 
 /* Settings Panel */
 .settings-panel {
-    width: 380px;
+    width: 250px;
+    min-width: 0;
     background: rgba(8, 12, 20, 0.95);
     border-right: 1px solid rgba(0, 255, 200, 0.1);
     display: flex;
@@ -2868,12 +2919,18 @@ body.tactical-mode * {
 
 /* Responsive: adjust layout on smaller screens */
 @media (max-width: 1200px) {
+    .sidebar,
     .left-sidebar {
-        width: 240px;
+        width: 220px;
     }
     .systems-panel,
-    .optical-panel {
-        width: 240px;
+    .optical-panel,
+    .speed-control-panel,
+    .missions-panel,
+    .pid-panel,
+    .settings-panel,
+    .heatmap-history-panel {
+        width: 220px;
     }
 }
 

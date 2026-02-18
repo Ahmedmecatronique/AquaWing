@@ -10,7 +10,7 @@
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="/static/map.css?v=21">
+    <link rel="stylesheet" href="/static/map.css?v=22">
 </head>
 
 <body>
@@ -146,9 +146,10 @@
         </span>
     </button>
 
-    <div class="main-layout">
+    <!-- Global App Layout Container -->
+    <div class="app-layout">
         <!-- LEFT SIDEBAR: Navigation and Controls -->
-        <aside class="left-sidebar">
+        <aside id="sidebar" class="sidebar">
             <div class="sidebar-header">
                 <div class="logo-text">
                     <img src="/static/aquawing-logo.png" alt="AquaWing" class="logo-image">
@@ -1150,8 +1151,10 @@
             </div>
         </section>
     </div>
-    </div>
     <!-- End of hidden dashboard-grid -->
+        </main>
+    </div>
+    <!-- End of app-layout -->
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -1166,6 +1169,6 @@
     <div id="toast" aria-live="polite" aria-atomic="true" class="toast-container" style="display:none;"></div>
 
     <script>/* dev: stamped version */ window.__MAP_CSS_VERSION='v2'; window.__MAP_JS_VERSION='v1';</script>
-    <script defer src="/static/map.js?v=16"></script>
+    <script defer src="/static/map.js?v=17"></script>
 </body>
 </html>

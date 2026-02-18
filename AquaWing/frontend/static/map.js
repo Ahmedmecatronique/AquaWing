@@ -2707,19 +2707,27 @@ window.addEventListener('load', () => {
         });
     }
     
-    // Menu toggle button
+    // Menu toggle button - Global Layout Toggle
     const menuToggleBtn = document.getElementById('menu-toggle-btn');
     if (menuToggleBtn) {
         menuToggleBtn.addEventListener('click', () => {
-            const sidebar = document.querySelector('.left-sidebar');
+            // Try new sidebar ID first, fallback to legacy class
+            const sidebar = document.getElementById('sidebar') || document.querySelector('.left-sidebar');
             if (!sidebar) return;
             
-            const isHidden = sidebar.classList.contains('hidden');
-            if (isHidden) {
-                sidebar.classList.remove('hidden');
+            const isCollapsed = sidebar.classList.contains('collapsed') || sidebar.classList.contains('hidden');
+            
+            if (isCollapsed) {
+                // Expand sidebar
+                sidebar.classList.remove('collapsed', 'hidden');
                 menuToggleBtn.classList.remove('active');
             } else {
-                sidebar.classList.add('hidden');
+                // Collapse sidebar
+                sidebar.classList.add('collapsed');
+                // Also add hidden for backward compatibility
+                if (!sidebar.classList.contains('hidden')) {
+                    sidebar.classList.add('hidden');
+                }
                 menuToggleBtn.classList.add('active');
             }
             
