@@ -34,24 +34,32 @@ html, body { height: 100%; width: 100%; background: #0a0e1a; font-family: 'Outfi
     backdrop-filter: blur(8px);
 }
 
-/* Menu Toggle Button (Hamburger) - Fixed position outside sidebar */
+/* Menu Toggle Button (Hamburger) - Inside sidebar at top */
 .menu-toggle-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
-    background: rgba(5, 11, 20, 0.98);
-    border: 1px solid rgba(255, 122, 24, 0.15);
-    border-radius: 6px;
+    width: 100%;
+    min-height: 44px;
+    background: rgba(8, 14, 24, 0.95);
+    border: 1px solid rgba(255, 122, 24, 0.2);
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
-    padding: 0;
-    position: fixed;
-    left: 20px;
-    top: 68px;
-    z-index: 1001;
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    position: relative;
+}
+
+.menu-toggle-btn::after {
+    content: '';
+    position: absolute;
+    bottom: -12px;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: rgba(255, 122, 24, 0.1);
 }
 
 .sidebar-header {
@@ -61,12 +69,13 @@ html, body { height: 100%; width: 100%; background: #0a0e1a; font-family: 'Outfi
 }
 
 .menu-toggle-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 122, 24, 0.08);
     border-color: rgba(255, 122, 24, 0.3);
+    box-shadow: 0 2px 8px rgba(255, 122, 24, 0.15);
 }
 
 .menu-toggle-btn:active {
-    transform: scale(0.95);
+    transform: scale(0.98);
 }
 
 .hamburger-icon {
@@ -462,6 +471,12 @@ html, body { height: 100%; width: 100%; background: #0a0e1a; font-family: 'Outfi
     position: relative;
 }
 
+/* Ensure hamburger is first element in sidebar */
+.sidebar > .menu-toggle-btn {
+    order: -1;
+    margin-top: 0;
+}
+
 .sidebar.collapsed {
     width: 65px;
     padding: 12px 0;
@@ -472,10 +487,19 @@ html, body { height: 100%; width: 100%; background: #0a0e1a; font-family: 'Outfi
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
 }
 
-/* Hide header and footer when collapsed */
+/* Hide header and footer when collapsed, but keep hamburger visible */
 .sidebar.collapsed .sidebar-header,
 .sidebar.collapsed .sidebar-footer {
     display: none;
+}
+
+/* Adjust hamburger button for collapsed state */
+.sidebar.collapsed .menu-toggle-btn {
+    width: 100%;
+    min-height: 40px;
+    padding: 8px;
+    margin-bottom: 8px;
+    border-radius: 6px;
 }
 
 /* Keep nav visible but adjust layout */
@@ -541,12 +565,22 @@ html, body { height: 100%; width: 100%; background: #0a0e1a; font-family: 'Outfi
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
 }
 
-/* Hide header and footer when collapsed */
+/* Hide header and footer when collapsed, but keep hamburger visible */
 .left-sidebar.hidden .sidebar-header,
 .left-sidebar.hidden .sidebar-footer,
 .left-sidebar.collapsed .sidebar-header,
 .left-sidebar.collapsed .sidebar-footer {
     display: none;
+}
+
+/* Adjust hamburger button for collapsed state */
+.left-sidebar.hidden .menu-toggle-btn,
+.left-sidebar.collapsed .menu-toggle-btn {
+    width: 100%;
+    min-height: 40px;
+    padding: 8px;
+    margin-bottom: 8px;
+    border-radius: 6px;
 }
 
 /* Keep nav visible but adjust layout */
@@ -911,6 +945,7 @@ html, body { height: 100%; width: 100%; background: #0a0e1a; font-family: 'Outfi
     background: rgba(255, 255, 255, 0.1);
     outline: none;
     -webkit-appearance: none;
+    appearance: none;
 }
 
 .speed-control-wrapper input[type="range"]::-webkit-slider-thumb {
@@ -2483,6 +2518,7 @@ body.tactical-mode * {
     background: rgba(255, 255, 255, 0.1);
     outline: none;
     -webkit-appearance: none;
+    appearance: none;
 }
 
 .settings-group input[type="range"]::-webkit-slider-thumb {
@@ -3098,7 +3134,7 @@ body.tactical-mode * {
 
 .waypoint-marker:hover {
     background: linear-gradient(135deg, var(--accent), #cc7a3a) !important;
-    box-shadow: 0 0 22px rgba(255,122,24,0.34) !important, inset 0 0 8px rgba(255,255,255,0.06) !important;
+    box-shadow: 0 0 22px rgba(255,122,24,0.34), inset 0 0 8px rgba(255,255,255,0.06) !important;
 }
 
 .leaflet-popup-content div {

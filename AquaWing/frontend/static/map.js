@@ -3986,7 +3986,7 @@ function showAlert(title, message, type = 'info', duration = 6000, alertKey = nu
     if (!container) return null;
     
     const icons = {
-        info: 'ℹ️',
+        info: '🔔',
         warning: '⚠️',
         error: '❌',
         success: '✅',
