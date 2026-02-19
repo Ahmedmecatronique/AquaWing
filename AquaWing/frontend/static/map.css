@@ -457,17 +457,60 @@ html, body { height: 100%; width: 100%; background: #0a0e1a; font-family: 'Outfi
     overflow-y: auto;
     overflow-x: hidden;
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
-    transition: width 0.3s ease, padding 0.3s ease;
+    transition: width 0.2s ease, padding 0.2s ease;
     flex-shrink: 0;
     position: relative;
 }
 
 .sidebar.collapsed {
-    width: 0;
-    padding-left: 0;
-    padding-right: 0;
-    border-right: none;
+    width: 65px;
+    padding: 12px 0;
+    background: rgba(5, 11, 20, 0.98);
+    border-right: 1px solid rgba(255, 122, 24, 0.15);
     overflow: hidden;
+    pointer-events: auto;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Hide header and footer when collapsed */
+.sidebar.collapsed .sidebar-header,
+.sidebar.collapsed .sidebar-footer {
+    display: none;
+}
+
+/* Keep nav visible but adjust layout */
+.sidebar.collapsed .sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 0;
+}
+
+/* Hide text labels, keep icons centered */
+.sidebar.collapsed .nav-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 12px 0;
+    gap: 0;
+    min-height: 44px;
+}
+
+.sidebar.collapsed .nav-item > span:not(.nav-icon) {
+    display: none;
+}
+
+.sidebar.collapsed .nav-icon {
+    font-size: 20px;
+    margin: 0;
+}
+
+/* Hover effect for collapsed icons */
+.sidebar.collapsed .nav-item:hover {
+    background: rgba(0, 255, 200, 0.08);
+    border-color: rgba(0, 255, 200, 0.15);
 }
 
 /* Legacy class support for backward compatibility */
@@ -482,18 +525,68 @@ html, body { height: 100%; width: 100%; background: #0a0e1a; font-family: 'Outfi
     overflow-y: auto;
     overflow-x: hidden;
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
-    transition: width 0.3s ease, padding 0.3s ease;
+    transition: width 0.2s ease, padding 0.2s ease;
     flex-shrink: 0;
     position: relative;
 }
 
 .left-sidebar.hidden,
 .left-sidebar.collapsed {
-    width: 0;
-    padding-left: 0;
-    padding-right: 0;
-    border-right: none;
+    width: 65px;
+    padding: 12px 0;
+    background: rgba(5, 11, 20, 0.98);
+    border-right: 1px solid rgba(255, 122, 24, 0.15);
     overflow: hidden;
+    pointer-events: auto;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Hide header and footer when collapsed */
+.left-sidebar.hidden .sidebar-header,
+.left-sidebar.hidden .sidebar-footer,
+.left-sidebar.collapsed .sidebar-header,
+.left-sidebar.collapsed .sidebar-footer {
+    display: none;
+}
+
+/* Keep nav visible but adjust layout */
+.left-sidebar.hidden .sidebar-nav,
+.left-sidebar.collapsed .sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 0;
+}
+
+/* Hide text labels, keep icons centered */
+.left-sidebar.hidden .nav-item,
+.left-sidebar.collapsed .nav-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 12px 0;
+    gap: 0;
+    min-height: 44px;
+}
+
+.left-sidebar.hidden .nav-item > span:not(.nav-icon),
+.left-sidebar.collapsed .nav-item > span:not(.nav-icon) {
+    display: none;
+}
+
+.left-sidebar.hidden .nav-icon,
+.left-sidebar.collapsed .nav-icon {
+    font-size: 20px;
+    margin: 0;
+}
+
+/* Hover effect for collapsed icons */
+.left-sidebar.hidden .nav-item:hover,
+.left-sidebar.collapsed .nav-item:hover {
+    background: rgba(0, 255, 200, 0.08);
+    border-color: rgba(0, 255, 200, 0.15);
 }
 
 .sidebar-header {
@@ -574,6 +667,24 @@ html, body { height: 100%; width: 100%; background: #0a0e1a; font-family: 'Outfi
     border-bottom: 3px solid #ff7a18;
     border-radius: 0;
     padding-bottom: 9px;
+}
+
+/* Active state for collapsed sidebar */
+.sidebar.collapsed .nav-item.nav-active {
+    background: rgba(255, 122, 24, 0.1);
+    border-color: rgba(255, 122, 24, 0.2);
+    border-bottom: none;
+    border-radius: 8px;
+    padding-bottom: 12px;
+}
+
+.left-sidebar.collapsed .nav-item.nav-active,
+.left-sidebar.hidden .nav-item.nav-active {
+    background: rgba(255, 122, 24, 0.1);
+    border-color: rgba(255, 122, 24, 0.2);
+    border-bottom: none;
+    border-radius: 8px;
+    padding-bottom: 12px;
 }
 
 .nav-icon {

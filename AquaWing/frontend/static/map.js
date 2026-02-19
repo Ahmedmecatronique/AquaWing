@@ -2739,6 +2739,9 @@ window.addEventListener('load', () => {
                 } catch(e) {}
             }, 300);
         });
+        
+        // Note: In collapsed mode, icons are still clickable for navigation
+        // The hamburger button is used to toggle expand/collapse
     }
     
     // AI Advisor panel controls
