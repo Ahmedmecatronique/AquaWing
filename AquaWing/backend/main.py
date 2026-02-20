@@ -119,6 +119,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Include REST API router (/api/status, /api/telemetry, /api/pid, etc.)
+from backend import api
+app.include_router(api.router, prefix="/api", tags=["API"])
+
 # Mount static files
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 

@@ -135,6 +135,28 @@
             <span class="tactical-icon">🎯</span>
             <span id="tactical-mode-label">TACTICAL</span>
         </button>
+        
+        <!-- Notification Button -->
+        <div style="position: relative;">
+            <button id="notification-btn" class="notification-btn" title="Notifications">
+                <span class="notification-icon">🔔</span>
+                <span id="notification-count" class="notification-count" style="display:none;">0</span>
+            </button>
+            
+            <!-- Notification Panel - Floating HUD -->
+            <div class="notification-panel" id="notification-panel" style="display:none;">
+                <div class="notification-panel-header">
+                    <span class="notification-icon">🔔</span>
+                    <span>NOTIFICATIONS</span>
+                    <button class="notification-panel-close" id="notification-panel-close" title="Fermer">✕</button>
+                </div>
+                <div class="notification-panel-body">
+                    <div id="notification-list" class="notification-list">
+                        <div class="notification-empty">Aucune notification</div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Global App Layout Container -->
@@ -339,6 +361,12 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Placeholder slots for future extension (ESC Status, CPU/Raspberry Pi, Communication, Signal Strength) -->
+                <div class="systems-grid-slot" data-placeholder="esc-status" aria-hidden="true"></div>
+                <div class="systems-grid-slot" data-placeholder="cpu-raspberry" aria-hidden="true"></div>
+                <div class="systems-grid-slot" data-placeholder="communication" aria-hidden="true"></div>
+                <div class="systems-grid-slot" data-placeholder="signal-strength" aria-hidden="true"></div>
             </div>
         </div>
 
@@ -382,7 +410,7 @@
                 <!-- Thermal Camera Settings -->
                 <div class="optical-settings-section">
                     <div class="settings-section-title">THERMAL CAMERA</div>
-                    <div class="settings-group">
+                    <div class="settings-group settings-group-resettable">
                         <label for="thermal-palette">Color Palette</label>
                         <select id="thermal-palette">
                             <option value="ironbow">Ironbow</option>
@@ -390,19 +418,23 @@
                             <option value="grayscale">Grayscale</option>
                             <option value="hot">Hot</option>
                         </select>
+                        <button type="button" class="param-reset-btn" data-param="thermal-palette" data-default="ironbow" aria-label="Reset to default">✕</button>
                     </div>
-                    <div class="settings-group">
+                    <div class="settings-group settings-group-resettable">
                         <label for="thermal-temp-min">Min Temperature (°C)</label>
                         <input type="number" id="thermal-temp-min" min="-40" max="100" value="0">
+                        <button type="button" class="param-reset-btn" data-param="thermal-temp-min" data-default="0" aria-label="Reset to default">✕</button>
                     </div>
-                    <div class="settings-group">
+                    <div class="settings-group settings-group-resettable">
                         <label for="thermal-temp-max">Max Temperature (°C)</label>
                         <input type="number" id="thermal-temp-max" min="-40" max="100" value="100">
+                        <button type="button" class="param-reset-btn" data-param="thermal-temp-max" data-default="100" aria-label="Reset to default">✕</button>
                     </div>
-                    <div class="settings-group">
+                    <div class="settings-group settings-group-resettable">
                         <label>
                             <input type="checkbox" id="thermal-emissivity"> Auto Emissivity
                         </label>
+                        <button type="button" class="param-reset-btn" data-param="thermal-emissivity" data-default="false" aria-label="Reset to default">✕</button>
                     </div>
                     <div class="settings-group">
                         <button id="optical-thermal-toggle" class="btn-primary settings-toggle-btn">Thermal: OFF</button>
@@ -412,25 +444,29 @@
                 <!-- AI Detection Settings -->
                 <div class="optical-settings-section">
                     <div class="settings-section-title">AI DETECTION</div>
-                    <div class="settings-group">
+                    <div class="settings-group settings-group-resettable">
                         <label>
                             <input type="checkbox" id="ai-detection-enabled" checked> Enable AI Detection
                         </label>
+                        <button type="button" class="param-reset-btn" data-param="ai-detection-enabled" data-default="true" aria-label="Reset to default">✕</button>
                     </div>
-                    <div class="settings-group">
+                    <div class="settings-group settings-group-resettable">
                         <label for="ai-confidence-threshold">Confidence Threshold</label>
                         <input type="range" id="ai-confidence-threshold" min="0" max="100" value="50">
                         <div class="settings-value" id="ai-confidence-threshold-val">50%</div>
+                        <button type="button" class="param-reset-btn" data-param="ai-confidence-threshold" data-default="50" aria-label="Reset to default">✕</button>
                     </div>
-                    <div class="settings-group">
+                    <div class="settings-group settings-group-resettable">
                         <label>
                             <input type="checkbox" id="ai-show-bounding-boxes" checked> Show Bounding Boxes
                         </label>
+                        <button type="button" class="param-reset-btn" data-param="ai-show-bounding-boxes" data-default="true" aria-label="Reset to default">✕</button>
                     </div>
-                    <div class="settings-group">
+                    <div class="settings-group settings-group-resettable">
                         <label>
                             <input type="checkbox" id="ai-show-labels" checked> Show Labels
                         </label>
+                        <button type="button" class="param-reset-btn" data-param="ai-show-labels" data-default="true" aria-label="Reset to default">✕</button>
                     </div>
                 </div>
             </div>
@@ -442,78 +478,87 @@
                 <div class="panel-title">PID SETTINGS</div>
             </div>
             <div class="pid-panel-content">
-                <!-- Roll PID -->
-                <div class="settings-section">
-                    <div class="settings-section-title">ROLL PID</div>
-                    <div class="settings-group">
-                        <label for="pid-roll-p">P (Proportional)</label>
-                        <input type="number" id="pid-roll-p" min="0" max="10" step="0.01" value="4.5">
+                <div class="pid-grid">
+                    <!-- Roll PID -->
+                    <div class="pid-card">
+                        <div class="pid-card-title">ROLL PID</div>
+                        <div class="pid-card-fields">
+                            <div class="pid-field">
+                                <label for="pid-roll-p">P</label>
+                                <input type="number" id="pid-roll-p" min="0" max="10" step="0.01" value="4.5">
+                            </div>
+                            <div class="pid-field">
+                                <label for="pid-roll-i">I</label>
+                                <input type="number" id="pid-roll-i" min="0" max="10" step="0.01" value="0.45">
+                            </div>
+                            <div class="pid-field">
+                                <label for="pid-roll-d">D</label>
+                                <input type="number" id="pid-roll-d" min="0" max="10" step="0.01" value="0.05">
+                            </div>
+                        </div>
                     </div>
-                    <div class="settings-group">
-                        <label for="pid-roll-i">I (Integral)</label>
-                        <input type="number" id="pid-roll-i" min="0" max="10" step="0.01" value="0.45">
+                    <!-- Pitch PID -->
+                    <div class="pid-card">
+                        <div class="pid-card-title">PITCH PID</div>
+                        <div class="pid-card-fields">
+                            <div class="pid-field">
+                                <label for="pid-pitch-p">P</label>
+                                <input type="number" id="pid-pitch-p" min="0" max="10" step="0.01" value="4.5">
+                            </div>
+                            <div class="pid-field">
+                                <label for="pid-pitch-i">I</label>
+                                <input type="number" id="pid-pitch-i" min="0" max="10" step="0.01" value="0.45">
+                            </div>
+                            <div class="pid-field">
+                                <label for="pid-pitch-d">D</label>
+                                <input type="number" id="pid-pitch-d" min="0" max="10" step="0.01" value="0.05">
+                            </div>
+                        </div>
                     </div>
-                    <div class="settings-group">
-                        <label for="pid-roll-d">D (Derivative)</label>
-                        <input type="number" id="pid-roll-d" min="0" max="10" step="0.01" value="0.05">
-                    </div>
-                </div>
-
-                <!-- Pitch PID -->
-                <div class="settings-section">
-                    <div class="settings-section-title">PITCH PID</div>
-                    <div class="settings-group">
-                        <label for="pid-pitch-p">P (Proportional)</label>
-                        <input type="number" id="pid-pitch-p" min="0" max="10" step="0.01" value="4.5">
-                    </div>
-                    <div class="settings-group">
-                        <label for="pid-pitch-i">I (Integral)</label>
-                        <input type="number" id="pid-pitch-i" min="0" max="10" step="0.01" value="0.45">
-                    </div>
-                    <div class="settings-group">
-                        <label for="pid-pitch-d">D (Derivative)</label>
-                        <input type="number" id="pid-pitch-d" min="0" max="10" step="0.01" value="0.05">
-                    </div>
-                </div>
-
-                <!-- Yaw PID -->
-                <div class="settings-section">
-                    <div class="settings-section-title">YAW PID</div>
-                    <div class="settings-group">
-                        <label for="pid-yaw-p">P (Proportional)</label>
-                        <input type="number" id="pid-yaw-p" min="0" max="10" step="0.01" value="4.5">
-                    </div>
-                    <div class="settings-group">
-                        <label for="pid-yaw-i">I (Integral)</label>
-                        <input type="number" id="pid-yaw-i" min="0" max="10" step="0.01" value="0.45">
-                    </div>
-                    <div class="settings-group">
-                        <label for="pid-yaw-d">D (Derivative)</label>
-                        <input type="number" id="pid-yaw-d" min="0" max="10" step="0.01" value="0.05">
-                    </div>
-                </div>
-
-                <!-- Altitude PID -->
-                <div class="settings-section">
-                    <div class="settings-section-title">ALTITUDE PID</div>
-                    <div class="settings-group">
-                        <label for="pid-alt-p">P (Proportional)</label>
-                        <input type="number" id="pid-alt-p" min="0" max="10" step="0.01" value="1.0">
-                    </div>
-                    <div class="settings-group">
-                        <label for="pid-alt-i">I (Integral)</label>
-                        <input type="number" id="pid-alt-i" min="0" max="10" step="0.01" value="0.1">
-                    </div>
-                    <div class="settings-group">
-                        <label for="pid-alt-d">D (Derivative)</label>
-                        <input type="number" id="pid-alt-d" min="0" max="10" step="0.01" value="0.01">
+                    <!-- Yaw PID -->
+                    <div class="pid-card">
+                        <div class="pid-card-title">YAW PID</div>
+                        <div class="pid-card-fields">
+                            <div class="pid-field">
+                                <label for="pid-yaw-p">P</label>
+                                <input type="number" id="pid-yaw-p" min="0" max="10" step="0.01" value="4.5">
+                            </div>
+                            <div class="pid-field">
+                                <label for="pid-yaw-i">I</label>
+                                <input type="number" id="pid-yaw-i" min="0" max="10" step="0.01" value="0.45">
+                            </div>
+                            <div class="pid-field">
+                                <label for="pid-yaw-d">D</label>
+                                <input type="number" id="pid-yaw-d" min="0" max="10" step="0.01" value="0.05">
+                            </div>
+                        </div>
                     </div>
                 </div>
-
-                <!-- Action Buttons -->
-                <div class="settings-actions">
-                    <button id="pid-save-btn" class="btn-primary">Save PID</button>
+                <!-- Altitude PID row -->
+                <div class="pid-altitude-row">
+                    <div class="pid-card pid-card-altitude">
+                        <div class="pid-card-title">ALTITUDE PID</div>
+                        <div class="pid-card-fields pid-card-fields-inline">
+                            <div class="pid-field">
+                                <label for="pid-alt-p">P</label>
+                                <input type="number" id="pid-alt-p" min="0" max="10" step="0.01" value="1.0">
+                            </div>
+                            <div class="pid-field">
+                                <label for="pid-alt-i">I</label>
+                                <input type="number" id="pid-alt-i" min="0" max="10" step="0.01" value="0.1">
+                            </div>
+                            <div class="pid-field">
+                                <label for="pid-alt-d">D</label>
+                                <input type="number" id="pid-alt-d" min="0" max="10" step="0.01" value="0.01">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Global action area -->
+                <div class="pid-actions">
+                    <button id="pid-apply-btn" class="btn-primary">Apply Settings</button>
                     <button id="pid-reset-btn" class="btn-ghost">Reset to Default</button>
+                    <button id="pid-save-btn" class="btn-primary">Save Profile</button>
                 </div>
             </div>
         </div>

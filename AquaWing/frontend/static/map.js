@@ -2773,6 +2773,150 @@ window.addEventListener('load', () => {
             toggleAIAdvisor();
         });
     }
+    
+    // Notification button and panel
+    const notificationBtn = document.getElementById('notification-btn');
+    const notificationPanel = document.getElementById('notification-panel');
+    const notificationPanelClose = document.getElementById('notification-panel-close');
+    const notificationList = document.getElementById('notification-list');
+    const alertsContainer = document.getElementById('alerts-container');
+    let notificationCount = 0;
+    let isNotificationPanelOpen = false;
+    
+    function updateNotificationCount() {
+        const countEl = document.getElementById('notification-count');
+        if (countEl) {
+            const activeAlerts = alertsContainer ? alertsContainer.querySelectorAll('.alert-toast').length : 0;
+            notificationCount = activeAlerts;
+            if (activeAlerts > 0) {
+                countEl.textContent = activeAlerts > 99 ? '99+' : activeAlerts;
+                countEl.style.display = 'flex';
+            } else {
+                countEl.style.display = 'none';
+            }
+        }
+    }
+    
+    function formatNotificationDate(date) {
+        const now = new Date();
+        const diff = now - date;
+        const seconds = Math.floor(diff / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+        
+        if (seconds < 60) {
+            return 'À l\'instant';
+        } else if (minutes < 60) {
+            return `Il y a ${minutes} min`;
+        } else if (hours < 24) {
+            return `Il y a ${hours} h`;
+        } else if (days < 7) {
+            return `Il y a ${days} j`;
+        } else {
+            return date.toLocaleDateString('fr-FR', { 
+                day: '2-digit', 
+                month: '2-digit', 
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+    }
+    
+    // Make updateNotificationPanel globally accessible
+    window.updateNotificationPanel = function() {
+        const list = document.getElementById('notification-list');
+        if (!list) return;
+        
+        if (notificationHistory.length === 0) {
+            list.innerHTML = '<div class="notification-empty">Aucune notification</div>';
+            return;
+        }
+        
+        list.innerHTML = notificationHistory.map(notif => {
+            return `
+                <div class="notification-item ${notif.type}">
+                    <div class="notification-item-header">
+                        <span class="notification-item-icon">${notif.icon}</span>
+                        <span class="notification-item-title">${notif.title}</span>
+                    </div>
+                    <div class="notification-item-message">${notif.message}</div>
+                    <div class="notification-item-date">${formatNotificationDate(notif.date)}</div>
+                </div>
+            `;
+        }).join('');
+    };
+    
+    function toggleNotificationPanel() {
+        isNotificationPanelOpen = !isNotificationPanelOpen;
+        if (notificationPanel) {
+            if (isNotificationPanelOpen) {
+                notificationPanel.style.display = 'block';
+                if (typeof window.updateNotificationPanel === 'function') {
+                    window.updateNotificationPanel();
+                }
+            } else {
+                notificationPanel.style.display = 'none';
+            }
+        }
+    }
+    
+    if (notificationBtn) {
+        notificationBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleNotificationPanel();
+        });
+    }
+    
+    if (notificationPanelClose) {
+        notificationPanelClose.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleNotificationPanel();
+        });
+    }
+    
+    // Close panel when clicking outside
+    document.addEventListener('click', (e) => {
+        if (isNotificationPanelOpen && notificationPanel && notificationBtn) {
+            if (!notificationPanel.contains(e.target) && !notificationBtn.contains(e.target)) {
+                toggleNotificationPanel();
+            }
+        }
+    });
+    
+    // Update notification count when alerts are added/removed
+    const originalShowAlert = window.showAlert;
+    if (typeof originalShowAlert === 'function') {
+        window.showAlert = function(...args) {
+            const result = originalShowAlert.apply(this, args);
+            updateNotificationCount();
+            return result;
+        };
+    }
+    
+    const originalRemoveAlert = window.removeAlert;
+    if (typeof originalRemoveAlert === 'function') {
+        window.removeAlert = function(...args) {
+            const result = originalRemoveAlert.apply(this, args);
+            updateNotificationCount();
+            return result;
+        };
+    }
+    
+    // Initial count update
+    updateNotificationCount();
+    if (typeof window.updateNotificationPanel === 'function') {
+        window.updateNotificationPanel();
+    }
+    
+    // Monitor alerts container for changes
+    if (alertsContainer) {
+        const observer = new MutationObserver(() => {
+            updateNotificationCount();
+        });
+        observer.observe(alertsContainer, { childList: true, subtree: true });
+    }
 });
 
 // Simulation state with smoothing helper (must be declared before use)
@@ -3223,9 +3367,13 @@ function resetPidSettings() {
 
 // Wire up PID panel buttons
 document.addEventListener('DOMContentLoaded', () => {
+    const pidApplyBtn = document.getElementById('pid-apply-btn');
     const pidSaveBtn = document.getElementById('pid-save-btn');
     const pidResetBtn = document.getElementById('pid-reset-btn');
     
+    if (pidApplyBtn) {
+        pidApplyBtn.addEventListener('click', savePidSettings);
+    }
     if (pidSaveBtn) {
         pidSaveBtn.addEventListener('click', savePidSettings);
     }
@@ -3969,6 +4117,10 @@ const alertConditions = {
 // Alert tracking to prevent duplicates
 const activeAlerts = new Map(); // Map<alertKey, alertElement>
 
+// Notification history - stores all notifications with dates
+const notificationHistory = []; // Array of {title, message, type, icon, date, timestamp}
+const MAX_NOTIFICATION_HISTORY = 50; // Keep last 50 notifications
+
 function showAlert(title, message, type = 'info', duration = 6000, alertKey = null) {
     // Use alertKey to prevent duplicates, or generate from title if not provided
     const key = alertKey || title.toLowerCase().replace(/\s+/g, '-');
@@ -4017,6 +4169,26 @@ function showAlert(title, message, type = 'info', duration = 6000, alertKey = nu
     
     container.appendChild(alert);
     activeAlerts.set(key, alert);
+    
+    // Add to notification history
+    const notificationEntry = {
+        title: title,
+        message: message,
+        type: type,
+        icon: icon,
+        date: new Date(),
+        timestamp: Date.now()
+    };
+    
+    notificationHistory.unshift(notificationEntry); // Add to beginning
+    if (notificationHistory.length > MAX_NOTIFICATION_HISTORY) {
+        notificationHistory.pop(); // Remove oldest if exceeds limit
+    }
+    
+    // Update notification panel if open
+    if (typeof window.updateNotificationPanel === 'function') {
+        window.updateNotificationPanel();
+    }
     
     // Auto-remove after duration (6 seconds default)
     setTimeout(() => {
