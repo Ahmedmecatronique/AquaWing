@@ -2334,6 +2334,9 @@ window.addEventListener('load', () => {
     const rightColumn = document.querySelector('.right-column');
     const camsArea = document.querySelector('.cams-area');
     
+    // Optical Settings panel visibility (X only toggles this; no route/nav change)
+    let isOpticalSettingsVisible = true;
+    
     function setActiveNav(activeEl) {
         [navDashboard, navMissions, navSystems, navOptical, navPid, navHeatmap, navSettings].forEach(el => {
             if (el) {
@@ -2496,8 +2499,10 @@ window.addEventListener('load', () => {
             if (settingsPanel) settingsPanel.style.display = 'none';
             const heatmapPanelOptical = document.getElementById('heatmap-panel');
             if (heatmapPanelOptical) heatmapPanelOptical.style.display = 'none';
+            isOpticalSettingsVisible = true;
             if (opticalPanel) {
                 opticalPanel.style.display = 'flex';
+                opticalPanel.classList.remove('collapsed');
                 console.log('Optical settings panel shown');
             }
             if (opticalCamerasView) {
@@ -2655,6 +2660,27 @@ window.addEventListener('load', () => {
         navSettings.addEventListener('click', () => {
             console.log('Settings clicked');
             setActiveNav(navSettings);
+        });
+    }
+    
+    // Optical panel close (X) button: only hide settings panel; stay on Optical page; no route/nav change
+    const opticalPanelClose = document.getElementById('optical-panel-close');
+    if (opticalPanelClose) {
+        opticalPanelClose.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            isOpticalSettingsVisible = false;
+            const opticalPanel = document.getElementById('optical-panel');
+            if (opticalPanel) opticalPanel.classList.add('collapsed');
+        });
+    }
+
+    // Speed Control panel close (X) button: hide panel only; other UI unchanged
+    const speedControlPanelClose = document.getElementById('speed-control-panel-close');
+    if (speedControlPanelClose) {
+        speedControlPanelClose.addEventListener('click', () => {
+            const speedControlPanel = document.getElementById('speed-control-panel');
+            if (speedControlPanel) speedControlPanel.style.display = 'none';
         });
     }
     

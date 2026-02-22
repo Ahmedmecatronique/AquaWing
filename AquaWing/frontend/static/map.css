@@ -2483,9 +2483,35 @@ body.tactical-mode * {
 }
 
 .speed-control-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 20px;
     padding-bottom: 12px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.speed-control-panel-close {
+    position: relative;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: rgba(234, 242, 255, 0.35);
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease, background 0.2s ease;
+}
+
+.speed-control-panel-close:hover {
+    color: rgba(234, 242, 255, 0.8);
+    background: rgba(255, 255, 255, 0.06);
 }
 
 .speed-control-panel-content {
@@ -2687,6 +2713,16 @@ body.tactical-mode * {
     overflow-y: auto;
     height: calc(100vh - 48px - 40px);
     flex-shrink: 0;
+    transition: width 0.2s ease;
+}
+
+/* Collapsed: panel takes no space; cameras view expands */
+.optical-panel.collapsed {
+    width: 0;
+    min-width: 0;
+    padding: 0;
+    overflow: hidden;
+    border-right-width: 0;
 }
 
 .optical-settings-content {
@@ -2853,9 +2889,35 @@ body.tactical-mode * {
 }
 
 .optical-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 20px;
     padding-bottom: 12px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.optical-panel-close {
+    position: relative;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: rgba(234, 242, 255, 0.35);
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease, background 0.2s ease;
+}
+
+.optical-panel-close:hover {
+    color: rgba(234, 242, 255, 0.8);
+    background: rgba(255, 255, 255, 0.06);
 }
 
 /* PID Settings Panel - Full-screen structured layout */
@@ -3245,9 +3307,9 @@ body.tactical-mode * {
     font-family: 'Courier New', monospace;
 }
 
-/* Settings Panel */
+/* Settings Panel - full available width */
 .settings-panel {
-    width: 250px;
+    flex: 1;
     min-width: 0;
     background: rgba(8, 12, 20, 0.95);
     border-right: 1px solid rgba(0, 255, 200, 0.1);
@@ -3256,7 +3318,6 @@ body.tactical-mode * {
     padding: 20px;
     overflow-y: auto;
     height: calc(100vh - 48px - 40px);
-    flex-shrink: 0;
 }
 
 .settings-panel-header {
@@ -3268,7 +3329,30 @@ body.tactical-mode * {
 .settings-panel-content {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 24px;
+    flex: 1;
+    min-height: 0;
+}
+
+/* Grid of setting cards - distributes across full width */
+.settings-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, max-content));
+    gap: 24px;
+    align-content: start;
+}
+
+/* Full-width footer for Save/Reset, centered */
+.settings-panel-footer {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    flex-shrink: 0;
+    margin-top: auto;
+}
+
+.settings-panel-footer .settings-actions {
+    margin-top: 0;
 }
 
 .settings-section {
@@ -3456,9 +3540,9 @@ body.tactical-mode * {
         grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
         gap: 24px;
     }
-    /* Settings panel keeps flex: 1 for full-width layout */
-    .settings-panel-content {
-        grid-template-columns: repeat(3, 1fr);
+    /* Settings cards grid: narrow min for smaller screens */
+    .settings-cards-grid {
+        grid-template-columns: repeat(auto-fit, minmax(280px, max-content));
         gap: 16px;
     }
     /* PID panel keeps flex: 1 for full-screen layout */
@@ -3475,7 +3559,7 @@ body.tactical-mode * {
     .pid-card-altitude {
         max-width: none;
     }
-    .settings-panel-content {
+    .settings-cards-grid {
         grid-template-columns: 1fr;
     }
 }

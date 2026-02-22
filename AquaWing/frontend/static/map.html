@@ -222,6 +222,7 @@
         <div class="speed-control-panel" id="speed-control-panel" style="display:none;">
             <div class="speed-control-panel-header">
                 <div class="panel-title">SPEED CONTROL</div>
+                <button type="button" class="speed-control-panel-close" id="speed-control-panel-close" aria-label="Close panel">✕</button>
             </div>
             <div class="speed-control-panel-content">
                 <div class="speed-control-wrapper">
@@ -374,19 +375,12 @@
         <div class="optical-panel" id="optical-panel" style="display:none;">
             <div class="optical-panel-header">
                 <div class="panel-title">OPTICAL SETTINGS</div>
+                <button type="button" class="optical-panel-close" id="optical-panel-close" aria-label="Close panel">✕</button>
             </div>
             <div class="optical-settings-content">
                 <!-- RGB Camera Settings -->
                 <div class="optical-settings-section">
                     <div class="settings-section-title">RGB CAMERA</div>
-                    <div class="settings-group">
-                        <label for="optical-rgb-resolution">Resolution</label>
-                        <select id="optical-rgb-resolution" aria-label="RGB resolution">
-                            <option value="640x480">640×480</option>
-                            <option value="800x600">800×600</option>
-                            <option value="1280x720" selected>1280×720</option>
-                        </select>
-                    </div>
                     <div class="settings-group">
                         <label for="rgb-brightness">Brightness</label>
                         <input type="range" id="rgb-brightness" min="0" max="100" value="50">
@@ -607,68 +601,72 @@
                 <div class="panel-title">SETTINGS</div>
             </div>
             <div class="settings-panel-content">
-                <!-- General Settings -->
-                <div class="settings-section">
-                    <div class="settings-section-title">GENERAL</div>
-                    <div class="settings-group">
-                        <label>
-                            <input type="checkbox" id="settings-auto-connect" checked> Auto Connect on Startup
-                        </label>
+                <div class="settings-cards-grid">
+                    <!-- General Settings -->
+                    <div class="settings-section">
+                        <div class="settings-section-title">GENERAL</div>
+                        <div class="settings-group">
+                            <label>
+                                <input type="checkbox" id="settings-auto-connect" checked> Auto Connect on Startup
+                            </label>
+                        </div>
+                        <div class="settings-group">
+                            <label>
+                                <input type="checkbox" id="settings-show-notifications" checked> Show Notifications
+                            </label>
+                        </div>
+                        <div class="settings-group">
+                            <label for="settings-language">Language</label>
+                            <select id="settings-language">
+                                <option value="en" selected>English</option>
+                                <option value="fr">Français</option>
+                                <option value="ar">العربية</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="settings-group">
-                        <label>
-                            <input type="checkbox" id="settings-show-notifications" checked> Show Notifications
-                        </label>
+
+                    <!-- Display Settings -->
+                    <div class="settings-section">
+                        <div class="settings-section-title">DISPLAY</div>
+                        <div class="settings-group">
+                            <label for="settings-theme">Theme</label>
+                            <select id="settings-theme">
+                                <option value="dark" selected>Dark</option>
+                                <option value="light">Light</option>
+                                <option value="auto">Auto</option>
+                            </select>
+                        </div>
+                        <div class="settings-group">
+                            <label for="settings-map-style">Map Style</label>
+                            <select id="settings-map-style">
+                                <option value="standard" selected>Standard</option>
+                                <option value="satellite">Satellite</option>
+                                <option value="terrain">Terrain</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="settings-group">
-                        <label for="settings-language">Language</label>
-                        <select id="settings-language">
-                            <option value="en" selected>English</option>
-                            <option value="fr">Français</option>
-                            <option value="ar">العربية</option>
-                        </select>
+
+                    <!-- Telemetry Settings -->
+                    <div class="settings-section">
+                        <div class="settings-section-title">TELEMETRY</div>
+                        <div class="settings-group">
+                            <label for="settings-update-rate">Update Rate (Hz)</label>
+                            <input type="number" id="settings-update-rate" min="1" max="50" value="10">
+                        </div>
+                        <div class="settings-group">
+                            <label>
+                                <input type="checkbox" id="settings-record-telemetry" checked> Record Telemetry
+                            </label>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Display Settings -->
-                <div class="settings-section">
-                    <div class="settings-section-title">DISPLAY</div>
-                    <div class="settings-group">
-                        <label for="settings-theme">Theme</label>
-                        <select id="settings-theme">
-                            <option value="dark" selected>Dark</option>
-                            <option value="light">Light</option>
-                            <option value="auto">Auto</option>
-                        </select>
+                <!-- Action Buttons (full-width footer, centered) -->
+                <div class="settings-panel-footer">
+                    <div class="settings-actions">
+                        <button id="settings-save-btn" class="btn-primary">Save Settings</button>
+                        <button id="settings-reset-btn" class="btn-ghost">Reset to Default</button>
                     </div>
-                    <div class="settings-group">
-                        <label for="settings-map-style">Map Style</label>
-                        <select id="settings-map-style">
-                            <option value="standard" selected>Standard</option>
-                            <option value="satellite">Satellite</option>
-                            <option value="terrain">Terrain</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Telemetry Settings -->
-                <div class="settings-section">
-                    <div class="settings-section-title">TELEMETRY</div>
-                    <div class="settings-group">
-                        <label for="settings-update-rate">Update Rate (Hz)</label>
-                        <input type="number" id="settings-update-rate" min="1" max="50" value="10">
-                    </div>
-                    <div class="settings-group">
-                        <label>
-                            <input type="checkbox" id="settings-record-telemetry" checked> Record Telemetry
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Action Buttons -->
-                <div class="settings-actions">
-                    <button id="settings-save-btn" class="btn-primary">Save Settings</button>
-                    <button id="settings-reset-btn" class="btn-ghost">Reset to Default</button>
                 </div>
             </div>
         </div>
@@ -681,12 +679,6 @@
                     <div class="optical-camera-header">
                         <div class="optical-camera-title">RGB CAMERA</div>
                         <div class="optical-camera-controls">
-                            <label class="small" for="optical-rgb-resolution-main">Res:</label>
-                            <select id="optical-rgb-resolution-main" aria-label="RGB resolution">
-                                <option value="640x480">640×480</option>
-                                <option value="800x600">800×600</option>
-                                <option value="1280x720" selected>1280×720</option>
-                            </select>
                             <button id="optical-video-toggle-main" class="btn-primary">RGB: OFF</button>
                         </div>
                     </div>
