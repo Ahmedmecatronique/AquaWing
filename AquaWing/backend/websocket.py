@@ -2,12 +2,12 @@
 WebSocket Handlers - Real-Time Telemetry Streaming with Authentication
 
 This module implements WebSocket connections for real-time telemetry streaming.
-Clients connect via /ws to receive continuous drone status updates.
+Clients connect via /ws to receive continuous drone status updates and send commands.
 
 Features:
-- Real-time position tracking
-- Session-based authentication
-- Auto-reconnection support
+- Real-time position tracking (broadcast when start_flight is sent)
+- Command handling: send_route, start_flight, abort, rtl, set_speed
+- Session-based authentication (cookie session_id)
 - Broadcast to multiple clients
 """
 
@@ -16,8 +16,14 @@ from typing import Set
 import json
 import asyncio
 import time
+import math
 
 from backend import auth
+
+# Demo telemetry base (Tunis)
+_BASE_LAT = 36.8065
+_BASE_LON = 10.1815
+_flight_active = False
 
 
 router = APIRouter()
@@ -78,22 +84,38 @@ manager = ConnectionManager()
 
 def get_session_from_headers(headers: dict) -> str:
     """
-    Extract session ID from cookie headers.
-
-    Args:
-        headers: WebSocket headers/cookies dict
-
-    Returns:
-        Session ID if found, empty string otherwise
+    Extract session ID from cookie headers (auth.COOKIE_NAME = session_id).
     """
     cookies_header = headers.get("cookie", "")
-
+    prefix = auth.COOKIE_NAME + "="
     for cookie in cookies_header.split(";"):
         cookie = cookie.strip()
-        if cookie.startswith("session_id="):
+        if cookie.startswith(prefix):
             return cookie.split("=", 1)[1]
-
     return ""
+
+
+async def _demo_telemetry_loop():
+    """Broadcast demo telemetry every 0.5 s while flight is active."""
+    global _flight_active
+    counter = 0
+    radius = 0.005
+    while _flight_active:
+        counter += 1
+        angle = (counter * 2.0) % 360
+        lat = _BASE_LAT + radius * math.cos(math.radians(angle))
+        lon = _BASE_LON + radius * math.sin(math.radians(angle))
+        telemetry = {
+            "lat": lat,
+            "lon": lon,
+            "alt": 15.0 + 5.0 * math.sin(math.radians(counter)),
+            "heading": angle,
+            "speed": 2.5,
+            "battery": 85.0,
+            "ts": int(time.time()),
+        }
+        await manager.broadcast(telemetry)
+        await asyncio.sleep(0.5)
 
 
 # ============================================================================
@@ -134,13 +156,48 @@ async def websocket_telemetry(websocket: WebSocket):
         return
 
     print(f"✓ WebSocket: User authenticated: {username}")
-
     await manager.connect(websocket)
 
+    global _flight_active
     try:
         while True:
-            # Keep the connection alive; telemetry is broadcast by demo_telemetry_loop
-            data = await websocket.receive_text()
+            raw = await websocket.receive_text()
+            try:
+                msg = json.loads(raw)
+            except json.JSONDecodeError:
+                await websocket.send_json({"type": "error", "msg": "Invalid JSON"})
+                continue
+
+            cmd = msg.get("cmd", "")
+            print(f"⇠ WS cmd from {username}: {cmd}")
+
+            if cmd == "send_route":
+                points = msg.get("points", [])
+                name = msg.get("name", f"mission_{int(time.time())}")
+                print(f"  Route '{name}' with {len(points)} waypoints")
+                await websocket.send_json({
+                    "type": "ack", "cmd": "send_route", "status": "ok",
+                    "name": name, "count": len(points),
+                })
+            elif cmd == "start_flight":
+                print(f"  ▶ START FLIGHT requested by {username}")
+                _flight_active = True
+                asyncio.create_task(_demo_telemetry_loop())
+                await websocket.send_json({"type": "ack", "cmd": "start_flight", "status": "ok"})
+            elif cmd == "abort":
+                print(f"  ■ ABORT requested by {username}")
+                _flight_active = False
+                await websocket.send_json({"type": "ack", "cmd": "abort", "status": "ok"})
+            elif cmd == "rtl":
+                print(f"  ↩ RTL requested by {username}")
+                _flight_active = False
+                await websocket.send_json({"type": "ack", "cmd": "rtl", "status": "ok"})
+            elif cmd == "set_speed":
+                value = msg.get("value", 0)
+                print(f"  Speed → {value} m/s")
+                await websocket.send_json({"type": "ack", "cmd": "set_speed", "value": value})
+            else:
+                await websocket.send_json({"type": "error", "msg": f"Unknown cmd: {cmd}"})
     except WebSocketDisconnect:
         manager.disconnect(websocket)
         print(f"✓ WebSocket client disconnected: {username}")
