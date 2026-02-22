@@ -15,6 +15,12 @@ from typing import Optional
 from pydantic import BaseModel
 from backend.src.streaming.vedio_heatmap_stream import HeatmapStreamer
 
+try:
+    from config.cablage import GPS, FLIGHT_CONTROLLER as _CABLAGE_FC
+except Exception:
+    _CABLAGE_FC = None
+    GPS = None
+
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
@@ -383,6 +389,12 @@ async def websocket_endpoint(websocket: WebSocket):
                 _flight_active = False
                 await websocket.send_json({"type": "ack", "cmd": "abort", "status": "ok"})
 
+            elif cmd == "rtl":
+                print(f"  ↩ RTL (Return To Launch) requested by {username}")
+                _flight_active = False
+                # TODO: forward to flight controller via UART
+                await websocket.send_json({"type": "ack", "cmd": "rtl", "status": "ok"})
+
             elif cmd == "set_speed":
                 value = msg.get("value", 0)
                 print(f"  Speed → {value} m/s")
@@ -404,6 +416,11 @@ async def websocket_endpoint(websocket: WebSocket):
 async def startup_event():
     """Load users on startup. Telemetry loop is NOT auto-started."""
     load_users()
+    # Log UART assignment (RPi 5: GPS = miniUART, FC = PL011)
+    if GPS:
+        print(f"GPS configured on {GPS['port']} (miniUART)")
+    if _CABLAGE_FC:
+        print(f"Flight Controller configured on {_CABLAGE_FC['port']} (PL011)")
     # Demo telemetry loop is disabled by default.
     # It starts only when the frontend sends a 'start_flight' command.
 

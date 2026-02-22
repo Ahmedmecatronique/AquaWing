@@ -2,43 +2,55 @@
 UART Link - Serial Port Communication
 
 Handles opening, closing, and communication over a serial UART connection.
-Provides abstraction for sending and receiving messages.
-Le câblage GPS (port, baudrate, GPIO) est lu depuis config/cablage.py.
+Configuration from config/cablage.py:
+  - FLIGHT_CONTROLLER (default): PID and flight commands → /dev/ttyAMA0 (PL011)
+  - GPS: GPS-related communication only → /dev/ttyS0 (miniUART)
+
+Serial instances are separate; no shared UART between GPS and STM32.
 
 TODO: Implement real serial communication
 """
 
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
-from config.cablage import GPS
+from config.cablage import FLIGHT_CONTROLLER, GPS
 
 import serial
-from typing import Optional
+from typing import Optional, Dict, Any
 
 
 class UARTLink:
     """
     UART serial communication interface.
-    Configuration par défaut lue depuis config.cablage.GPS.
+    Default config: FLIGHT_CONTROLLER (PID, commands). For GPS use config=GPS.
     
     TODO: Add connection state management
     TODO: Add automatic reconnection logic
     TODO: Add message queuing and retry logic
     """
     
-    def __init__(self, port: str = None, baudrate: int = None, timeout: float = None):
+    def __init__(
+        self,
+        config: Optional[Dict[str, Any]] = None,
+        port: Optional[str] = None,
+        baudrate: Optional[int] = None,
+        timeout: Optional[float] = None,
+    ):
         """
         Initialize UART link (without opening).
-        Defaults are read from config/cablage.py GPS config.
+        Default: FLIGHT_CONTROLLER (ttyAMA0). For GPS use config=GPS.
         
         Args:
-            port: Serial port name (default from cablage.GPS)
-            baudrate: Serial transmission speed (default from cablage.GPS)
-            timeout: Read timeout in seconds (default from cablage.GPS)
+            config: Cabling config dict (FLIGHT_CONTROLLER or GPS). None => FLIGHT_CONTROLLER.
+            port: Override port (optional)
+            baudrate: Override baudrate (optional)
+            timeout: Override timeout in seconds (optional)
         """
-        self.port = port or GPS["port"]
-        self.baudrate = baudrate or GPS["baudrate"]
-        self.timeout = timeout or GPS["timeout_s"]
+        cfg = config if config is not None else FLIGHT_CONTROLLER
+        self.port = port or cfg["port"]
+        self.baudrate = baudrate or cfg["baudrate"]
+        self.timeout = timeout if timeout is not None else cfg.get("timeout_s", 1.0)
+        self.label = cfg.get("label", "UART")
         self.serial = None
     
     def open(self) -> bool:
@@ -51,14 +63,14 @@ class UARTLink:
         try:
             self.serial = serial.Serial(self.port, self.baudrate, timeout=self.timeout)
             if getattr(self.serial, 'is_open', False):
-                print(f"UART opened {self.port} @ {self.baudrate}")
+                print(f"{self.label} connected on {self.port}")
                 return True
             # unexpected state
             print(f"UART could not be opened (unknown state)")
             self.serial = None
             return False
         except Exception as e:
-            print(f"Error opening UART {self.port}: {e}")
+            print(f"Error opening {self.port} ({self.label}): {e}")
             self.serial = None
             return False
     
