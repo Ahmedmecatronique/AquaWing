@@ -199,6 +199,10 @@
                     <span class="nav-icon">⚙️</span>
                     <span>PID Settings</span>
                 </button>
+                <button id="nav-electrical-wiring" class="nav-item">
+                    <span class="nav-icon">🔌</span>
+                    <span>Electrical Wiring</span>
+                </button>
                 <button id="nav-heatmap" class="nav-item">
                     <span class="nav-icon">🔥</span>
                     <span>Heatmap</span>
@@ -553,6 +557,37 @@
                     <button id="pid-apply-btn" class="btn-primary">Apply Settings</button>
                     <button id="pid-reset-btn" class="btn-ghost">Reset to Default</button>
                     <button id="pid-save-btn" class="btn-primary">Save Profile</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Electrical Wiring Panel (shown when Electrical Wiring tab is active) -->
+        <div class="electrical-wiring-panel" id="electrical-wiring-panel" style="display:none;">
+            <div class="electrical-wiring-panel-header">
+                <div class="panel-title">ELECTRICAL WIRING</div>
+            </div>
+            <div class="electrical-wiring-panel-content">
+                <div class="electrical-wiring-grid">
+                    <div class="electrical-wiring-card">
+                        <div class="electrical-wiring-card-title">Wiring Diagram</div>
+                        <div class="electrical-wiring-card-placeholder">Diagram and pinout reference</div>
+                    </div>
+                    <div class="electrical-wiring-card">
+                        <div class="electrical-wiring-card-title">Battery Connections</div>
+                        <div class="electrical-wiring-card-placeholder">LiPo, PDB, power distribution</div>
+                    </div>
+                    <div class="electrical-wiring-card">
+                        <div class="electrical-wiring-card-title">ESC to Motor</div>
+                        <div class="electrical-wiring-card-placeholder">ESC wiring and motor order</div>
+                    </div>
+                    <div class="electrical-wiring-card">
+                        <div class="electrical-wiring-card-title">Flight Controller</div>
+                        <div class="electrical-wiring-card-placeholder">STM32 UART, PWM, telemetry</div>
+                    </div>
+                    <div class="electrical-wiring-card">
+                        <div class="electrical-wiring-card-title">Sensors & Cameras</div>
+                        <div class="electrical-wiring-card-placeholder">GPS, IMU, RGB, thermal</div>
+                    </div>
                 </div>
             </div>
         </div>

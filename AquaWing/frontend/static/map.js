@@ -2325,6 +2325,7 @@ window.addEventListener('load', () => {
     const navSystems = document.getElementById('nav-systems');
     const navOptical = document.getElementById('nav-optical');
     const navPid = document.getElementById('nav-pid');
+    const navElectricalWiring = document.getElementById('nav-electrical-wiring');
     const navHeatmap = document.getElementById('nav-heatmap');
     const navSettings = document.getElementById('nav-settings');
     
@@ -2338,7 +2339,7 @@ window.addEventListener('load', () => {
     let isOpticalSettingsVisible = true;
     
     function setActiveNav(activeEl) {
-        [navDashboard, navMissions, navSystems, navOptical, navPid, navHeatmap, navSettings].forEach(el => {
+        [navDashboard, navMissions, navSystems, navOptical, navPid, navElectricalWiring, navHeatmap, navSettings].forEach(el => {
             if (el) {
                 el.classList.remove('nav-active');
             }
@@ -2370,6 +2371,8 @@ window.addEventListener('load', () => {
             if (opticalCamerasView) opticalCamerasView.style.display = 'none';
             const pidPanel = document.getElementById('pid-panel');
             if (pidPanel) pidPanel.style.display = 'none';
+            const electricalWiringPanel = document.getElementById('electrical-wiring-panel');
+            if (electricalWiringPanel) electricalWiringPanel.style.display = 'none';
             const settingsPanel = document.getElementById('settings-panel');
             if (settingsPanel) settingsPanel.style.display = 'none';
             const heatmapPanel = document.getElementById('heatmap-panel');
@@ -2400,6 +2403,8 @@ window.addEventListener('load', () => {
             if (opticalPanel) opticalPanel.style.display = 'none';
             const pidPanel = document.getElementById('pid-panel');
             if (pidPanel) pidPanel.style.display = 'none';
+            const electricalWiringPanelMissions = document.getElementById('electrical-wiring-panel');
+            if (electricalWiringPanelMissions) electricalWiringPanelMissions.style.display = 'none';
             const settingsPanelMissions = document.getElementById('settings-panel');
             if (settingsPanelMissions) settingsPanelMissions.style.display = 'none';
             const heatmapPanelMissions = document.getElementById('heatmap-panel');
@@ -2471,6 +2476,8 @@ window.addEventListener('load', () => {
             if (opticalPanel) opticalPanel.style.display = 'none';
             const pidPanelSystems = document.getElementById('pid-panel');
             if (pidPanelSystems) pidPanelSystems.style.display = 'none';
+            const electricalWiringPanelSystems = document.getElementById('electrical-wiring-panel');
+            if (electricalWiringPanelSystems) electricalWiringPanelSystems.style.display = 'none';
             const settingsPanelSystems = document.getElementById('settings-panel');
             if (settingsPanelSystems) settingsPanelSystems.style.display = 'none';
             const heatmapPanelSystems = document.getElementById('heatmap-panel');
@@ -2495,6 +2502,8 @@ window.addEventListener('load', () => {
             if (systemsPanel) systemsPanel.style.display = 'none';
             // Hide PID panel in Optical view
             if (pidPanel) pidPanel.style.display = 'none';
+            const electricalWiringPanelOptical = document.getElementById('electrical-wiring-panel');
+            if (electricalWiringPanelOptical) electricalWiringPanelOptical.style.display = 'none';
             // Hide Settings panel in Optical view
             if (settingsPanel) settingsPanel.style.display = 'none';
             const heatmapPanelOptical = document.getElementById('heatmap-panel');
@@ -2533,6 +2542,8 @@ window.addEventListener('load', () => {
             if (systemsPanel) systemsPanel.style.display = 'none';
             if (opticalPanel) opticalPanel.style.display = 'none';
             if (opticalCamerasView) opticalCamerasView.style.display = 'none';
+            const electricalWiringPanelPid = document.getElementById('electrical-wiring-panel');
+            if (electricalWiringPanelPid) electricalWiringPanelPid.style.display = 'none';
             // Hide Settings panel in PID view
             if (settingsPanel) settingsPanel.style.display = 'none';
             const heatmapPanelPid = document.getElementById('heatmap-panel');
@@ -2552,14 +2563,15 @@ window.addEventListener('load', () => {
                     loadPidSettings();
                 }, 200);
             }
-        } else if (activeEl === navHeatmap) {
-            // Heatmap: show heatmap panel with map
+        } else if (activeEl === navElectricalWiring) {
+            // Electrical Wiring: show electrical wiring panel
             const speedControlPanel = document.getElementById('speed-control-panel');
             const missionsPanel = document.getElementById('missions-panel');
             const systemsPanel = document.getElementById('systems-panel');
             const opticalPanel = document.getElementById('optical-panel');
             const opticalCamerasView = document.getElementById('optical-cameras-view');
             const pidPanel = document.getElementById('pid-panel');
+            const electricalWiringPanel = document.getElementById('electrical-wiring-panel');
             const settingsPanel = document.getElementById('settings-panel');
             const heatmapPanel = document.getElementById('heatmap-panel');
             const mainContent = document.querySelector('.main-content');
@@ -2571,6 +2583,36 @@ window.addEventListener('load', () => {
             if (opticalPanel) opticalPanel.style.display = 'none';
             if (opticalCamerasView) opticalCamerasView.style.display = 'none';
             if (pidPanel) pidPanel.style.display = 'none';
+            if (settingsPanel) settingsPanel.style.display = 'none';
+            if (heatmapPanel) heatmapPanel.style.display = 'none';
+            if (mainContent) mainContent.style.display = 'none';
+            if (dashboardCams) dashboardCams.style.display = 'none';
+            
+            if (electricalWiringPanel) {
+                electricalWiringPanel.style.display = 'flex';
+                console.log('Electrical Wiring panel shown');
+            }
+        } else if (activeEl === navHeatmap) {
+            // Heatmap: show heatmap panel with map
+            const speedControlPanel = document.getElementById('speed-control-panel');
+            const missionsPanel = document.getElementById('missions-panel');
+            const systemsPanel = document.getElementById('systems-panel');
+            const opticalPanel = document.getElementById('optical-panel');
+            const opticalCamerasView = document.getElementById('optical-cameras-view');
+            const pidPanel = document.getElementById('pid-panel');
+            const electricalWiringPanelHeatmap = document.getElementById('electrical-wiring-panel');
+            const settingsPanel = document.getElementById('settings-panel');
+            const heatmapPanel = document.getElementById('heatmap-panel');
+            const mainContent = document.querySelector('.main-content');
+            const dashboardCams = document.querySelector('.dashboard-cams');
+            
+            if (speedControlPanel) speedControlPanel.style.display = 'none';
+            if (missionsPanel) missionsPanel.style.display = 'none';
+            if (systemsPanel) systemsPanel.style.display = 'none';
+            if (opticalPanel) opticalPanel.style.display = 'none';
+            if (opticalCamerasView) opticalCamerasView.style.display = 'none';
+            if (pidPanel) pidPanel.style.display = 'none';
+            if (electricalWiringPanelHeatmap) electricalWiringPanelHeatmap.style.display = 'none';
             if (settingsPanel) settingsPanel.style.display = 'none';
             // Hide main content
             if (mainContent) mainContent.style.display = 'none';
@@ -2608,6 +2650,8 @@ window.addEventListener('load', () => {
             if (opticalPanel) opticalPanel.style.display = 'none';
             if (opticalCamerasView) opticalCamerasView.style.display = 'none';
             if (pidPanel) pidPanel.style.display = 'none';
+            const electricalWiringPanelSettings = document.getElementById('electrical-wiring-panel');
+            if (electricalWiringPanelSettings) electricalWiringPanelSettings.style.display = 'none';
             const heatmapPanelSettings = document.getElementById('heatmap-panel');
             if (heatmapPanelSettings) heatmapPanelSettings.style.display = 'none';
             if (settingsPanel) {
@@ -2648,6 +2692,12 @@ window.addEventListener('load', () => {
         navPid.addEventListener('click', () => {
             console.log('PID Settings clicked');
             setActiveNav(navPid);
+        });
+    }
+    if (navElectricalWiring) {
+        navElectricalWiring.addEventListener('click', () => {
+            console.log('Electrical Wiring clicked');
+            setActiveNav(navElectricalWiring);
         });
     }
     if (navHeatmap) {

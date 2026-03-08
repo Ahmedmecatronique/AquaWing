@@ -4,7 +4,7 @@
 **Version du système :** 0.2.0  
 **Langage principal :** Python 3  
 **Framework :** FastAPI + Uvicorn  
-**Plateforme cible :** Raspberry Pi 5
+**Plateforme cible :** Raspberry Pi 5 // Raspberry Pi 4
 
 ---
 
