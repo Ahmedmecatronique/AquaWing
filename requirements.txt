@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+websockets
+python-multipart
+pyyaml
+pydantic
+pyserial
+numpy
+Pillow
