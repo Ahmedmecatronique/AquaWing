@@ -3154,6 +3154,118 @@ body.tactical-mode * {
     color: var(--muted);
 }
 
+/* Electrical Wiring — STM32 / Pi tables */
+.ew-tabs {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+    margin-bottom: 12px;
+}
+
+.ew-tab {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 122, 24, 0.25);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.ew-tab:hover {
+    border-color: rgba(255, 122, 24, 0.45);
+    color: var(--text, #e8eef5);
+}
+
+.ew-tab.ew-tab-active {
+    background: rgba(255, 122, 24, 0.18);
+    border-color: rgba(255, 122, 24, 0.55);
+    color: var(--accent);
+}
+
+.ew-subpanel {
+    min-height: 0;
+}
+
+.ew-table-wrap {
+    overflow: auto;
+    max-height: calc(100vh - 48px - 40px - 120px);
+    border: 1px solid rgba(255, 122, 24, 0.12);
+    border-radius: 8px;
+}
+
+.ew-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.ew-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    text-align: left;
+    padding: 10px 12px;
+    background: rgba(12, 18, 28, 0.98);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--accent);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 11px;
+}
+
+.ew-table tbody td {
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    vertical-align: middle;
+}
+
+.ew-table tbody tr:hover td {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.ew-col-pin code {
+    font-family: ui-monospace, monospace;
+    font-size: 12px;
+    color: var(--text, #e8eef5);
+}
+
+.ew-assign {
+    width: 100%;
+    max-width: 200px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(0, 0, 0, 0.25);
+    color: var(--text, #e8eef5);
+    font-size: 12px;
+}
+
+.ew-cycle-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+}
+
+.ew-cycle-badge--oui {
+    background: rgba(0, 200, 140, 0.18);
+    color: #5fe0b8;
+    border: 1px solid rgba(0, 200, 140, 0.35);
+}
+
+.ew-cycle-badge--non {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--muted);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 /* Heatmap Panel */
 .heatmap-panel {
     width: 100%;

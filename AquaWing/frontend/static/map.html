@@ -10,7 +10,7 @@
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="/static/map.css?v=22">
+    <link rel="stylesheet" href="/static/map.css?v=23">
 </head>
 
 <body>
@@ -566,27 +566,37 @@
             <div class="electrical-wiring-panel-header">
                 <div class="panel-title">ELECTRICAL WIRING</div>
             </div>
+            <div class="ew-tabs" role="tablist" aria-label="Carte cible">
+                <button type="button" class="ew-tab ew-tab-active" id="ew-tab-stm" role="tab" aria-selected="true" aria-controls="ew-panel-stm" data-ew-target="stm">STM32</button>
+                <button type="button" class="ew-tab" id="ew-tab-pi" role="tab" aria-selected="false" aria-controls="ew-panel-pi" data-ew-target="pi">Raspberry Pi 4</button>
+            </div>
             <div class="electrical-wiring-panel-content">
-                <div class="electrical-wiring-grid">
-                    <div class="electrical-wiring-card">
-                        <div class="electrical-wiring-card-title">Wiring Diagram</div>
-                        <div class="electrical-wiring-card-placeholder">Diagram and pinout reference</div>
+                <div id="ew-panel-stm" class="ew-subpanel" role="tabpanel" aria-labelledby="ew-tab-stm">
+                    <div class="ew-table-wrap">
+                        <table class="ew-table" id="ew-stm-table">
+                            <thead>
+                                <tr>
+                                    <th>Broche</th>
+                                    <th>Variable / affectation</th>
+                                    <th>Statut (cycle) auto</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ew-stm-tbody"></tbody>
+                        </table>
                     </div>
-                    <div class="electrical-wiring-card">
-                        <div class="electrical-wiring-card-title">Battery Connections</div>
-                        <div class="electrical-wiring-card-placeholder">LiPo, PDB, power distribution</div>
-                    </div>
-                    <div class="electrical-wiring-card">
-                        <div class="electrical-wiring-card-title">ESC to Motor</div>
-                        <div class="electrical-wiring-card-placeholder">ESC wiring and motor order</div>
-                    </div>
-                    <div class="electrical-wiring-card">
-                        <div class="electrical-wiring-card-title">Flight Controller</div>
-                        <div class="electrical-wiring-card-placeholder">STM32 UART, PWM, telemetry</div>
-                    </div>
-                    <div class="electrical-wiring-card">
-                        <div class="electrical-wiring-card-title">Sensors & Cameras</div>
-                        <div class="electrical-wiring-card-placeholder">GPS, IMU, RGB, thermal</div>
+                </div>
+                <div id="ew-panel-pi" class="ew-subpanel" role="tabpanel" aria-labelledby="ew-tab-pi" style="display:none;">
+                    <div class="ew-table-wrap">
+                        <table class="ew-table" id="ew-pi-table">
+                            <thead>
+                                <tr>
+                                    <th>Broche (BCM)</th>
+                                    <th>Variable / affectation</th>
+                                    <th>Statut (cycle) auto</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ew-pi-tbody"></tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -1241,6 +1251,6 @@
     <div id="toast" aria-live="polite" aria-atomic="true" class="toast-container" style="display:none;"></div>
 
     <script>/* dev: stamped version */ window.__MAP_CSS_VERSION='v2'; window.__MAP_JS_VERSION='v1';</script>
-    <script defer src="/static/map.js?v=17"></script>
+    <script defer src="/static/map.js?v=19"></script>
 </body>
 </html>
