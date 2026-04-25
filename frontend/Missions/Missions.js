@@ -25,6 +25,8 @@ let missionTimer = null;
 let missionSegmentIndex = 0;
 let missionSegmentProgress = 0;
 let missionRunning = false;
+let missionFollowMode = true;
+let missionWaypointsEnabled = true;
 
 function updateWaypointCount() {
     const count = document.getElementById("waypoint-count");
@@ -69,6 +71,10 @@ function clearMissionWaypoints() {
     syncWaypointsToParent();
 }
 
+function clearMissionTrack() {
+    if (missionTrackLine) missionTrackLine.setLatLngs([]);
+}
+
 function refreshWaypointMarkerLabels() {
     missionWaypointMarkers.forEach((marker, index) => {
         const n = index + 1;
@@ -102,7 +108,10 @@ function initMissionMap() {
         lineCap: "round",
         lineJoin: "round",
     });
-    missionMap.on("click", (e) => addMissionWaypoint(e.latlng.lat, e.latlng.lng));
+    missionMap.on("click", (e) => {
+        if (!missionWaypointsEnabled) return;
+        addMissionWaypoint(e.latlng.lat, e.latlng.lng);
+    });
 
     missionTrackLine = L.polyline([], {
         color: "#00d4ff",
@@ -134,6 +143,9 @@ function updateMissionDrone(lat, lon, headingDeg) {
     pts.push([lat, lon]);
     if (pts.length > 1200) pts.shift();
     missionTrackLine.setLatLngs(pts);
+    if (missionFollowMode && missionMap) {
+        missionMap.setView([lat, lon], missionMap.getZoom(), { animate: true });
+    }
 }
 
 function resetMissionAnimationPath() {
@@ -163,7 +175,6 @@ function startMissionAnimation(reset = true) {
         const lon = a.lon + (b.lon - a.lon) * missionSegmentProgress;
         const heading = Math.atan2(b.lon - a.lon, b.lat - a.lat) * 180 / Math.PI;
         updateMissionDrone(lat, lon, heading);
-        missionMap.setView([lat, lon], missionMap.getZoom(), { animate: true });
     }, 500);
 }
 
@@ -222,7 +233,6 @@ function startEmergencyRtl() {
         const lon = startLon + (endLon - startLon) * progress;
         const heading = Math.atan2(endLon - startLon, endLat - startLat) * 180 / Math.PI;
         updateMissionDrone(lat, lon, heading);
-        missionMap.setView([lat, lon], missionMap.getZoom(), { animate: true });
 
         if (progress >= 1) {
             if (missionTimer) clearInterval(missionTimer);
@@ -256,6 +266,10 @@ window.addEventListener("DOMContentLoaded", () => {
     const rtlBtn = document.getElementById("emergency-rtl-btn");
     const endBtn = document.getElementById("wait-btn");
     const clearWaypointsBtn = document.getElementById("clear-waypoints-btn");
+    const followBtn = document.getElementById("mission-follow-toggle");
+    const centerBtn = document.getElementById("mission-center-btn");
+    const clearTrackBtn = document.getElementById("mission-clear-track-btn");
+    const waypointsToggleBtn = document.getElementById("mission-waypoints-toggle");
 
     if (startBtn) {
         startBtn.addEventListener("click", () => {
@@ -311,6 +325,34 @@ window.addEventListener("DOMContentLoaded", () => {
         clearWaypointsBtn.addEventListener("click", () => {
             clearMissionWaypoints();
             toast("Waypoints cleared", "info");
+        });
+    }
+
+    if (followBtn) {
+        followBtn.addEventListener("click", () => {
+            missionFollowMode = !missionFollowMode;
+            followBtn.textContent = `Follow: ${missionFollowMode ? "ON" : "OFF"}`;
+        });
+    }
+
+    if (centerBtn) {
+        centerBtn.addEventListener("click", () => {
+            if (!missionMap || !missionDroneMarker) return;
+            missionMap.setView(missionDroneMarker.getLatLng(), missionMap.getZoom(), { animate: true });
+        });
+    }
+
+    if (clearTrackBtn) {
+        clearTrackBtn.addEventListener("click", () => {
+            clearMissionTrack();
+            toast("Track cleared", "info");
+        });
+    }
+
+    if (waypointsToggleBtn) {
+        waypointsToggleBtn.addEventListener("click", () => {
+            missionWaypointsEnabled = !missionWaypointsEnabled;
+            waypointsToggleBtn.textContent = `Waypoints: ${missionWaypointsEnabled ? "ON" : "OFF"}`;
         });
     }
 

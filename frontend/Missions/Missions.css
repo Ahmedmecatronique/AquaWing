@@ -78,6 +78,7 @@ html, body {
 .mission-map-wrap {
     min-width: 0;
     min-height: 0;
+    position: relative;
 }
 
 .mission-map {
@@ -87,6 +88,32 @@ html, body {
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 10px;
     overflow: hidden;
+}
+
+.mission-map-controls {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 700;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.mission-map-btn {
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(10, 16, 28, 0.88);
+    color: #eaf2ff;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.mission-map-btn:hover {
+    background: rgba(255, 122, 24, 0.2);
+    border-color: rgba(255, 122, 24, 0.4);
 }
 
 .mission-map-wrap::before {
