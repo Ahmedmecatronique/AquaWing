@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AquaWing - Heatmap</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="/heatmap-page.css">
+</head>
+<body>
+    <main class="heatmap-root">
+        <div class="heatmap-toolbar">
+            <button id="heatmap-clear-btn" class="btn">Clear Points</button>
+            <button id="heatmap-clear-history-btn" class="btn btn-ghost">Effacer historique</button>
+        </div>
+        <div class="heatmap-stats">
+            <div>Total: <strong id="heatmap-total-detections">0</strong></div>
+            <div>Drowning: <strong id="heatmap-drowning-count">0</strong></div>
+            <div>Normal: <strong id="heatmap-normal-count">0</strong></div>
+        </div>
+        <div class="heatmap-main">
+            <div id="heatmap-map" class="heatmap-map"></div>
+            <aside class="heatmap-history">
+                <div class="history-title">HISTORIQUE DES CAS</div>
+                <div id="heatmap-history-content" class="history-content">
+                    <div class="history-empty">Aucun cas enregistré</div>
+                </div>
+            </aside>
+        </div>
+    </main>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="/heatmap-page.js"></script>
+</body>
+</html>

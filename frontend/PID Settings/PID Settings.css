@@ -1,0 +1,51 @@
+:root {
+    --text: #eaf2ff;
+    --muted: rgba(234,242,255,0.7);
+    --accent: #ff7a18;
+}
+* { box-sizing: border-box; }
+html, body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    color: var(--text);
+    font-family: "Outfit", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+.pid-root { padding: 8px; display: flex; flex-direction: column; gap: 14px; }
+.pid-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.pid-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,122,24,0.15);
+    border-radius: 8px;
+    padding: 12px;
+}
+.pid-card h3 {
+    margin: 0 0 10px;
+    color: var(--accent);
+    font-size: 13px;
+    text-align: center;
+}
+.pid-card label {
+    display: block;
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 8px;
+}
+.pid-card input {
+    margin-top: 4px;
+    width: 100%;
+    padding: 9px;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(0,0,0,0.25);
+    color: var(--text);
+}
+.pid-alt-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.pid-actions { display: flex; justify-content: center; gap: 10px; }
+.btn-primary, .btn-ghost {
+    border: 0; border-radius: 8px; padding: 10px 14px; font-weight: 800; cursor: pointer;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-ghost { background: rgba(255,255,255,0.08); color: var(--text); }

@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AquaWing - Settings</title>
+    <link rel="stylesheet" href="/settings-page.css">
+</head>
+<body>
+    <main class="settings-root">
+        <div class="settings-cards-grid">
+            <section class="settings-section">
+                <h3>GENERAL</h3>
+                <label><input type="checkbox" id="settings-auto-connect" checked> Auto Connect on Startup</label>
+                <label><input type="checkbox" id="settings-show-notifications" checked> Show Notifications</label>
+                <label>Language
+                    <select id="settings-language">
+                        <option value="en" selected>English</option>
+                        <option value="fr">Français</option>
+                        <option value="ar">العربية</option>
+                    </select>
+                </label>
+            </section>
+
+            <section class="settings-section">
+                <h3>DISPLAY</h3>
+                <label>Theme
+                    <select id="settings-theme">
+                        <option value="dark" selected>Dark</option>
+                        <option value="light">Light</option>
+                        <option value="auto">Auto</option>
+                    </select>
+                </label>
+                <label>Map Style
+                    <select id="settings-map-style">
+                        <option value="standard" selected>Standard</option>
+                        <option value="satellite">Satellite</option>
+                        <option value="terrain">Terrain</option>
+                    </select>
+                </label>
+            </section>
+
+            <section class="settings-section">
+                <h3>TELEMETRY</h3>
+                <label>Update Rate (Hz)
+                    <input type="number" id="settings-update-rate" min="1" max="50" value="10">
+                </label>
+                <label><input type="checkbox" id="settings-record-telemetry" checked> Record Telemetry</label>
+            </section>
+        </div>
+
+        <div class="settings-actions">
+            <button id="settings-save-btn" class="btn-primary">Save Settings</button>
+            <button id="settings-reset-btn" class="btn-ghost">Reset to Default</button>
+        </div>
+    </main>
+    <script src="/settings-page.js"></script>
+</body>
+</html>

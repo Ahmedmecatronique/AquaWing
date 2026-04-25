@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AquaWing - Mission Control</title>
+    <link rel="stylesheet" href="/missions-page.css">
+</head>
+<body>
+    <main class="missions-root">
+        <div class="mission-control-buttons">
+            <button id="start-flight-btn" class="mission-btn btn-success">START FLIGHT</button>
+            <button id="pause-mission-btn" class="mission-btn btn-warning" disabled>PAUSE</button>
+            <button id="resume-mission-btn" class="mission-btn btn-success" disabled>RESUME</button>
+            <button id="preflight-btn" class="mission-btn btn-preflight">PRE-FLIGHT CHECK</button>
+            <button id="emergency-rtl-btn" class="mission-btn btn-warning">EMERGENCY RTL</button>
+            <button id="wait-btn" class="mission-btn btn-danger" disabled>END MISSION</button>
+        </div>
+
+        <div id="preflight-status" class="preflight-status" aria-live="polite" aria-atomic="true" style="display:none;">
+            <div class="status-item"><span class="component">Main Battery</span><span class="status wait">WAIT</span></div>
+            <div class="status-item"><span class="component">Motors</span><span class="status wait">WAIT</span></div>
+            <div class="status-item"><span class="component">Sensors</span><span class="status wait">WAIT</span></div>
+        </div>
+    </main>
+
+    <script src="/missions-page.js"></script>
+</body>
+</html>

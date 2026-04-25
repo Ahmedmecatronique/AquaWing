@@ -1,0 +1,78 @@
+:root {
+    --text: #eaf2ff;
+    --muted: rgba(234, 242, 255, 0.55);
+    --accent: #ff7a18;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    color: var(--text);
+    font-family: "Outfit", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+.systems-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    padding: 8px;
+}
+
+.systems-section {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.systems-section-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 10px;
+}
+
+.systems-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(100px, 1fr));
+    gap: 10px 16px;
+}
+
+.systems-label {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 2px;
+}
+
+.systems-value {
+    font-size: 22px;
+    font-weight: 900;
+    color: var(--text);
+    line-height: 1.1;
+}
+
+.status-normal { color: #00ff88; }
+
+.systems-motors-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(110px, 1fr));
+    gap: 10px;
+}
+
+.systems-motor-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.motor-label { font-size: 10px; color: var(--muted); text-transform: uppercase; }
+.motor-status { font-size: 22px; font-weight: 900; color: #00ff88; margin-top: 4px; }
+.motor-temp { font-size: 11px; color: rgba(255, 255, 255, 0.6); margin-top: 2px; }

@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AquaWing - Optical</title>
+    <link rel="stylesheet" href="/optical-page.css">
+</head>
+<body>
+    <div class="optical-layout">
+        <aside class="optical-settings">
+            <div class="settings-title">OPTICAL SETTINGS</div>
+
+            <div class="settings-section">
+                <div class="section-title">RGB CAMERA</div>
+                <label>Brightness <input id="rgb-brightness" type="range" min="0" max="100" value="50"></label>
+                <label>Contrast <input id="rgb-contrast" type="range" min="0" max="100" value="50"></label>
+                <label>Saturation <input id="rgb-saturation" type="range" min="0" max="100" value="50"></label>
+                <button id="optical-video-toggle" class="btn">RGB: OFF</button>
+            </div>
+
+            <div class="settings-section">
+                <div class="section-title">THERMAL CAMERA</div>
+                <label>Palette
+                    <select id="thermal-palette">
+                        <option value="ironbow">Ironbow</option>
+                        <option value="rainbow">Rainbow</option>
+                        <option value="grayscale">Grayscale</option>
+                    </select>
+                </label>
+                <button id="optical-thermal-toggle" class="btn">Thermal: OFF</button>
+            </div>
+        </aside>
+
+        <section class="optical-cameras-grid">
+            <div class="camera-card">
+                <div class="camera-header">
+                    <div>RGB CAMERA</div>
+                    <button id="optical-video-toggle-main" class="btn small">RGB: OFF</button>
+                </div>
+                <div class="camera-body">
+                    <img id="optical-video-stream" class="stream" src="" alt="RGB stream">
+                    <div id="optical-video-placeholder" class="placeholder">Video stream not available</div>
+                </div>
+            </div>
+
+            <div class="camera-card">
+                <div class="camera-header">
+                    <div>THERMAL</div>
+                    <button id="optical-thermal-toggle-main" class="btn small">Thermal: OFF</button>
+                </div>
+                <div class="camera-body">
+                    <img id="optical-thermal-stream" class="stream" src="" alt="Thermal stream">
+                    <div id="optical-thermal-placeholder" class="placeholder">Thermal stream not available</div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="/optical-page.js"></script>
+</body>
+</html>

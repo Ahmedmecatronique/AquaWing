@@ -10,7 +10,7 @@
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="/static/map.css?v=23">
+    <link rel="stylesheet" href="/dashboard.css?v=1">
 </head>
 
 <body>
@@ -271,21 +271,14 @@
                 <div class="panel-title">MISSION CONTROL</div>
             </div>
             <div class="missions-content">
-                <div class="mission-control-buttons">
-                    <button id="start-flight-btn" class="mission-btn btn-success" title="Démarrer la mission de vol">START FLIGHT</button>
-                    <button id="pause-mission-btn" class="mission-btn btn-warning" disabled title="Mettre en pause la mission en cours">PAUSE</button>
-                    <button id="resume-mission-btn" class="mission-btn btn-success" disabled title="Reprendre la mission en pause">RESUME</button>
-                    <button id="preflight-btn" class="mission-btn btn-preflight" title="Vérification pré-vol du système">PRE-FLIGHT CHECK</button>
-                    <button id="emergency-rtl-btn" class="mission-btn btn-warning" title="Retour d'urgence au point de départ">EMERGENCY RTL</button>
-                    <button id="wait-btn" class="mission-btn btn-danger" disabled title="Terminer la mission">END MISSION</button>
-                </div>
-                
-                <!-- Pre-flight status -->
-                <div id="preflight-status" class="preflight-status" aria-live="polite" aria-atomic="true" style="display:none;">
-                    <div class="status-item"><span class="component">Main Battery</span><span class="status wait">WAIT</span></div>
-                    <div class="status-item"><span class="component">Motors</span><span class="status wait">WAIT</span></div>
-                    <div class="status-item"><span class="component">Sensors</span><span class="status wait">WAIT</span></div>
-                </div>
+                <iframe
+                    id="missions-frame"
+                    class="missions-frame"
+                    src="/missions-page"
+                    title="Mission Control"
+                    loading="lazy"
+                    referrerpolicy="same-origin">
+                </iframe>
             </div>
         </div>
 
@@ -294,84 +287,15 @@
             <div class="systems-panel-header">
                 <div class="panel-title">SYSTEMS</div>
             </div>
-            <div class="systems-content">
-                <!-- Power Section -->
-                <div class="systems-section">
-                    <div class="systems-section-title">Power / Electrical</div>
-                    <div class="systems-metrics">
-                        <div class="systems-metric">
-                            <div class="systems-label">Battery Voltage</div>
-                            <div class="systems-value" id="sys-batt-voltage">12.6 V</div>
-                        </div>
-                        <div class="systems-metric">
-                            <div class="systems-label">Battery Current</div>
-                            <div class="systems-value" id="sys-batt-current">0.0 A</div>
-                        </div>
-                        <div class="systems-metric">
-                            <div class="systems-label">Power</div>
-                            <div class="systems-value" id="sys-power-cons">0 W</div>
-                        </div>
-                        <div class="systems-metric">
-                            <div class="systems-label">Bus Voltage</div>
-                            <div class="systems-value" id="sys-bus-voltage">12.6 V</div>
-                        </div>
-                        <div class="systems-metric">
-                            <div class="systems-label">Battery Temp</div>
-                            <div class="systems-value" id="sys-batt-temp">30°C</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Motors Section -->
-                <div class="systems-section">
-                    <div class="systems-section-title">Motors</div>
-                    <div class="systems-motors-grid">
-                        <div class="systems-motor-card">
-                            <div class="motor-label">Motor 1</div>
-                            <div class="motor-status" id="sys-motor-1">OK</div>
-                            <div class="motor-temp" id="sys-motor-1-temp">45°C</div>
-                        </div>
-                        <div class="systems-motor-card">
-                            <div class="motor-label">Motor 2</div>
-                            <div class="motor-status" id="sys-motor-2">OK</div>
-                            <div class="motor-temp" id="sys-motor-2-temp">45°C</div>
-                        </div>
-                        <div class="systems-motor-card">
-                            <div class="motor-label">Motor 3</div>
-                            <div class="motor-status" id="sys-motor-3">OK</div>
-                            <div class="motor-temp" id="sys-motor-3-temp">45°C</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Sensors Section -->
-                <div class="systems-section">
-                    <div class="systems-section-title">Sensors</div>
-                    <div class="systems-metrics">
-                        <div class="systems-metric">
-                            <div class="systems-label">IMU</div>
-                            <div class="systems-value status-normal" id="sys-imu">OK</div>
-                        </div>
-                        <div class="systems-metric">
-                            <div class="systems-label">GPS</div>
-                            <div class="systems-value status-normal" id="sys-gps">FIX</div>
-                        </div>
-                        <div class="systems-metric">
-                            <div class="systems-label">Barometer</div>
-                            <div class="systems-value" id="sys-baro">1013 hPa</div>
-                        </div>
-                        <div class="systems-metric">
-                            <div class="systems-label">Compass</div>
-                            <div class="systems-value status-normal" id="sys-compass">OK</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Placeholder slots for future extension (ESC Status, CPU/Raspberry Pi, Communication, Signal Strength) -->
-                <div class="systems-grid-slot" data-placeholder="esc-status" aria-hidden="true"></div>
-                <div class="systems-grid-slot" data-placeholder="cpu-raspberry" aria-hidden="true"></div>
-                <div class="systems-grid-slot" data-placeholder="communication" aria-hidden="true"></div>
-                <div class="systems-grid-slot" data-placeholder="signal-strength" aria-hidden="true"></div>
+            <div class="systems-content systems-content-host">
+                <iframe
+                    id="systems-frame"
+                    class="systems-frame"
+                    src="/systems-page"
+                    title="Systems"
+                    loading="lazy"
+                    referrerpolicy="same-origin">
+                </iframe>
             </div>
         </div>
 
@@ -379,94 +303,16 @@
         <div class="optical-panel" id="optical-panel" style="display:none;">
             <div class="optical-panel-header">
                 <div class="panel-title">OPTICAL SETTINGS</div>
-                <button type="button" class="optical-panel-close" id="optical-panel-close" aria-label="Close panel">✕</button>
             </div>
             <div class="optical-settings-content">
-                <!-- RGB Camera Settings -->
-                <div class="optical-settings-section">
-                    <div class="settings-section-title">RGB CAMERA</div>
-                    <div class="settings-group">
-                        <label for="rgb-brightness">Brightness</label>
-                        <input type="range" id="rgb-brightness" min="0" max="100" value="50">
-                        <div class="settings-value" id="rgb-brightness-val">50%</div>
-                    </div>
-                    <div class="settings-group">
-                        <label for="rgb-contrast">Contrast</label>
-                        <input type="range" id="rgb-contrast" min="0" max="100" value="50">
-                        <div class="settings-value" id="rgb-contrast-val">50%</div>
-                    </div>
-                    <div class="settings-group">
-                        <label for="rgb-saturation">Saturation</label>
-                        <input type="range" id="rgb-saturation" min="0" max="100" value="50">
-                        <div class="settings-value" id="rgb-saturation-val">50%</div>
-                    </div>
-                    <div class="settings-group">
-                        <button id="optical-video-toggle" class="btn-primary settings-toggle-btn">RGB: OFF</button>
-                    </div>
-                </div>
-
-                <!-- Thermal Camera Settings -->
-                <div class="optical-settings-section">
-                    <div class="settings-section-title">THERMAL CAMERA</div>
-                    <div class="settings-group settings-group-resettable">
-                        <label for="thermal-palette">Color Palette</label>
-                        <select id="thermal-palette">
-                            <option value="ironbow">Ironbow</option>
-                            <option value="rainbow">Rainbow</option>
-                            <option value="grayscale">Grayscale</option>
-                            <option value="hot">Hot</option>
-                        </select>
-                        <button type="button" class="param-reset-btn" data-param="thermal-palette" data-default="ironbow" aria-label="Reset to default">✕</button>
-                    </div>
-                    <div class="settings-group settings-group-resettable">
-                        <label for="thermal-temp-min">Min Temperature (°C)</label>
-                        <input type="number" id="thermal-temp-min" min="-40" max="100" value="0">
-                        <button type="button" class="param-reset-btn" data-param="thermal-temp-min" data-default="0" aria-label="Reset to default">✕</button>
-                    </div>
-                    <div class="settings-group settings-group-resettable">
-                        <label for="thermal-temp-max">Max Temperature (°C)</label>
-                        <input type="number" id="thermal-temp-max" min="-40" max="100" value="100">
-                        <button type="button" class="param-reset-btn" data-param="thermal-temp-max" data-default="100" aria-label="Reset to default">✕</button>
-                    </div>
-                    <div class="settings-group settings-group-resettable">
-                        <label>
-                            <input type="checkbox" id="thermal-emissivity"> Auto Emissivity
-                        </label>
-                        <button type="button" class="param-reset-btn" data-param="thermal-emissivity" data-default="false" aria-label="Reset to default">✕</button>
-                    </div>
-                    <div class="settings-group">
-                        <button id="optical-thermal-toggle" class="btn-primary settings-toggle-btn">Thermal: OFF</button>
-                    </div>
-                </div>
-
-                <!-- AI Detection Settings -->
-                <div class="optical-settings-section">
-                    <div class="settings-section-title">AI DETECTION</div>
-                    <div class="settings-group settings-group-resettable">
-                        <label>
-                            <input type="checkbox" id="ai-detection-enabled" checked> Enable AI Detection
-                        </label>
-                        <button type="button" class="param-reset-btn" data-param="ai-detection-enabled" data-default="true" aria-label="Reset to default">✕</button>
-                    </div>
-                    <div class="settings-group settings-group-resettable">
-                        <label for="ai-confidence-threshold">Confidence Threshold</label>
-                        <input type="range" id="ai-confidence-threshold" min="0" max="100" value="50">
-                        <div class="settings-value" id="ai-confidence-threshold-val">50%</div>
-                        <button type="button" class="param-reset-btn" data-param="ai-confidence-threshold" data-default="50" aria-label="Reset to default">✕</button>
-                    </div>
-                    <div class="settings-group settings-group-resettable">
-                        <label>
-                            <input type="checkbox" id="ai-show-bounding-boxes" checked> Show Bounding Boxes
-                        </label>
-                        <button type="button" class="param-reset-btn" data-param="ai-show-bounding-boxes" data-default="true" aria-label="Reset to default">✕</button>
-                    </div>
-                    <div class="settings-group settings-group-resettable">
-                        <label>
-                            <input type="checkbox" id="ai-show-labels" checked> Show Labels
-                        </label>
-                        <button type="button" class="param-reset-btn" data-param="ai-show-labels" data-default="true" aria-label="Reset to default">✕</button>
-                    </div>
-                </div>
+                <iframe
+                    id="optical-frame"
+                    class="optical-frame"
+                    src="/optical-page"
+                    title="Optical"
+                    loading="lazy"
+                    referrerpolicy="same-origin">
+                </iframe>
             </div>
         </div>
 
@@ -476,88 +322,14 @@
                 <div class="panel-title">PID SETTINGS</div>
             </div>
             <div class="pid-panel-content">
-                <div class="pid-grid">
-                    <!-- Roll PID -->
-                    <div class="pid-card">
-                        <div class="pid-card-title">ROLL PID</div>
-                        <div class="pid-card-fields">
-                            <div class="pid-field">
-                                <label for="pid-roll-p">P</label>
-                                <input type="number" id="pid-roll-p" min="0" max="10" step="0.01" value="4.5">
-                            </div>
-                            <div class="pid-field">
-                                <label for="pid-roll-i">I</label>
-                                <input type="number" id="pid-roll-i" min="0" max="10" step="0.01" value="0.45">
-                            </div>
-                            <div class="pid-field">
-                                <label for="pid-roll-d">D</label>
-                                <input type="number" id="pid-roll-d" min="0" max="10" step="0.01" value="0.05">
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Pitch PID -->
-                    <div class="pid-card">
-                        <div class="pid-card-title">PITCH PID</div>
-                        <div class="pid-card-fields">
-                            <div class="pid-field">
-                                <label for="pid-pitch-p">P</label>
-                                <input type="number" id="pid-pitch-p" min="0" max="10" step="0.01" value="4.5">
-                            </div>
-                            <div class="pid-field">
-                                <label for="pid-pitch-i">I</label>
-                                <input type="number" id="pid-pitch-i" min="0" max="10" step="0.01" value="0.45">
-                            </div>
-                            <div class="pid-field">
-                                <label for="pid-pitch-d">D</label>
-                                <input type="number" id="pid-pitch-d" min="0" max="10" step="0.01" value="0.05">
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Yaw PID -->
-                    <div class="pid-card">
-                        <div class="pid-card-title">YAW PID</div>
-                        <div class="pid-card-fields">
-                            <div class="pid-field">
-                                <label for="pid-yaw-p">P</label>
-                                <input type="number" id="pid-yaw-p" min="0" max="10" step="0.01" value="4.5">
-                            </div>
-                            <div class="pid-field">
-                                <label for="pid-yaw-i">I</label>
-                                <input type="number" id="pid-yaw-i" min="0" max="10" step="0.01" value="0.45">
-                            </div>
-                            <div class="pid-field">
-                                <label for="pid-yaw-d">D</label>
-                                <input type="number" id="pid-yaw-d" min="0" max="10" step="0.01" value="0.05">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Altitude PID row -->
-                <div class="pid-altitude-row">
-                    <div class="pid-card pid-card-altitude">
-                        <div class="pid-card-title">ALTITUDE PID</div>
-                        <div class="pid-card-fields pid-card-fields-inline">
-                            <div class="pid-field">
-                                <label for="pid-alt-p">P</label>
-                                <input type="number" id="pid-alt-p" min="0" max="10" step="0.01" value="1.0">
-                            </div>
-                            <div class="pid-field">
-                                <label for="pid-alt-i">I</label>
-                                <input type="number" id="pid-alt-i" min="0" max="10" step="0.01" value="0.1">
-                            </div>
-                            <div class="pid-field">
-                                <label for="pid-alt-d">D</label>
-                                <input type="number" id="pid-alt-d" min="0" max="10" step="0.01" value="0.01">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Global action area -->
-                <div class="pid-actions">
-                    <button id="pid-apply-btn" class="btn-primary">Apply Settings</button>
-                    <button id="pid-reset-btn" class="btn-ghost">Reset to Default</button>
-                    <button id="pid-save-btn" class="btn-primary">Save Profile</button>
-                </div>
+                <iframe
+                    id="pid-frame"
+                    class="pid-frame"
+                    src="/pid-page"
+                    title="PID Settings"
+                    loading="lazy"
+                    referrerpolicy="same-origin">
+                </iframe>
             </div>
         </div>
 
@@ -566,39 +338,15 @@
             <div class="electrical-wiring-panel-header">
                 <div class="panel-title">ELECTRICAL WIRING</div>
             </div>
-            <div class="ew-tabs" role="tablist" aria-label="Carte cible">
-                <button type="button" class="ew-tab ew-tab-active" id="ew-tab-stm" role="tab" aria-selected="true" aria-controls="ew-panel-stm" data-ew-target="stm">STM32</button>
-                <button type="button" class="ew-tab" id="ew-tab-pi" role="tab" aria-selected="false" aria-controls="ew-panel-pi" data-ew-target="pi">Raspberry Pi 4</button>
-            </div>
             <div class="electrical-wiring-panel-content">
-                <div id="ew-panel-stm" class="ew-subpanel" role="tabpanel" aria-labelledby="ew-tab-stm">
-                    <div class="ew-table-wrap">
-                        <table class="ew-table" id="ew-stm-table">
-                            <thead>
-                                <tr>
-                                    <th>Broche</th>
-                                    <th>Variable / affectation</th>
-                                    <th>Statut (cycle) auto</th>
-                                </tr>
-                            </thead>
-                            <tbody id="ew-stm-tbody"></tbody>
-                        </table>
-                    </div>
-                </div>
-                <div id="ew-panel-pi" class="ew-subpanel" role="tabpanel" aria-labelledby="ew-tab-pi" style="display:none;">
-                    <div class="ew-table-wrap">
-                        <table class="ew-table" id="ew-pi-table">
-                            <thead>
-                                <tr>
-                                    <th>Broche (BCM)</th>
-                                    <th>Variable / affectation</th>
-                                    <th>Statut (cycle) auto</th>
-                                </tr>
-                            </thead>
-                            <tbody id="ew-pi-tbody"></tbody>
-                        </table>
-                    </div>
-                </div>
+                <iframe
+                    id="electrical-wiring-frame"
+                    class="electrical-wiring-frame"
+                    src="/electrical-wiring"
+                    title="Electrical Wiring"
+                    loading="lazy"
+                    referrerpolicy="same-origin">
+                </iframe>
             </div>
         </div>
 
@@ -606,37 +354,16 @@
         <div class="heatmap-panel" id="heatmap-panel" style="display:none;">
             <div class="heatmap-panel-header">
                 <div class="panel-title">HEATMAP - DROWNING DETECTION</div>
-                <div class="heatmap-controls">
-                    <button id="heatmap-clear-btn" class="btn-ghost">Clear Points</button>
-                </div>
             </div>
             <div class="heatmap-panel-content">
-                <div class="heatmap-stats">
-                    <div class="heatmap-stat">
-                        <span class="heatmap-stat-label">Total Detections:</span>
-                        <span class="heatmap-stat-value" id="heatmap-total-detections">0</span>
-                    </div>
-                    <div class="heatmap-stat">
-                        <span class="heatmap-stat-label">Drowning Cases:</span>
-                        <span class="heatmap-stat-value drowning" id="heatmap-drowning-count">0</span>
-                    </div>
-                    <div class="heatmap-stat">
-                        <span class="heatmap-stat-label">Normal Persons:</span>
-                        <span class="heatmap-stat-value normal" id="heatmap-normal-count">0</span>
-                    </div>
-                </div>
-                <div class="heatmap-main-area">
-                    <div id="heatmap-map" class="heatmap-map-canvas"></div>
-                    <div class="heatmap-history-panel">
-                        <div class="heatmap-history-header">
-                            <div class="history-title">HISTORIQUE DES CAS</div>
-                            <button id="heatmap-clear-history-btn" class="btn-ghost btn-small">Effacer</button>
-                        </div>
-                        <div class="heatmap-history-content" id="heatmap-history-content">
-                            <div class="history-empty">Aucun cas enregistré</div>
-                        </div>
-                    </div>
-                </div>
+                <iframe
+                    id="heatmap-frame"
+                    class="heatmap-frame"
+                    src="/heatmap-page"
+                    title="Heatmap"
+                    loading="lazy"
+                    referrerpolicy="same-origin">
+                </iframe>
             </div>
         </div>
 
@@ -646,126 +373,19 @@
                 <div class="panel-title">SETTINGS</div>
             </div>
             <div class="settings-panel-content">
-                <div class="settings-cards-grid">
-                    <!-- General Settings -->
-                    <div class="settings-section">
-                        <div class="settings-section-title">GENERAL</div>
-                        <div class="settings-group">
-                            <label>
-                                <input type="checkbox" id="settings-auto-connect" checked> Auto Connect on Startup
-                            </label>
-                        </div>
-                        <div class="settings-group">
-                            <label>
-                                <input type="checkbox" id="settings-show-notifications" checked> Show Notifications
-                            </label>
-                        </div>
-                        <div class="settings-group">
-                            <label for="settings-language">Language</label>
-                            <select id="settings-language">
-                                <option value="en" selected>English</option>
-                                <option value="fr">Français</option>
-                                <option value="ar">العربية</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Display Settings -->
-                    <div class="settings-section">
-                        <div class="settings-section-title">DISPLAY</div>
-                        <div class="settings-group">
-                            <label for="settings-theme">Theme</label>
-                            <select id="settings-theme">
-                                <option value="dark" selected>Dark</option>
-                                <option value="light">Light</option>
-                                <option value="auto">Auto</option>
-                            </select>
-                        </div>
-                        <div class="settings-group">
-                            <label for="settings-map-style">Map Style</label>
-                            <select id="settings-map-style">
-                                <option value="standard" selected>Standard</option>
-                                <option value="satellite">Satellite</option>
-                                <option value="terrain">Terrain</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Telemetry Settings -->
-                    <div class="settings-section">
-                        <div class="settings-section-title">TELEMETRY</div>
-                        <div class="settings-group">
-                            <label for="settings-update-rate">Update Rate (Hz)</label>
-                            <input type="number" id="settings-update-rate" min="1" max="50" value="10">
-                        </div>
-                        <div class="settings-group">
-                            <label>
-                                <input type="checkbox" id="settings-record-telemetry" checked> Record Telemetry
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Action Buttons (full-width footer, centered) -->
-                <div class="settings-panel-footer">
-                    <div class="settings-actions">
-                        <button id="settings-save-btn" class="btn-primary">Save Settings</button>
-                        <button id="settings-reset-btn" class="btn-ghost">Reset to Default</button>
-                    </div>
-                </div>
+                <iframe
+                    id="settings-frame"
+                    class="settings-frame"
+                    src="/settings-page"
+                    title="Settings"
+                    loading="lazy"
+                    referrerpolicy="same-origin">
+                </iframe>
             </div>
         </div>
 
         <!-- Optical Cameras View (shown when Optical tab is active) -->
-        <div class="optical-cameras-view" id="optical-cameras-view" style="display:none;">
-            <div class="optical-cameras-grid">
-                <!-- RGB Camera -->
-                <div class="optical-camera-card full-size">
-                    <div class="optical-camera-header">
-                        <div class="optical-camera-title">RGB CAMERA</div>
-                        <div class="optical-camera-controls">
-                            <button id="optical-video-toggle-main" class="btn-primary">RGB: OFF</button>
-                        </div>
-                    </div>
-                    <!-- AI Analysis Comment Area -->
-                    <div class="ai-analysis-area" id="optical-rgb-ai-analysis">
-                        <div class="ai-analysis-label">AI ANALYSIS:</div>
-                        <div class="ai-analysis-text" id="optical-rgb-ai-text">Waiting for analysis...</div>
-                    </div>
-                    <div class="optical-video-content full-video">
-                        <img id="optical-video-stream" class="video-stream" src="" alt="RGB stream" />
-                        <canvas id="optical-rgb-overlay" class="video-overlay" aria-hidden="true"></canvas>
-                        <div id="optical-video-placeholder" class="video-placeholder">
-                            <div class="video-loader"></div>
-                            <div class="video-placeholder-text">Connecting to RGB Camera...</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Thermal Camera -->
-                <div class="optical-camera-card full-size">
-                    <div class="optical-camera-header">
-                        <div class="optical-camera-title">THERMAL</div>
-                        <div class="optical-camera-controls">
-                            <button id="optical-thermal-toggle-main" class="btn-primary">Thermal: OFF</button>
-                        </div>
-                    </div>
-                    <!-- AI Analysis Comment Area -->
-                    <div class="ai-analysis-area" id="optical-thermal-ai-analysis">
-                        <div class="ai-analysis-label">AI ANALYSIS:</div>
-                        <div class="ai-analysis-text" id="optical-thermal-ai-text">Waiting for analysis...</div>
-                    </div>
-                    <div class="optical-video-content full-video">
-                        <img id="optical-thermal-stream" class="thermal-stream" src="" alt="Thermal stream" />
-                        <canvas id="optical-thermal-overlay" class="video-overlay" aria-hidden="true"></canvas>
-                        <div id="optical-thermal-placeholder" class="video-placeholder">
-                            <div class="video-loader"></div>
-                            <div class="video-placeholder-text">Connecting to Camera...</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <div class="optical-cameras-view" id="optical-cameras-view" style="display:none;"></div>
 
         <!-- MAIN CONTENT: Dashboard View -->
         <main class="main-content">
@@ -931,43 +551,6 @@
                     <div class="value-item"><div class="label">Speed (m/s)</div><div id="val-speed" class="value">0.0</div><div class="label small">Cmd: <span id="set-speed-value">-</span></div></div>
                     <div class="value-item"><div class="label">Heading</div><div id="val-heading" class="value">0</div></div>
                     <div class="value-item"><div class="label">Time</div><div id="val-time" class="value">-</div></div>
-                </div>
-
-                <div id="pid-panel-old" class="telemetry-row" style="display:none;">
-                    <div class="hud-card" style="width:100%;">
-                        <div class="hud-title">PID TUNING</div>
-                        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;padding:12px;">
-                            <label for="pid-axis" class="small">Axis</label>
-                            <select id="pid-axis">
-                                <option value="pitch">Pitch</option>
-                                <option value="roll">Roll</option>
-                                <option value="yaw">Yaw</option>
-                                <option value="altitude">Altitude</option>
-                            </select>
-
-                            <div style="display:flex;gap:8px;align-items:center;">
-                                <label class="small">Kp</label>
-                                <input id="pid-kp" type="number" step="0.01" value="1.0" style="width:90px">
-                            </div>
-                            <div style="display:flex;gap:8px;align-items:center;">
-                                <label class="small">Ki</label>
-                                <input id="pid-ki" type="number" step="0.001" value="0.0" style="width:90px">
-                            </div>
-                            <div style="display:flex;gap:8px;align-items:center;">
-                                <label class="small">Kd</label>
-                                <input id="pid-kd" type="number" step="0.01" value="0.0" style="width:90px">
-                            </div>
-
-                            <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
-                                <button id="pid-apply" class="btn btn-preflight">Apply</button>
-                                <button id="pid-refresh" class="btn btn-ghost">Refresh</button>
-                            </div>
-                        </div>
-
-                        <div style="padding:8px 12px;border-top:1px solid rgba(255,255,255,0.02);font-size:13px;color:var(--muted);">
-                            Changes are applied in memory and forwarded to the flight controller on the RPi. They are volatile (not saved to disk).
-                        </div>
-                    </div>
                 </div>
 
                 <div class="telemetry-row compass-row">
@@ -1144,25 +727,6 @@
                         </div>
                     </section>
 
-                    <!-- System Settings (reuses existing card styles; non-intrusive controls) -->
-                    <div class="system-settings card" id="system-settings">
-                        <div class="panel-title">System Settings</div>
-                        <div class="settings-row" style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;">
-                            <div class="metric small" style="flex:1 1 220px;">
-                                <div class="metric-label">Battery low threshold (V)</div>
-                                <input id="setting-batt-low" type="range" min="9" max="12.6" step="0.1" value="10.8">
-                                <div id="setting-batt-low-val" class="metric-val">10.8 V</div>
-                            </div>
-                            <div class="metric small" style="flex:1 1 220px;">
-                                <div class="metric-label">Motor max temp (°C)</div>
-                                <input id="setting-motor-max-temp" type="range" min="50" max="120" step="1" value="85">
-                                <div id="setting-motor-max-temp-val" class="metric-val">85°C</div>
-                            </div>
-                        </div>
-                        <div style="margin-top:10px;">
-                            <button id="apply-settings-btn" class="btn btn-preflight">Apply Settings</button>
-                        </div>
-                    </div>
                 </div>
             </div>
         </aside>
@@ -1251,6 +815,6 @@
     <div id="toast" aria-live="polite" aria-atomic="true" class="toast-container" style="display:none;"></div>
 
     <script>/* dev: stamped version */ window.__MAP_CSS_VERSION='v2'; window.__MAP_JS_VERSION='v1';</script>
-    <script defer src="/static/map.js?v=19"></script>
+    <script defer src="/dashboard.js?v=1"></script>
 </body>
 </html>

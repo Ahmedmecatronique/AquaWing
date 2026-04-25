@@ -30,8 +30,17 @@ SESSION_COOKIE_NAME = "sid"
 BASE_LATITUDE = 36.8065  # Tunis
 BASE_LONGITUDE = 10.1815
 STATIC_DIR = Path(__file__).parent.parent / "frontend" / "static"
+LOGIN_DIR = Path(__file__).parent.parent / "frontend" / "login"
+ELECTRICAL_WIRING_DIR = Path(__file__).parent.parent / "frontend" / "Electrical Wiring"
+MISSIONS_DIR = Path(__file__).parent.parent / "frontend" / "Missions"
+SYSTEMS_DIR = Path(__file__).parent.parent / "frontend" / "Systems"
+OPTICAL_DIR = Path(__file__).parent.parent / "frontend" / "Optical"
+PID_SETTINGS_DIR = Path(__file__).parent.parent / "frontend" / "PID Settings"
+HEATMAP_DIR = Path(__file__).parent.parent / "frontend" / "Heatmap"
+SETTINGS_DIR = Path(__file__).parent.parent / "frontend" / "Settings"
+DASHBOARD_DIR = Path(__file__).parent.parent / "frontend" / "Dashboard"
 
-# Development flag: when True, bypass auth for /map to simplify local testing.
+# Development flag: when True, bypass auth for /dashboard to simplify local testing.
 # IMPORTANT: set to False in production.
 DEV_BYPASS_AUTH = False
 
@@ -138,21 +147,30 @@ app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 @app.get("/")
 def root(sid: str = Cookie(None)):
-    """Root endpoint - redirect to map or login."""
+    """Root endpoint - redirect to dashboard or login."""
     if sid and validate_session(sid):
-        return RedirectResponse(url="/map", status_code=302)
+        return RedirectResponse(url="/dashboard", status_code=302)
     return RedirectResponse(url="/login", status_code=302)
 
 @app.get("/login")
 def login_page(sid: str = Cookie(None)):
     """Serve login page."""
     if sid and validate_session(sid):
-        return RedirectResponse(url="/map", status_code=302)
+        return RedirectResponse(url="/dashboard", status_code=302)
     
-    login_path = STATIC_DIR / "login.html"
+    login_path = LOGIN_DIR / "login.html"
     if login_path.exists():
         return FileResponse(str(login_path))
     return {"error": "login.html not found"}
+
+
+@app.get("/login/login.css")
+def login_css():
+    """Serve login stylesheet from login folder."""
+    css_path = LOGIN_DIR / "login.css"
+    if css_path.exists():
+        return FileResponse(str(css_path), media_type="text/css")
+    return {"error": "login.css not found"}
 
 @app.post("/login")
 async def login_post(request: Request, username: str = Form(None), password: str = Form(None)):
@@ -170,7 +188,7 @@ async def login_post(request: Request, username: str = Form(None), password: str
         return RedirectResponse(url="/login?err=1", status_code=302)
 
     session_id = create_session(username)
-    resp = RedirectResponse(url="/map", status_code=302)
+    resp = RedirectResponse(url="/dashboard", status_code=302)
     resp.set_cookie(key=SESSION_COOKIE_NAME, value=session_id, httponly=True, max_age=SESSION_TIMEOUT, path="/")
     return resp
 
@@ -205,15 +223,15 @@ def logout(sid: str = Cookie(None)):
     resp.delete_cookie(SESSION_COOKIE_NAME, path="/")
     return resp
 
-@app.get("/map")
-def map_page(request: Request, sid: str = Cookie(None), guest: Optional[str] = None):
-    """Serve map page (protected). Guest allowed via ?guest=1."""
-    # Development bypass: serve map without session check when flagged
+@app.get("/dashboard")
+def dashboard_page(request: Request, sid: str = Cookie(None), guest: Optional[str] = None):
+    """Serve dashboard page (protected). Guest allowed via ?guest=1."""
+    # Development bypass: serve dashboard without session check when flagged
     if DEV_BYPASS_AUTH:
-        map_path = STATIC_DIR / "map.html"
-        if map_path.exists():
-            return FileResponse(str(map_path))
-        return {"error": "map.html not found"}
+        dashboard_path = DASHBOARD_DIR / "Dashboard.html"
+        if dashboard_path.exists():
+            return FileResponse(str(dashboard_path))
+        return {"error": "Dashboard.html not found"}
 
     # Normal behavior: allow guest via ?guest=1, otherwise require valid session
     if guest == "1":
@@ -222,10 +240,245 @@ def map_page(request: Request, sid: str = Cookie(None), guest: Optional[str] = N
         if not sid or not validate_session(sid):
             return RedirectResponse(url="/login", status_code=302)
 
-    map_path = STATIC_DIR / "map.html"
-    if map_path.exists():
-        return FileResponse(str(map_path))
-    return {"error": "map.html not found"}
+    dashboard_path = DASHBOARD_DIR / "Dashboard.html"
+    if dashboard_path.exists():
+        return FileResponse(str(dashboard_path))
+    return {"error": "Dashboard.html not found"}
+
+
+@app.get("/dashboard.css")
+def dashboard_css():
+    """Serve dashboard stylesheet."""
+    css_path = DASHBOARD_DIR / "Dashboard.css"
+    if css_path.exists():
+        return FileResponse(str(css_path), media_type="text/css")
+    return {"error": "Dashboard.css not found"}
+
+
+@app.get("/dashboard.js")
+def dashboard_js():
+    """Serve dashboard script."""
+    js_path = DASHBOARD_DIR / "Dashboard.js"
+    if js_path.exists():
+        return FileResponse(str(js_path), media_type="application/javascript")
+    return {"error": "Dashboard.js not found"}
+
+
+@app.get("/electrical-wiring")
+def electrical_wiring_page(sid: str = Cookie(None), guest: Optional[str] = None):
+    """Serve standalone Electrical Wiring page."""
+    if not DEV_BYPASS_AUTH and guest != "1":
+        if not sid or not validate_session(sid):
+            return RedirectResponse(url="/login", status_code=302)
+
+    page_path = ELECTRICAL_WIRING_DIR / "Electrical Wiring.html"
+    if page_path.exists():
+        return FileResponse(str(page_path))
+    return {"error": "Electrical Wiring.html not found"}
+
+
+@app.get("/electrical-wiring.css")
+def electrical_wiring_css():
+    """Serve standalone Electrical Wiring CSS."""
+    css_path = ELECTRICAL_WIRING_DIR / "Electrical Wiring.css"
+    if css_path.exists():
+        return FileResponse(str(css_path), media_type="text/css")
+    return {"error": "Electrical Wiring.css not found"}
+
+
+@app.get("/electrical-wiring.js")
+def electrical_wiring_js():
+    """Serve standalone Electrical Wiring JS."""
+    js_path = ELECTRICAL_WIRING_DIR / "Electrical Wiring.js"
+    if js_path.exists():
+        return FileResponse(str(js_path), media_type="application/javascript")
+    return {"error": "Electrical Wiring.js not found"}
+
+
+@app.get("/missions-page")
+def missions_page(sid: str = Cookie(None), guest: Optional[str] = None):
+    """Serve standalone Missions page."""
+    if not DEV_BYPASS_AUTH and guest != "1":
+        if not sid or not validate_session(sid):
+            return RedirectResponse(url="/login", status_code=302)
+
+    page_path = MISSIONS_DIR / "Missions.html"
+    if page_path.exists():
+        return FileResponse(str(page_path))
+    return {"error": "Missions.html not found"}
+
+
+@app.get("/missions-page.css")
+def missions_page_css():
+    """Serve standalone Missions CSS."""
+    css_path = MISSIONS_DIR / "Missions.css"
+    if css_path.exists():
+        return FileResponse(str(css_path), media_type="text/css")
+    return {"error": "Missions.css not found"}
+
+
+@app.get("/missions-page.js")
+def missions_page_js():
+    """Serve standalone Missions JS."""
+    js_path = MISSIONS_DIR / "Missions.js"
+    if js_path.exists():
+        return FileResponse(str(js_path), media_type="application/javascript")
+    return {"error": "Missions.js not found"}
+
+
+@app.get("/systems-page")
+def systems_page(sid: str = Cookie(None), guest: Optional[str] = None):
+    """Serve standalone Systems page."""
+    if not DEV_BYPASS_AUTH and guest != "1":
+        if not sid or not validate_session(sid):
+            return RedirectResponse(url="/login", status_code=302)
+
+    page_path = SYSTEMS_DIR / "Systems.html"
+    if page_path.exists():
+        return FileResponse(str(page_path))
+    return {"error": "Systems.html not found"}
+
+
+@app.get("/systems-page.css")
+def systems_page_css():
+    """Serve standalone Systems CSS."""
+    css_path = SYSTEMS_DIR / "Systems.css"
+    if css_path.exists():
+        return FileResponse(str(css_path), media_type="text/css")
+    return {"error": "Systems.css not found"}
+
+
+@app.get("/systems-page.js")
+def systems_page_js():
+    """Serve standalone Systems JS."""
+    js_path = SYSTEMS_DIR / "Systems.js"
+    if js_path.exists():
+        return FileResponse(str(js_path), media_type="application/javascript")
+    return {"error": "Systems.js not found"}
+
+
+@app.get("/optical-page")
+def optical_page(sid: str = Cookie(None), guest: Optional[str] = None):
+    """Serve standalone Optical page."""
+    if not DEV_BYPASS_AUTH and guest != "1":
+        if not sid or not validate_session(sid):
+            return RedirectResponse(url="/login", status_code=302)
+
+    page_path = OPTICAL_DIR / "Optical.html"
+    if page_path.exists():
+        return FileResponse(str(page_path))
+    return {"error": "Optical.html not found"}
+
+
+@app.get("/optical-page.css")
+def optical_page_css():
+    """Serve standalone Optical CSS."""
+    css_path = OPTICAL_DIR / "Optical.css"
+    if css_path.exists():
+        return FileResponse(str(css_path), media_type="text/css")
+    return {"error": "Optical.css not found"}
+
+
+@app.get("/optical-page.js")
+def optical_page_js():
+    """Serve standalone Optical JS."""
+    js_path = OPTICAL_DIR / "Optical.js"
+    if js_path.exists():
+        return FileResponse(str(js_path), media_type="application/javascript")
+    return {"error": "Optical.js not found"}
+
+
+@app.get("/pid-page")
+def pid_page(sid: str = Cookie(None), guest: Optional[str] = None):
+    """Serve standalone PID Settings page."""
+    if not DEV_BYPASS_AUTH and guest != "1":
+        if not sid or not validate_session(sid):
+            return RedirectResponse(url="/login", status_code=302)
+
+    page_path = PID_SETTINGS_DIR / "PID Settings.html"
+    if page_path.exists():
+        return FileResponse(str(page_path))
+    return {"error": "PID Settings.html not found"}
+
+
+@app.get("/pid-page.css")
+def pid_page_css():
+    """Serve standalone PID Settings CSS."""
+    css_path = PID_SETTINGS_DIR / "PID Settings.css"
+    if css_path.exists():
+        return FileResponse(str(css_path), media_type="text/css")
+    return {"error": "PID Settings.css not found"}
+
+
+@app.get("/pid-page.js")
+def pid_page_js():
+    """Serve standalone PID Settings JS."""
+    js_path = PID_SETTINGS_DIR / "PID Settings.js"
+    if js_path.exists():
+        return FileResponse(str(js_path), media_type="application/javascript")
+    return {"error": "PID Settings.js not found"}
+
+
+@app.get("/heatmap-page")
+def heatmap_page(sid: str = Cookie(None), guest: Optional[str] = None):
+    """Serve standalone Heatmap page."""
+    if not DEV_BYPASS_AUTH and guest != "1":
+        if not sid or not validate_session(sid):
+            return RedirectResponse(url="/login", status_code=302)
+
+    page_path = HEATMAP_DIR / "Heatmap.html"
+    if page_path.exists():
+        return FileResponse(str(page_path))
+    return {"error": "Heatmap.html not found"}
+
+
+@app.get("/heatmap-page.css")
+def heatmap_page_css():
+    """Serve standalone Heatmap CSS."""
+    css_path = HEATMAP_DIR / "Heatmap.css"
+    if css_path.exists():
+        return FileResponse(str(css_path), media_type="text/css")
+    return {"error": "Heatmap.css not found"}
+
+
+@app.get("/heatmap-page.js")
+def heatmap_page_js():
+    """Serve standalone Heatmap JS."""
+    js_path = HEATMAP_DIR / "Heatmap.js"
+    if js_path.exists():
+        return FileResponse(str(js_path), media_type="application/javascript")
+    return {"error": "Heatmap.js not found"}
+
+
+@app.get("/settings-page")
+def settings_page(sid: str = Cookie(None), guest: Optional[str] = None):
+    """Serve standalone Settings page."""
+    if not DEV_BYPASS_AUTH and guest != "1":
+        if not sid or not validate_session(sid):
+            return RedirectResponse(url="/login", status_code=302)
+
+    page_path = SETTINGS_DIR / "Settings.html"
+    if page_path.exists():
+        return FileResponse(str(page_path))
+    return {"error": "Settings.html not found"}
+
+
+@app.get("/settings-page.css")
+def settings_page_css():
+    """Serve standalone Settings CSS."""
+    css_path = SETTINGS_DIR / "Settings.css"
+    if css_path.exists():
+        return FileResponse(str(css_path), media_type="text/css")
+    return {"error": "Settings.css not found"}
+
+
+@app.get("/settings-page.js")
+def settings_page_js():
+    """Serve standalone Settings JS."""
+    js_path = SETTINGS_DIR / "Settings.js"
+    if js_path.exists():
+        return FileResponse(str(js_path), media_type="application/javascript")
+    return {"error": "Settings.js not found"}
 
 
 @app.get("/video")
@@ -283,7 +536,7 @@ def health():
     return {
         "ok": True,
         "ws": "/ws",
-        "map": "/map",
+        "dashboard": "/dashboard",
         "active_sessions": len(ACTIVE_SESSIONS)
     }
 

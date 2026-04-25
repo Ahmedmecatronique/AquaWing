@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AquaWing - Electrical Wiring</title>
+    <link rel="stylesheet" href="/electrical-wiring.css">
+</head>
+<body>
+    <main class="electrical-wiring-panel">
+        <div class="electrical-wiring-panel-header">
+            <div class="panel-title">ELECTRICAL WIRING</div>
+        </div>
+
+        <div class="ew-tabs" role="tablist" aria-label="Target board">
+            <button type="button" class="ew-tab ew-tab-active" id="ew-tab-stm" role="tab" aria-selected="true" aria-controls="ew-panel-stm">STM32</button>
+            <button type="button" class="ew-tab" id="ew-tab-pi" role="tab" aria-selected="false" aria-controls="ew-panel-pi">Raspberry Pi 4</button>
+        </div>
+
+        <div class="electrical-wiring-panel-content">
+            <div id="ew-panel-stm" class="ew-subpanel" role="tabpanel" aria-labelledby="ew-tab-stm">
+                <div class="ew-table-wrap">
+                    <table class="ew-table" id="ew-stm-table">
+                        <thead>
+                            <tr>
+                                <th>Pin</th>
+                                <th>Variable / assignment</th>
+                                <th>Auto cycle status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ew-stm-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="ew-panel-pi" class="ew-subpanel" role="tabpanel" aria-labelledby="ew-tab-pi" style="display:none;">
+                <div class="ew-table-wrap">
+                    <table class="ew-table" id="ew-pi-table">
+                        <thead>
+                            <tr>
+                                <th>Pin (BCM)</th>
+                                <th>Variable / assignment</th>
+                                <th>Auto cycle status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ew-pi-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="/electrical-wiring.js"></script>
+</body>
+</html>

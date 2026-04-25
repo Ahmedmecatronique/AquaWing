@@ -336,219 +336,6 @@ function initMap() {
     }catch(e){ console.warn('Could not reposition zoom control', e); }
 }
 
-// ============================================================================
-// HEATMAP MAP INITIALIZATION
-// ============================================================================
-
-let heatmapMap = null;
-let heatmapMarkers = [];
-let heatmapScanInterval = null;
-let isScanning = false;
-let heatmapHistory = []; // Array of {lat, lon, isDrowning, timestamp}
-
-function initHeatmapMap() {
-    const heatmapMapContainer = document.getElementById('heatmap-map');
-    if (!heatmapMapContainer) return;
-    
-    // If map already exists, just invalidate size
-    if (heatmapMap) {
-        setTimeout(() => {
-            try { heatmapMap.invalidateSize(); } catch(e) {}
-        }, 100);
-        return;
-    }
-    
-    // Create heatmap map centered on Tunis
-    heatmapMap = L.map('heatmap-map').setView(MAP_CENTER, 15);
-    
-    // Add OpenStreetMap tiles
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
-        maxZoom: 19
-    }).addTo(heatmapMap);
-    
-    // Move Leaflet zoom control to bottom-right
-    try{
-        if (heatmapMap && heatmapMap.zoomControl) heatmapMap.zoomControl.setPosition('bottomright');
-    }catch(e){ console.warn('Could not reposition heatmap zoom control', e); }
-}
-
-// ============================================================================
-// HEATMAP DETECTION FUNCTIONS
-// ============================================================================
-
-function startHeatmapScan() {
-    if (isScanning) {
-        return; // Already scanning
-    }
-    
-    isScanning = true;
-    
-    // Simulate scanning - in production, this would call an API
-    heatmapScanInterval = setInterval(() => {
-        simulateDetection();
-    }, 3000); // Scan every 3 seconds
-}
-
-function stopHeatmapScan() {
-    isScanning = false;
-    if (heatmapScanInterval) {
-        clearInterval(heatmapScanInterval);
-        heatmapScanInterval = null;
-    }
-}
-
-function simulateDetection() {
-    if (!heatmapMap) return;
-    
-    // Get current map bounds
-    const bounds = heatmapMap.getBounds();
-    const center = bounds.getCenter();
-    
-    // Generate random position within visible map area
-    const lat = center.lat + (Math.random() - 0.5) * (bounds.getNorth() - bounds.getSouth()) * 0.8;
-    const lon = center.lng + (Math.random() - 0.5) * (bounds.getEast() - bounds.getWest()) * 0.8;
-    
-    // Randomly determine if it's a drowning case (30% chance) or normal person (70% chance)
-    const isDrowning = Math.random() < 0.3;
-    
-    addHeatmapMarker(lat, lon, isDrowning);
-}
-
-function addHeatmapMarker(lat, lon, isDrowning) {
-    if (!heatmapMap) return;
-    
-    // Create marker with appropriate color
-    const color = isDrowning ? '#ff4d4d' : '#00ff88';
-    const icon = L.divIcon({
-        className: 'heatmap-marker',
-        html: `<div style="width: 16px; height: 16px; border-radius: 50%; background: ${color}; border: 2px solid white; box-shadow: 0 0 8px ${color};"></div>`,
-        iconSize: [16, 16],
-        iconAnchor: [8, 8]
-    });
-    
-    const marker = L.marker([lat, lon], { icon: icon }).addTo(heatmapMap);
-    
-    // Add popup with detection info
-    const popupText = isDrowning 
-        ? '<strong style="color: #ff4d4d;">⚠️ DROWNING CASE DETECTED</strong><br>Location: ' + lat.toFixed(6) + ', ' + lon.toFixed(6)
-        : '<strong style="color: #00ff88;">✓ Normal Person</strong><br>Location: ' + lat.toFixed(6) + ', ' + lon.toFixed(6);
-    marker.bindPopup(popupText);
-    
-    heatmapMarkers.push({ marker, isDrowning });
-    
-    // Add to history
-    const now = new Date();
-    const historyItem = {
-        lat: lat,
-        lon: lon,
-        isDrowning: isDrowning,
-        timestamp: now
-    };
-    heatmapHistory.unshift(historyItem); // Add to beginning
-    
-    // Update statistics and history display
-    updateHeatmapStats();
-    updateHeatmapHistory();
-}
-
-function clearHeatmapPoints() {
-    // Remove all markers
-    heatmapMarkers.forEach(({ marker }) => {
-        if (heatmapMap) heatmapMap.removeLayer(marker);
-    });
-    heatmapMarkers = [];
-    
-    // Clear history
-    heatmapHistory = [];
-    
-    // Update statistics and history display
-    updateHeatmapStats();
-    updateHeatmapHistory();
-}
-
-function clearHeatmapHistory() {
-    heatmapHistory = [];
-    updateHeatmapHistory();
-}
-
-function updateHeatmapHistory() {
-    const historyContent = document.getElementById('heatmap-history-content');
-    if (!historyContent) return;
-    
-    if (heatmapHistory.length === 0) {
-        historyContent.innerHTML = '<div class="history-empty">Aucun cas enregistré</div>';
-        return;
-    }
-    
-    let html = '';
-    heatmapHistory.forEach((item, index) => {
-        const date = new Date(item.timestamp);
-        const dateStr = date.toLocaleDateString('fr-FR', { 
-            day: '2-digit', 
-            month: '2-digit', 
-            year: 'numeric' 
-        });
-        const timeStr = date.toLocaleTimeString('fr-FR', { 
-            hour: '2-digit', 
-            minute: '2-digit', 
-            second: '2-digit' 
-        });
-        
-        const typeClass = item.isDrowning ? 'drowning' : 'normal';
-        const typeText = item.isDrowning ? '⚠️ NOYADE' : '✓ PERSONNE NORMALE';
-        
-        html += `
-            <div class="history-item ${typeClass}" data-index="${index}">
-                <div class="history-item-header">
-                    <span class="history-item-type ${typeClass}">${typeText}</span>
-                    <span class="history-item-time">${dateStr} ${timeStr}</span>
-                </div>
-                <div class="history-item-position">
-                    <div class="history-item-coords">
-                        <span class="history-item-coord">LAT: ${item.lat.toFixed(6)}</span>
-                        <span class="history-item-coord">LON: ${item.lon.toFixed(6)}</span>
-                    </div>
-                </div>
-            </div>
-        `;
-    });
-    
-    historyContent.innerHTML = html;
-    
-    // Add click handlers to center map on item
-    historyContent.querySelectorAll('.history-item').forEach((itemEl, index) => {
-        itemEl.addEventListener('click', () => {
-            const historyItem = heatmapHistory[index];
-            if (heatmapMap && historyItem) {
-                heatmapMap.setView([historyItem.lat, historyItem.lon], 18);
-                // Find and open marker popup
-                const markerData = heatmapMarkers.find(m => 
-                    Math.abs(m.marker.getLatLng().lat - historyItem.lat) < 0.0001 &&
-                    Math.abs(m.marker.getLatLng().lng - historyItem.lon) < 0.0001
-                );
-                if (markerData && markerData.marker) {
-                    markerData.marker.openPopup();
-                }
-            }
-        });
-    });
-}
-
-function updateHeatmapStats() {
-    const total = heatmapMarkers.length;
-    const drowning = heatmapMarkers.filter(m => m.isDrowning).length;
-    const normal = total - drowning;
-    
-    const totalEl = document.getElementById('heatmap-total-detections');
-    const drowningEl = document.getElementById('heatmap-drowning-count');
-    const normalEl = document.getElementById('heatmap-normal-count');
-    
-    if (totalEl) totalEl.textContent = total;
-    if (drowningEl) drowningEl.textContent = drowning;
-    if (normalEl) normalEl.textContent = normal;
-}
-
 function createDroneMarker(lat = MAP_CENTER[0], lon = MAP_CENTER[1], heading = 0) {
     // If exists, update position and heading smoothly
     if (droneMarker) {
@@ -2305,108 +2092,6 @@ if (speedControl) {
     });
 }
 
-const EW_STM_LS = 'aquawing_ew_stm_v1';
-const EW_PI_LS = 'aquawing_ew_pi_v1';
-
-function getEwStmPinList() {
-    const pins = [];
-    for (let i = 0; i <= 15; i++) pins.push(`PA${i}`);
-    for (let i = 0; i <= 15; i++) pins.push(`PB${i}`);
-    [13, 14, 15].forEach((i) => pins.push(`PC${i}`));
-    return pins;
-}
-
-function getEwPiPinList() {
-    const pins = [];
-    for (let g = 2; g <= 27; g++) pins.push(`GPIO ${g}`);
-    return pins;
-}
-
-function ewDerivedCycle(assignment) {
-    const v = String(assignment ?? '').trim().toLowerCase();
-    if (v === 'servo' || v === 'moteur') {
-        return { text: 'Oui', cls: 'ew-cycle-badge--oui' };
-    }
-    return { text: 'Non', cls: 'ew-cycle-badge--non' };
-}
-
-function initElectricalWiringTables() {
-    const tabStm = document.getElementById('ew-tab-stm');
-    const tabPi = document.getElementById('ew-tab-pi');
-    const panelStm = document.getElementById('ew-panel-stm');
-    const panelPi = document.getElementById('ew-panel-pi');
-    if (!tabStm || !tabPi || !panelStm || !panelPi) return;
-
-    function showEw(which) {
-        const stm = which === 'stm';
-        tabStm.classList.toggle('ew-tab-active', stm);
-        tabPi.classList.toggle('ew-tab-active', !stm);
-        tabStm.setAttribute('aria-selected', stm ? 'true' : 'false');
-        tabPi.setAttribute('aria-selected', stm ? 'false' : 'true');
-        panelStm.style.display = stm ? 'block' : 'none';
-        panelPi.style.display = stm ? 'none' : 'block';
-    }
-
-    tabStm.addEventListener('click', () => showEw('stm'));
-    tabPi.addEventListener('click', () => showEw('pi'));
-
-    function buildTable(tbodyId, pinList, storageKey) {
-        const tbody = document.getElementById(tbodyId);
-        if (!tbody) return;
-        let saved = {};
-        try {
-            saved = JSON.parse(localStorage.getItem(storageKey) || '{}');
-        } catch (e) {
-            saved = {};
-        }
-
-        tbody.innerHTML = '';
-        pinList.forEach((pin) => {
-            const tr = document.createElement('tr');
-            const selVal = saved[pin] || '';
-            const cycle = ewDerivedCycle(selVal);
-            tr.innerHTML = `
-                <td class="ew-col-pin"><code>${pin}</code></td>
-                <td class="ew-col-var">
-                    <select class="ew-assign" data-pin="${pin}" aria-label="Affectation ${pin}">
-                        <option value="">—</option>
-                        <option value="Servo">Servo</option>
-                        <option value="Moteur">Moteur</option>
-                        <option value="Autre">Autre</option>
-                    </select>
-                </td>
-                <td class="ew-col-cycle"><span class="ew-cycle-badge ${cycle.cls}" data-pin="${pin}">${cycle.text}</span></td>
-            `;
-            const sel = tr.querySelector('select');
-            if (sel && selVal) sel.value = selVal;
-            tbody.appendChild(tr);
-        });
-
-        tbody.querySelectorAll('select.ew-assign').forEach((sel) => {
-            sel.addEventListener('change', () => {
-                const pin = sel.dataset.pin;
-                const next = { ...saved };
-                if (!sel.value) delete next[pin];
-                else next[pin] = sel.value;
-                saved = next;
-                try {
-                    localStorage.setItem(storageKey, JSON.stringify(saved));
-                } catch (e) { /* ignore quota */ }
-                const badge = tbody.querySelector(`.ew-cycle-badge[data-pin="${pin}"]`);
-                if (badge) {
-                    const c = ewDerivedCycle(sel.value);
-                    badge.textContent = c.text;
-                    badge.className = `ew-cycle-badge ${c.cls}`;
-                }
-            });
-        });
-    }
-
-    buildTable('ew-stm-tbody', getEwStmPinList(), EW_STM_LS);
-    buildTable('ew-pi-tbody', getEwPiPinList(), EW_PI_LS);
-    showEw('stm');
-}
-
 // ============================================================================
 // INITIALIZATION
 // ============================================================================
@@ -2420,8 +2105,6 @@ window.addEventListener('load', () => {
     setThermal(false);
     // Ensure route controls initial state
     updateRouteControls();
-
-    initElectricalWiringTables();
 
     // Initialize navigation
     const navDashboard = document.getElementById('nav-dashboard');
@@ -2590,7 +2273,7 @@ window.addEventListener('load', () => {
             if (mainContent) mainContent.style.display = 'none';
             if (dashboardCams) dashboardCams.style.display = 'none';
         } else if (activeEl === navOptical) {
-            // Optical: show optical settings panel and cameras view (NO PID panel)
+            // Optical: show standalone optical page panel
             const speedControlPanel = document.getElementById('speed-control-panel');
             const missionsPanel = document.getElementById('missions-panel');
             const systemsPanel = document.getElementById('systems-panel');
@@ -2616,18 +2299,12 @@ window.addEventListener('load', () => {
             if (opticalPanel) {
                 opticalPanel.style.display = 'flex';
                 opticalPanel.classList.remove('collapsed');
-                console.log('Optical settings panel shown');
+                console.log('Optical panel shown');
             }
-            if (opticalCamerasView) {
-                opticalCamerasView.style.display = 'flex';
-                console.log('Optical cameras view shown');
-            }
+            if (opticalCamerasView) opticalCamerasView.style.display = 'none';
             // Hide main content
             if (mainContent) mainContent.style.display = 'none';
             if (dashboardCams) dashboardCams.style.display = 'none';
-            // Auto-enable cameras
-            if (!videoOn) setVideo(true);
-            if (!thermalOn) setThermal(true);
         } else if (activeEl === navPid) {
             // PID Settings: show PID settings panel
             const speedControlPanel = document.getElementById('speed-control-panel');
@@ -2660,12 +2337,6 @@ window.addEventListener('load', () => {
             if (pidPanel) {
                 pidPanel.style.display = 'flex';
                 console.log('PID settings panel shown');
-                // Force display of default values immediately, then load from API
-                ensurePidValuesVisible();
-                // Load PID values from API (with small delay to ensure DOM is ready)
-                setTimeout(() => {
-                    loadPidSettings();
-                }, 200);
             }
         } else if (activeEl === navElectricalWiring) {
             // Electrical Wiring: show electrical wiring panel
@@ -2731,10 +2402,6 @@ window.addEventListener('load', () => {
                 if (mainLayout && !mainLayout.contains(heatmapPanel)) {
                     mainLayout.appendChild(heatmapPanel);
                 }
-                // Initialize heatmap map if not already initialized
-                setTimeout(() => {
-                    initHeatmapMap();
-                }, 100);
             }
         } else if (activeEl === navSettings) {
             // Settings: show settings panel
@@ -2870,22 +2537,6 @@ window.addEventListener('load', () => {
 
     // ensure leaflet map is correctly sized after layout changes
     setTimeout(()=>{ try { if (map && typeof map.invalidateSize === 'function') map.invalidateSize(); } catch(e){} }, 250);
-    
-    // Heatmap panel controls
-    const heatmapClearBtn = document.getElementById('heatmap-clear-btn');
-    
-    if (heatmapClearBtn) {
-        heatmapClearBtn.addEventListener('click', () => {
-            clearHeatmapPoints();
-        });
-    }
-    
-    const heatmapClearHistoryBtn = document.getElementById('heatmap-clear-history-btn');
-    if (heatmapClearHistoryBtn) {
-        heatmapClearHistoryBtn.addEventListener('click', () => {
-            clearHeatmapHistory();
-        });
-    }
     
     // Menu toggle button - Global Layout Toggle
     const menuToggleBtn = document.getElementById('menu-toggle-btn');
@@ -3211,7 +2862,6 @@ function showPidPanel() {
     if (tabTelemetry) { tabTelemetry.classList.remove('active'); tabTelemetry.setAttribute('aria-selected','false'); }
     if (tabPower) { tabPower.classList.remove('active'); tabPower.setAttribute('aria-selected','false'); }
     if (tabPid) { tabPid.classList.add('active'); tabPid.setAttribute('aria-selected','true'); }
-    fetchPidGains();
 }
 
 if (tabTelemetry) tabTelemetry.addEventListener('click', showTelemetryPanel);
@@ -3219,350 +2869,7 @@ if (tabPower) tabPower.addEventListener('click', showPowerPanel);
 if (tabPid) tabPid.addEventListener('click', showPidPanel);
 
 
-// PID panel helpers
-async function fetchPidGains() {
-    console.log('fetchPidGains()');
-    try {
-        const res = await fetch(API_BASE + '/api/pid');
-        if (!res.ok) throw new Error('Failed to fetch PID gains');
-        const data = await res.json();
-        console.log('PID gains received', data);
-        const axis = document.getElementById('pid-axis');
-        const kp = document.getElementById('pid-kp');
-        const ki = document.getElementById('pid-ki');
-        const kd = document.getElementById('pid-kd');
-        if (axis && kp && ki && kd) {
-            const a = axis.value || 'pitch';
-            const gains = data[a] || { kp:1, ki:0, kd:0 };
-            kp.value = gains.kp;
-            ki.value = gains.ki;
-            kd.value = gains.kd;
-        }
-    } catch (err) {
-        console.warn('fetchPidGains error', err);
-    }
-}
-
-// Fetch PID gains on initial load so fields are populated even if user doesn't click the tab
-try { fetchPidGains(); } catch(e) { console.warn('initial fetchPidGains failed', e); }
-
-async function applyPidUpdate() {
-    const axis = document.getElementById('pid-axis').value;
-    const kp = parseFloat(document.getElementById('pid-kp').value || 0);
-    const ki = parseFloat(document.getElementById('pid-ki').value || 0);
-    const kd = parseFloat(document.getElementById('pid-kd').value || 0);
-    try {
-        const res = await fetch(API_BASE + '/api/pid', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ axis, kp, ki, kd })
-        });
-        if (!res.ok) {
-            const txt = await res.text();
-            throw new Error(txt || 'PID update failed');
-        }
-        const j = await res.json();
-        showToast(`PID ${axis} updated (${j.sent_to_mcu ? 'sent to MCU' : 'local only'})`, 'success');
-    } catch (err) {
-        console.error('applyPidUpdate error', err);
-        showToast('PID update failed', 'error');
-    }
-}
-
-// wire up buttons
-const pidApplyBtn = document.getElementById('pid-apply');
-const pidRefreshBtn = document.getElementById('pid-refresh');
-if (pidApplyBtn) pidApplyBtn.addEventListener('click', applyPidUpdate);
-if (pidRefreshBtn) pidRefreshBtn.addEventListener('click', fetchPidGains);
-
-// Ensure PID values are visible (set defaults immediately)
-function ensurePidValuesVisible() {
-    const rollP = document.getElementById('pid-roll-p');
-    const rollI = document.getElementById('pid-roll-i');
-    const rollD = document.getElementById('pid-roll-d');
-    const pitchP = document.getElementById('pid-pitch-p');
-    const pitchI = document.getElementById('pid-pitch-i');
-    const pitchD = document.getElementById('pid-pitch-d');
-    const yawP = document.getElementById('pid-yaw-p');
-    const yawI = document.getElementById('pid-yaw-i');
-    const yawD = document.getElementById('pid-yaw-d');
-    const altP = document.getElementById('pid-alt-p');
-    const altI = document.getElementById('pid-alt-i');
-    const altD = document.getElementById('pid-alt-d');
-    
-    // Set default values immediately
-    if (rollP && (!rollP.value || rollP.value === '')) rollP.value = 4.5;
-    if (rollI && (!rollI.value || rollI.value === '')) rollI.value = 0.45;
-    if (rollD && (!rollD.value || rollD.value === '')) rollD.value = 0.05;
-    if (pitchP && (!pitchP.value || pitchP.value === '')) pitchP.value = 4.5;
-    if (pitchI && (!pitchI.value || pitchI.value === '')) pitchI.value = 0.45;
-    if (pitchD && (!pitchD.value || pitchD.value === '')) pitchD.value = 0.05;
-    if (yawP && (!yawP.value || yawP.value === '')) yawP.value = 4.5;
-    if (yawI && (!yawI.value || yawI.value === '')) yawI.value = 0.45;
-    if (yawD && (!yawD.value || yawD.value === '')) yawD.value = 0.05;
-    if (altP && (!altP.value || altP.value === '')) altP.value = 1.0;
-    if (altI && (!altI.value || altI.value === '')) altI.value = 0.1;
-    if (altD && (!altD.value || altD.value === '')) altD.value = 0.01;
-}
-
-// Load PID settings for the new PID panel
-async function loadPidSettings() {
-    console.log('Loading PID settings from API...');
-    
-    // Get all input elements first
-    const rollP = document.getElementById('pid-roll-p');
-    const rollI = document.getElementById('pid-roll-i');
-    const rollD = document.getElementById('pid-roll-d');
-    const pitchP = document.getElementById('pid-pitch-p');
-    const pitchI = document.getElementById('pid-pitch-i');
-    const pitchD = document.getElementById('pid-pitch-d');
-    const yawP = document.getElementById('pid-yaw-p');
-    const yawI = document.getElementById('pid-yaw-i');
-    const yawD = document.getElementById('pid-yaw-d');
-    const altP = document.getElementById('pid-alt-p');
-    const altI = document.getElementById('pid-alt-i');
-    const altD = document.getElementById('pid-alt-d');
-    
-    // Check if elements exist
-    if (!rollP || !rollI || !rollD || !pitchP || !pitchI || !pitchD || !yawP || !yawI || !yawD || !altP || !altI || !altD) {
-        console.warn('PID input elements not found, using default values');
-        // Set default values if elements exist
-        if (rollP) rollP.value = 4.5;
-        if (rollI) rollI.value = 0.45;
-        if (rollD) rollD.value = 0.05;
-        if (pitchP) pitchP.value = 4.5;
-        if (pitchI) pitchI.value = 0.45;
-        if (pitchD) pitchD.value = 0.05;
-        if (yawP) yawP.value = 4.5;
-        if (yawI) yawI.value = 0.45;
-        if (yawD) yawD.value = 0.05;
-        if (altP) altP.value = 1.0;
-        if (altI) altI.value = 0.1;
-        if (altD) altD.value = 0.01;
-        return;
-    }
-    
-    try {
-        const res = await fetch(API_BASE + '/api/pid');
-        if (!res.ok) {
-            throw new Error(`Failed to fetch PID gains: ${res.status}`);
-        }
-        const data = await res.json();
-        console.log('PID gains received:', data);
-        
-        // Update Roll PID
-        if (data.roll) {
-            rollP.value = data.roll.kp !== undefined ? data.roll.kp : 4.5;
-            rollI.value = data.roll.ki !== undefined ? data.roll.ki : 0.45;
-            rollD.value = data.roll.kd !== undefined ? data.roll.kd : 0.05;
-        } else {
-            rollP.value = 4.5;
-            rollI.value = 0.45;
-            rollD.value = 0.05;
-        }
-        
-        // Update Pitch PID
-        if (data.pitch) {
-            pitchP.value = data.pitch.kp !== undefined ? data.pitch.kp : 4.5;
-            pitchI.value = data.pitch.ki !== undefined ? data.pitch.ki : 0.45;
-            pitchD.value = data.pitch.kd !== undefined ? data.pitch.kd : 0.05;
-        } else {
-            pitchP.value = 4.5;
-            pitchI.value = 0.45;
-            pitchD.value = 0.05;
-        }
-        
-        // Update Yaw PID
-        if (data.yaw) {
-            yawP.value = data.yaw.kp !== undefined ? data.yaw.kp : 4.5;
-            yawI.value = data.yaw.ki !== undefined ? data.yaw.ki : 0.45;
-            yawD.value = data.yaw.kd !== undefined ? data.yaw.kd : 0.05;
-        } else {
-            yawP.value = 4.5;
-            yawI.value = 0.45;
-            yawD.value = 0.05;
-        }
-        
-        // Update Altitude PID
-        if (data.altitude) {
-            altP.value = data.altitude.kp !== undefined ? data.altitude.kp : 1.0;
-            altI.value = data.altitude.ki !== undefined ? data.altitude.ki : 0.1;
-            altD.value = data.altitude.kd !== undefined ? data.altitude.kd : 0.01;
-        } else {
-            altP.value = 1.0;
-            altI.value = 0.1;
-            altD.value = 0.01;
-        }
-        
-        console.log('PID settings loaded successfully');
-    } catch (err) {
-        console.error('Error loading PID settings:', err);
-        // Set default values on error
-        rollP.value = 4.5;
-        rollI.value = 0.45;
-        rollD.value = 0.05;
-        pitchP.value = 4.5;
-        pitchI.value = 0.45;
-        pitchD.value = 0.05;
-        yawP.value = 4.5;
-        yawI.value = 0.45;
-        yawD.value = 0.05;
-        altP.value = 1.0;
-        altI.value = 0.1;
-        altD.value = 0.01;
-        console.log('Using default PID values due to API error');
-    }
-}
-
-// Save PID settings
-async function savePidSettings() {
-    console.log('Saving PID settings...');
-    try {
-        const updates = [];
-        
-        // Roll
-        const rollP = document.getElementById('pid-roll-p');
-        const rollI = document.getElementById('pid-roll-i');
-        const rollD = document.getElementById('pid-roll-d');
-        if (rollP && rollI && rollD) {
-            updates.push({
-                axis: 'roll',
-                kp: parseFloat(rollP.value) || 0,
-                ki: parseFloat(rollI.value) || 0,
-                kd: parseFloat(rollD.value) || 0
-            });
-        }
-        
-        // Pitch
-        const pitchP = document.getElementById('pid-pitch-p');
-        const pitchI = document.getElementById('pid-pitch-i');
-        const pitchD = document.getElementById('pid-pitch-d');
-        if (pitchP && pitchI && pitchD) {
-            updates.push({
-                axis: 'pitch',
-                kp: parseFloat(pitchP.value) || 0,
-                ki: parseFloat(pitchI.value) || 0,
-                kd: parseFloat(pitchD.value) || 0
-            });
-        }
-        
-        // Yaw
-        const yawP = document.getElementById('pid-yaw-p');
-        const yawI = document.getElementById('pid-yaw-i');
-        const yawD = document.getElementById('pid-yaw-d');
-        if (yawP && yawI && yawD) {
-            updates.push({
-                axis: 'yaw',
-                kp: parseFloat(yawP.value) || 0,
-                ki: parseFloat(yawI.value) || 0,
-                kd: parseFloat(yawD.value) || 0
-            });
-        }
-        
-        // Altitude
-        const altP = document.getElementById('pid-alt-p');
-        const altI = document.getElementById('pid-alt-i');
-        const altD = document.getElementById('pid-alt-d');
-        if (altP && altI && altD) {
-            updates.push({
-                axis: 'altitude',
-                kp: parseFloat(altP.value) || 0,
-                ki: parseFloat(altI.value) || 0,
-                kd: parseFloat(altD.value) || 0
-            });
-        }
-        
-        // Send all updates
-        let successCount = 0;
-        for (const update of updates) {
-            try {
-                const res = await fetch(API_BASE + '/api/pid', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(update)
-                });
-                if (res.ok) {
-                    successCount++;
-                }
-            } catch (e) {
-                console.error(`Failed to update ${update.axis}:`, e);
-            }
-        }
-        
-        if (successCount === updates.length) {
-            showToast('PID settings saved successfully', 'success');
-        } else {
-            showToast(`Saved ${successCount}/${updates.length} PID settings`, 'warning');
-        }
-    } catch (err) {
-        console.error('Error saving PID settings:', err);
-        showToast('Failed to save PID settings', 'error');
-    }
-}
-
-// Reset PID settings to defaults
-function resetPidSettings() {
-    // Roll
-    const rollP = document.getElementById('pid-roll-p');
-    const rollI = document.getElementById('pid-roll-i');
-    const rollD = document.getElementById('pid-roll-d');
-    if (rollP && rollI && rollD) {
-        rollP.value = 4.5;
-        rollI.value = 0.45;
-        rollD.value = 0.05;
-    }
-    
-    // Pitch
-    const pitchP = document.getElementById('pid-pitch-p');
-    const pitchI = document.getElementById('pid-pitch-i');
-    const pitchD = document.getElementById('pid-pitch-d');
-    if (pitchP && pitchI && pitchD) {
-        pitchP.value = 4.5;
-        pitchI.value = 0.45;
-        pitchD.value = 0.05;
-    }
-    
-    // Yaw
-    const yawP = document.getElementById('pid-yaw-p');
-    const yawI = document.getElementById('pid-yaw-i');
-    const yawD = document.getElementById('pid-yaw-d');
-    if (yawP && yawI && yawD) {
-        yawP.value = 4.5;
-        yawI.value = 0.45;
-        yawD.value = 0.05;
-    }
-    
-    // Altitude
-    const altP = document.getElementById('pid-alt-p');
-    const altI = document.getElementById('pid-alt-i');
-    const altD = document.getElementById('pid-alt-d');
-    if (altP && altI && altD) {
-        altP.value = 1.0;
-        altI.value = 0.1;
-        altD.value = 0.01;
-    }
-    
-    showToast('PID settings reset to defaults', 'info');
-}
-
-// Wire up PID panel buttons
-document.addEventListener('DOMContentLoaded', () => {
-    const pidApplyBtn = document.getElementById('pid-apply-btn');
-    const pidSaveBtn = document.getElementById('pid-save-btn');
-    const pidResetBtn = document.getElementById('pid-reset-btn');
-    
-    if (pidApplyBtn) {
-        pidApplyBtn.addEventListener('click', savePidSettings);
-    }
-    if (pidSaveBtn) {
-        pidSaveBtn.addEventListener('click', savePidSettings);
-    }
-    if (pidResetBtn) {
-        pidResetBtn.addEventListener('click', resetPidSettings);
-    }
-});
-
-/* 'Open PID' quick button removed (UI change) */
+/* PID tuning logic moved to standalone pid-page */
 
 function smooth(val, target, alpha=0.15){ return val + (target - val) * alpha; }
 

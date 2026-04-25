@@ -2591,6 +2591,15 @@ body.tactical-mode * {
     gap: 20px;
 }
 
+.missions-frame {
+    width: 100%;
+    height: calc(100vh - 48px - 40px - 90px);
+    min-height: 420px;
+    border: 1px solid rgba(255, 122, 24, 0.15);
+    border-radius: 10px;
+    background: rgba(8, 12, 20, 0.96);
+}
+
 /* Systems Panel - Full-width grid layout */
 .systems-panel {
     flex: 1;
@@ -2619,6 +2628,19 @@ body.tactical-mode * {
     min-height: 0;
     overflow-y: auto;
     align-content: start;
+}
+
+.systems-content.systems-content-host {
+    display: block;
+}
+
+.systems-frame {
+    width: 100%;
+    height: calc(100vh - 48px - 40px - 90px);
+    min-height: 420px;
+    border: 1px solid rgba(255, 122, 24, 0.15);
+    border-radius: 10px;
+    background: rgba(8, 12, 20, 0.96);
 }
 
 /* Placeholder slots for future cards (ESC Status, CPU/Raspberry Pi, Communication, Signal Strength) */
@@ -2703,16 +2725,17 @@ body.tactical-mode * {
 
 /* Optical Panel - Settings */
 .optical-panel {
-    width: 250px;
+    width: 100%;
+    flex: 1;
     min-width: 0;
     background: rgba(8, 12, 20, 0.95);
-    border-right: 1px solid rgba(0, 255, 200, 0.1);
+    border-right: 0;
     display: flex;
     flex-direction: column;
     padding: 20px;
-    overflow-y: auto;
+    overflow: hidden;
     height: calc(100vh - 48px - 40px);
-    flex-shrink: 0;
+    flex-shrink: 1;
     transition: width 0.2s ease;
 }
 
@@ -2728,7 +2751,18 @@ body.tactical-mode * {
 .optical-settings-content {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 12px;
+    flex: 1;
+    min-height: 0;
+}
+
+.optical-frame {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    border: 1px solid rgba(255, 122, 24, 0.15);
+    border-radius: 10px;
+    background: rgba(8, 12, 20, 0.96);
 }
 
 .optical-settings-section {
@@ -2969,6 +3003,15 @@ body.tactical-mode * {
     overflow: hidden;
 }
 
+.pid-frame {
+    width: 100%;
+    height: calc(100vh - 48px - 40px - 90px);
+    min-height: 420px;
+    border: 1px solid rgba(255, 122, 24, 0.15);
+    border-radius: 10px;
+    background: rgba(8, 12, 20, 0.96);
+}
+
 /* 3-column grid: Roll | Pitch | Yaw */
 .pid-grid {
     display: grid;
@@ -3118,152 +3161,13 @@ body.tactical-mode * {
     overflow: auto;
 }
 
-.electrical-wiring-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 24px;
-    align-content: start;
-}
-
-.electrical-wiring-card {
-    background: rgba(255, 255, 255, 0.03);
+.electrical-wiring-frame {
+    width: 100%;
+    height: 100%;
+    min-height: calc(100vh - 48px - 40px - 64px);
     border: 1px solid rgba(255, 122, 24, 0.15);
-    border-radius: 8px;
-    padding: 20px;
-    min-width: 0;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.electrical-wiring-card:hover {
-    border-color: rgba(255, 122, 24, 0.25);
-}
-
-.electrical-wiring-card-title {
-    font-size: 13px;
-    font-weight: 800;
-    color: var(--accent);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 12px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.electrical-wiring-card-placeholder {
-    font-size: 13px;
-    color: var(--muted);
-}
-
-/* Electrical Wiring — STM32 / Pi tables */
-.ew-tabs {
-    display: flex;
-    gap: 8px;
-    flex-shrink: 0;
-    margin-bottom: 12px;
-}
-
-.ew-tab {
-    padding: 8px 16px;
-    border-radius: 8px;
-    border: 1px solid rgba(255, 122, 24, 0.25);
-    background: rgba(255, 255, 255, 0.04);
-    color: var(--muted);
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    cursor: pointer;
-    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-}
-
-.ew-tab:hover {
-    border-color: rgba(255, 122, 24, 0.45);
-    color: var(--text, #e8eef5);
-}
-
-.ew-tab.ew-tab-active {
-    background: rgba(255, 122, 24, 0.18);
-    border-color: rgba(255, 122, 24, 0.55);
-    color: var(--accent);
-}
-
-.ew-subpanel {
-    min-height: 0;
-}
-
-.ew-table-wrap {
-    overflow: auto;
-    max-height: calc(100vh - 48px - 40px - 120px);
-    border: 1px solid rgba(255, 122, 24, 0.12);
-    border-radius: 8px;
-}
-
-.ew-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-}
-
-.ew-table thead th {
-    position: sticky;
-    top: 0;
-    z-index: 1;
-    text-align: left;
-    padding: 10px 12px;
-    background: rgba(12, 18, 28, 0.98);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    color: var(--accent);
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-size: 11px;
-}
-
-.ew-table tbody td {
-    padding: 8px 12px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    vertical-align: middle;
-}
-
-.ew-table tbody tr:hover td {
-    background: rgba(255, 255, 255, 0.02);
-}
-
-.ew-col-pin code {
-    font-family: ui-monospace, monospace;
-    font-size: 12px;
-    color: var(--text, #e8eef5);
-}
-
-.ew-assign {
-    width: 100%;
-    max-width: 200px;
-    padding: 6px 8px;
-    border-radius: 6px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    background: rgba(0, 0, 0, 0.25);
-    color: var(--text, #e8eef5);
-    font-size: 12px;
-}
-
-.ew-cycle-badge {
-    display: inline-block;
-    padding: 4px 10px;
-    border-radius: 999px;
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 0.3px;
-}
-
-.ew-cycle-badge--oui {
-    background: rgba(0, 200, 140, 0.18);
-    color: #5fe0b8;
-    border: 1px solid rgba(0, 200, 140, 0.35);
-}
-
-.ew-cycle-badge--non {
-    background: rgba(255, 255, 255, 0.06);
-    color: var(--muted);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    background: rgba(8, 12, 20, 0.96);
 }
 
 /* Heatmap Panel */
@@ -3300,6 +3204,15 @@ body.tactical-mode * {
     overflow: hidden;
     padding: 20px;
     gap: 16px;
+}
+
+.heatmap-frame {
+    width: 100%;
+    height: calc(100vh - 48px - 40px - 90px);
+    min-height: 420px;
+    border: 1px solid rgba(255, 122, 24, 0.15);
+    border-radius: 10px;
+    background: rgba(8, 12, 20, 0.96);
 }
 
 .heatmap-stats {
@@ -3515,6 +3428,15 @@ body.tactical-mode * {
     gap: 24px;
     flex: 1;
     min-height: 0;
+}
+
+.settings-frame {
+    width: 100%;
+    height: calc(100vh - 48px - 40px - 90px);
+    min-height: 420px;
+    border: 1px solid rgba(255, 122, 24, 0.15);
+    border-radius: 10px;
+    background: rgba(8, 12, 20, 0.96);
 }
 
 /* Grid of setting cards - distributes across full width */
