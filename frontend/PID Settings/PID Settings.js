@@ -57,12 +57,25 @@ async function loadPid() {
 
 async function savePid() {
     const payload = readPidValues();
-    const res = await fetch("/api/pid", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const axisMap = {
+        roll: payload.roll,
+        pitch: payload.pitch,
+        yaw: payload.yaw,
+        altitude: payload.altitude,
+    };
+    for (const [axis, gains] of Object.entries(axisMap)) {
+        const res = await fetch("/api/pid", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                axis,
+                kp: gains.kp,
+                ki: gains.ki,
+                kd: gains.kd,
+            }),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status} (${axis})`);
+    }
 }
 
 window.addEventListener("DOMContentLoaded", () => {

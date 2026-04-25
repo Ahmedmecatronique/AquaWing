@@ -4,26 +4,37 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>AquaWing - Mission Control</title>
-    <link rel="stylesheet" href="/missions-page.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="/missions-page.css?v=2">
 </head>
 <body>
     <main class="missions-root">
-        <div class="mission-control-buttons">
-            <button id="start-flight-btn" class="mission-btn btn-success">START FLIGHT</button>
-            <button id="pause-mission-btn" class="mission-btn btn-warning" disabled>PAUSE</button>
-            <button id="resume-mission-btn" class="mission-btn btn-success" disabled>RESUME</button>
-            <button id="preflight-btn" class="mission-btn btn-preflight">PRE-FLIGHT CHECK</button>
-            <button id="emergency-rtl-btn" class="mission-btn btn-warning">EMERGENCY RTL</button>
-            <button id="wait-btn" class="mission-btn btn-danger" disabled>END MISSION</button>
-        </div>
+        <div class="missions-layout">
+            <section class="mission-side">
+                <div class="mission-control-buttons">
+                    <button id="start-flight-btn" class="mission-btn btn-success">START FLIGHT</button>
+                    <button id="pause-mission-btn" class="mission-btn btn-warning">PAUSE</button>
+                    <button id="resume-mission-btn" class="mission-btn btn-success">RESUME</button>
+                    <button id="preflight-btn" class="mission-btn btn-preflight">PRE-FLIGHT CHECK</button>
+                    <button id="emergency-rtl-btn" class="mission-btn btn-warning">EMERGENCY RTL</button>
+                    <button id="wait-btn" class="mission-btn btn-danger">END MISSION</button>
+                    <button id="clear-waypoints-btn" class="mission-btn btn-clear">CLEAR WAYPOINTS</button>
+                </div>
 
-        <div id="preflight-status" class="preflight-status" aria-live="polite" aria-atomic="true" style="display:none;">
-            <div class="status-item"><span class="component">Main Battery</span><span class="status wait">WAIT</span></div>
-            <div class="status-item"><span class="component">Motors</span><span class="status wait">WAIT</span></div>
-            <div class="status-item"><span class="component">Sensors</span><span class="status wait">WAIT</span></div>
+                <div id="preflight-status" class="preflight-status" aria-live="polite" aria-atomic="true" style="display:none;">
+                    <div class="status-item"><span class="component">Main Battery</span><span class="status wait">WAIT</span></div>
+                    <div class="status-item"><span class="component">Motors</span><span class="status wait">WAIT</span></div>
+                    <div class="status-item"><span class="component">Sensors</span><span class="status wait">WAIT</span></div>
+                </div>
+            </section>
+
+            <section class="mission-map-wrap">
+                <div id="mission-map" class="mission-map" aria-label="Mission map"></div>
+            </section>
         </div>
     </main>
 
-    <script src="/missions-page.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="/missions-page.js?v=2"></script>
 </body>
 </html>

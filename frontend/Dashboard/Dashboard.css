@@ -1800,49 +1800,16 @@ body.tactical-mode * {
     font-weight: 800;
 }
 
-/* Hide old dashboard grid */
-.dashboard-grid {
-    display: none !important;
-}
-
-/* Panels layout: ensure tabs span full width and the two left-side panels occupy the same grid cell */
-.panel-tabs { grid-column: 1 / 3; display:flex; gap:8px; margin:12px 0; align-items: center; }
-.telemetry-panel, .power-panel { grid-column: 1 / 2; grid-row: 2 / 3; }
-.right-column { grid-column: 2 / 3; grid-row: 2 / 3; }
-
 /* Sidebar navigation (left column) */
 .sidebar { display:flex; flex-direction:column; gap:10px; padding:12px; }
 .sidebar .nav-item { padding:10px 12px; border-radius:10px; cursor:pointer; color:var(--muted); font-weight:800; background: transparent; border:1px solid rgba(255,255,255,0.02); }
 .sidebar .nav-item.nav-active { background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,122,24,0.02)); color: var(--accent); border-color: rgba(255,122,24,0.08); box-shadow: 0 6px 18px rgba(255,122,24,0.03) inset; }
 .sidebar .nav-item:focus { outline: 2px solid rgba(255,255,255,0.04); }
 
-/* On small screens, let natural flow stack vertically */
-@media (max-width: 900px) {
-    .panel-tabs { grid-column: 1 / -1; }
-    .telemetry-panel, .power-panel, .right-column { grid-column: 1 / -1; grid-row: auto; }
-}
-
 /* Dev banner (small and unobtrusive) */
 #dev-banner { font-size:12px; color:var(--muted); }
 #dev-banner.error { background: rgba(64,0,0,0.8); color: #ffd6d6; border-color: rgba(255,0,0,0.14); }
-#dev-errors { position: fixed; left: 12px; top: 40px; z-index:2000; max-width:320px; max-height:40vh; overflow:auto; font-size:12px; color:#ffd6d6; background:rgba(0,0,0,0.6); border-radius:8px; border:1px solid rgba(255,0,0,0.08); padding:8px; display:none; }
 
-.telemetry-panel {
-    background: var(--glass-bg) !important;
-    border: 1px solid var(--glass-border) !important;
-    padding: 14px;
-    border-radius: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    min-width: 260px;
-    backdrop-filter: blur(10px);
-    box-shadow: 0 12px 30px rgba(2,6,12,0.6), inset 0 2px 8px rgba(255,122,24,0.02);
-    color: var(--text);
-} 
-
-/* RIGHT COLUMN: vertical layout — MAP on top, cameras below */
-.right-column { display: flex; flex-direction: column; gap: 14px; align-items: stretch; }
 .card { background: linear-gradient(180deg, rgba(10,12,16,0.48), rgba(6,8,12,0.34)) !important; border: 1px solid var(--glass-border) !important; border-radius: 16px; padding: 12px; display:flex; flex-direction:column; backdrop-filter: blur(8px); box-shadow: 0 6px 26px rgba(0,0,0,0.6) inset; }
 
 /* Camera area (bottom): two equal squares under map */
@@ -2141,12 +2108,8 @@ body.tactical-mode * {
 .camera-panel .camera-stats { position: absolute; left: 10px; bottom: 8px; background: rgba(2,6,12,0.6); padding:6px 8px; border-radius:8px; font-weight:700; color:var(--muted); font-size:12px; border:1px solid rgba(255,255,255,0.03); }
 .camera-panel .small { font-size:12px; }
 
-/* Ensure map panel above cameras spans full width of right-column */
-.map-panel { width:100%; position: relative; }
-
-/* Responsive: on small screens stack vertically */
+/* Responsive: on small screens stack cameras vertically */
 @media (max-width: 980px) {
-  .right-column { grid-template-columns: 1fr; }
   .cams-area { grid-template-columns: 1fr; }
   .camera-panel .video-content { aspect-ratio: 16/9; }
 }
@@ -2278,7 +2241,6 @@ body.tactical-mode * {
 
 /* Locked visuals for mission-related UI */
 .locked-ctrl { opacity: 0.55; pointer-events: none; filter: saturate(60%); }
-.telemetry-panel.mission-locked { box-shadow: inset 0 0 0 2px rgba(255,255,255,0.01); opacity: 0.95; }
 
 /* Flight status badge */
 .status-badge { padding:6px 10px; border-radius:8px; font-weight:800; background: rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.03); color: var(--muted); min-width:160px; text-align:center; font-size:13px; }
@@ -2338,33 +2300,9 @@ body.tactical-mode * {
 
 /* Responsive: stack on small screens */
 @media (max-width: 900px) {
-    .dashboard-grid { grid-template-columns: 1fr; grid-auto-rows: auto; padding:10px; }
     .map-canvas { height: 45vh; }
-    .video-panel .video-content { height: 35vh; }
 }
 
-/* AQUA-WING HUD: top centered horizontal bar */
-#control-bar {
-    position: fixed;
-    top: 12px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: min(980px, calc(100vw - 24px));
-    height: auto;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 12px 14px;
-    z-index: 99999;
-    border-radius: 14px;
-    background: rgba(6,12,18,0.82);
-    border: 1px solid rgba(255,122,24,0.12);
-    box-shadow: 0 8px 30px rgba(255,122,24,0.04);
-    backdrop-filter: blur(6px);
-} 
-
-#control-bar .hud-left, #control-bar .hud-center, #control-bar .hud-right { display:flex; align-items:center; gap:10px; }
 .hud-title { font-weight:800; color:var(--accent); letter-spacing:0.6px; font-size:15px; }
 .hud-chips { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
 .chip { background: var(--glass2); padding:6px 10px; border-radius:10px; border:1px solid rgba(255,122,24,0.06); color: var(--text); font-weight:700; font-size:13px; }
@@ -2385,88 +2323,19 @@ body.tactical-mode * {
 /* Ensure HUD overlay visible above map */
 #map, .map-canvas, .leaflet-container { z-index: 1 !important; }
 
-/* Fallback absolute HUD overlay to ensure visibility */
-#hud-overlay {
-    position: fixed;
-    top: 10px;
-    left: 10px;
-    z-index: 99999;
-    display:flex;
-    gap:10px;
-    align-items:center;
-    background: rgba(2,8,10,0.75);
-    color: #bfffe8;
-    padding:8px 10px;
-    border-radius:6px;
-    border: 1px solid rgba(0,255,200,0.08);
-    backdrop-filter: blur(4px);
-}
-
-.follow-btn { background:transparent; border:1px solid rgba(0,255,200,0.06); color:#9fffe9; padding:6px 10px; border-radius:6px; cursor:pointer; }
-
-#ws-status { font-weight:700; color:var(--accent); }
-
 /* WAYPOINTS STYLES */
 .waypoint-icon {
     filter: drop-shadow(0 0 6px rgba(0, 168, 255, 0.5));
 }
 
-/* Panel tabs */
-.panel-tabs { display:flex; gap:8px; margin:12px 0; }
-.tab { padding:8px 10px; border-radius:8px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.03); color: var(--muted); font-weight:800; cursor:pointer; }
-.tab.active { background: linear-gradient(90deg, rgba(255,122,24,0.10), rgba(255,122,24,0.04)); color: var(--accent); box-shadow: 0 6px 20px rgba(255,122,24,0.06); }
-.tab:focus { outline: 2px solid rgba(255,122,24,0.12); }
-
-.power-panel { background: var(--glass-bg); border: 1px solid var(--glass-border); padding: 12px; border-radius: 12px; display:flex; flex-direction:column; gap:12px; min-width:260px; backdrop-filter: blur(10px); box-shadow: 0 12px 30px rgba(2,6,12,0.6); color: var(--text); }
-.power-content { overflow:auto; max-height: calc(100vh - 220px); padding-right:6px; }
-.power-grid { display:grid; grid-template-columns: 1fr; gap:16px; }
-.power-section { background: linear-gradient(180deg,#02181a,#041217); padding:12px; border-radius:8px; display:flex; flex-direction:column; gap:10px; border:1px solid rgba(0,255,200,0.02); }
-.section-title { font-size:13px; font-weight:800; color:var(--accent); margin-bottom:8px; }
-
-/* Compact servos layout (align label / bar / value on one line) */
-.power-section.servos .metric { display:flex; align-items:center; gap:8px; padding:6px 0; }
-.power-section.servos .metric .metric-label { width:88px; min-width:72px; font-weight:800; }
-.power-section.servos .metric .metric-bar { flex:1; margin:0 8px; height:8px; border-radius:6px; }
-.power-section.servos .metric .metric-val { width:44px; text-align:right; font-weight:800; }
-.metric-row { display:flex; gap:12px; flex-wrap:wrap; }
-.small-row { gap:8px; }
-.metric { flex:1; min-width:140px; display:flex; flex-direction:column; gap:6px; }
-.metric.small { min-width:120px; }
-.metric-label { font-size:12px; color:var(--muted); font-weight:800; }
-.metric-val { font-weight:800; color:#cffff4; }
-.metric-bar { height:10px; background: rgba(255,255,255,0.03); border-radius:6px; overflow:hidden; }
-.bar-fill { height:100%; width:0%; background: linear-gradient(90deg,var(--accent),var(--accent-hover)); transition: width 320ms linear; }
-
-/* Motor cards and sliders */
-.motors-grid { display:flex; gap:18px 12px; flex-wrap:wrap; align-items:flex-start; }
-.motor-card { flex:1; min-width:220px; background: linear-gradient(180deg,#031217,#04161a); padding:8px; border-radius:8px; border:1px solid rgba(255,255,255,0.03); display:flex; flex-direction:column; gap:6px; }
-.motor-title { font-weight:800; color:var(--accent); font-size:13px; margin-bottom:6px; }
-.motor-power { -webkit-appearance: none; appearance: none; height:8px; border-radius:8px; background: rgba(255,255,255,0.03); width:100%; outline:none; margin-bottom:6px; }
-.motor-power:disabled { opacity:0.95; }
-.motor-power::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:#fff; box-shadow: 0 2px 6px rgba(0,0,0,0.4); }
-.motor-metrics { display:grid; grid-template-columns: 1fr 1fr; gap:8px; align-items:center; }
 .motor-metrics .metric { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:4px 6px; }
 .motor-metrics .metric .metric-label { font-size:12px; opacity:0.85; }
 .motor-metrics .metric .metric-val { text-align:right; font-weight:800; }
-
-/* status color overrides for motor metrics */
-.motor-card .metric-val.status-normal { color: var(--good); }
-.motor-card .metric-val.status-warn { color: #ffb347; }
-.motor-card .metric-val.status-critical { color: var(--bad); }
-
-@media(min-width:1100px) {
-    .power-grid { grid-template-columns: 1fr 1fr; gap:18px; }
-}
 
 /* status colors */
 .status-normal { color: var(--good); font-weight:900; }
 .status-warn { color: #ffb347; font-weight:900; }
 .status-critical { color: var(--bad); font-weight:900; }
-
-/* Responsive adjustments: make power sections grid into 2 columns on wide screens */
-@media(min-width:1100px) {
-    .power-grid { grid-template-columns: 1fr 1fr; gap:18px; }
-}
 
 /* Speed Control Panel */
 .speed-control-panel {
@@ -2567,16 +2436,15 @@ body.tactical-mode * {
 
 /* Missions Panel */
 .missions-panel {
-    width: 250px;
+    flex: 1;
     min-width: 0;
     background: rgba(8, 12, 20, 0.95);
-    border-right: 1px solid rgba(0, 255, 200, 0.1);
+    border: 1px solid rgba(0, 255, 200, 0.1);
     display: flex;
     flex-direction: column;
-    padding: 20px;
-    overflow-y: auto;
+    padding: 16px;
+    overflow: hidden;
     height: calc(100vh - 48px - 40px);
-    flex-shrink: 0;
 }
 
 .missions-panel-header {
@@ -2588,13 +2456,15 @@ body.tactical-mode * {
 .missions-content {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 12px;
+    flex: 1;
+    min-height: 0;
 }
 
 .missions-frame {
     width: 100%;
-    height: calc(100vh - 48px - 40px - 90px);
-    min-height: 420px;
+    height: 100%;
+    min-height: 0;
     border: 1px solid rgba(255, 122, 24, 0.15);
     border-radius: 10px;
     background: rgba(8, 12, 20, 0.96);
@@ -3791,9 +3661,7 @@ body.tactical-mode * {
 :root{ --accent: #ff7a18; --accent-hover: #ff9f1a; --neon: #ffb37a; }
 
 /* HUD / top bar */
-#wsStatus, #ws-status { color: var(--accent) !important; }
 .hud-title { color: var(--accent) !important; }
-#control-bar { border-color: rgba(255,122,24,0.12) !important; box-shadow: 0 8px 36px rgba(255,122,24,0.04) !important; }
 
 /* Status chips / dots */
 .status-chip { color: var(--accent) !important; border-color: rgba(255,122,24,0.14) !important; background: rgba(0,0,0,0.44) !important; }
