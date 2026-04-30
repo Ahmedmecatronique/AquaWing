@@ -60,7 +60,7 @@ function pushNotification(message, level = "info") {
 function initMap() {
   if (map) return;
   const mapNode = document.querySelector("#map");
-  if (!mapNode) return;
+  if (!mapNode || typeof L === "undefined") return;
 
   map = L.map(mapNode).setView(MAP_CENTER, 15);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -84,9 +84,6 @@ function updateDrone(lat, lon, heading = 0) {
   curr.push([lat, lon]);
   if (curr.length > 2000) curr.shift();
   trackLine.setLatLngs(curr);
-  setText("val-lat", lat.toFixed(6));
-  setText("val-lon", lon.toFixed(6));
-  setText("val-heading", heading.toFixed(1));
   setText("bottom-lat", lat.toFixed(6));
   setText("bottom-lng", lon.toFixed(6));
   if (followMode) map.setView([lat, lon], map.getZoom(), { animate: true });
@@ -113,9 +110,6 @@ function connectWs() {
     if (data.type === "telemetry" && data.data) data = data.data;
     if (typeof data.lat === "number" && typeof data.lon === "number") {
       updateDrone(data.lat, data.lon, Number(data.heading || 0));
-      if (typeof data.alt === "number") setText("val-alt", data.alt.toFixed(1));
-      if (typeof data.speed === "number") setText("val-speed", data.speed.toFixed(1));
-      if (typeof data.battery === "number") setText("battery-percent", `${Math.round(data.battery)}%`);
     }
   };
 }
@@ -197,8 +191,6 @@ function startDemo(reset = true) {
     const lon = a.lon + (b.lon - a.lon) * demoProgress;
     const heading = Math.atan2(b.lon - a.lon, b.lat - a.lat) * 180 / Math.PI;
     updateDrone(lat, lon, heading);
-    setText("val-speed", "3.0");
-    setText("val-alt", "20.0");
   }, 500);
 }
 
@@ -305,6 +297,9 @@ function setActiveNav(target) {
     if (main) main.style.display = "flex";
     if (cams) cams.style.display = "grid";
     setVisible("speed-control-panel", true);
+    if (map) {
+      setTimeout(() => map.invalidateSize(), 80);
+    }
     return;
   }
   if (target === $("nav-missions")) return setVisible("missions-panel", true);

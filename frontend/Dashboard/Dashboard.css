@@ -1040,80 +1040,6 @@ html, body { height: 100%; width: 100%; background: #0a0e1a; font-family: 'Outfi
     font-weight: 600;
 }
 
-/* Mission Control Section */
-.mission-control-section {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding-top: 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.mission-control-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.mission-btn {
-    padding: 12px 16px;
-    border-radius: 6px;
-    font-weight: 800;
-    font-size: 13px;
-    cursor: pointer;
-    transition: all 0.2s;
-    border: none;
-    text-align: center;
-}
-
-.mission-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.mission-btn.btn-success {
-    background: linear-gradient(135deg, #00ff88, #00cc6a);
-    color: #021;
-}
-
-.mission-btn.btn-success:hover:not(:disabled) {
-    background: linear-gradient(135deg, #00ffa0, #00dd7a);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);
-}
-
-.mission-btn.btn-warning {
-    background: linear-gradient(135deg, #ff9f1a, #ff7a18);
-    color: #021;
-}
-
-.mission-btn.btn-warning:hover:not(:disabled) {
-    background: linear-gradient(135deg, #ffb347, #ff9f1a);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(255, 159, 26, 0.3);
-}
-
-.mission-btn.btn-preflight {
-    background: linear-gradient(135deg, #2b6efb, #1e4ed8);
-    color: #fff;
-}
-
-.mission-btn.btn-preflight:hover:not(:disabled) {
-    background: linear-gradient(135deg, #3d7fff, #2b6efb);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(43, 110, 251, 0.3);
-}
-
-.mission-btn.btn-danger {
-    background: linear-gradient(135deg, #ff6b6b, #ff3b3b);
-    color: #fff;
-}
-
-.mission-btn.btn-danger:hover:not(:disabled) {
-    background: linear-gradient(135deg, #ff8f8f, #ff6b6b);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
-}
 
 /* Speed Control Section */
 .speed-control-section {
@@ -2210,50 +2136,9 @@ body.tactical-mode * {
 .btn-danger:hover:not([disabled]) { box-shadow: 0 8px 26px rgba(255, 99, 71, 0.18); transform: translateY(-2px); }
 .btn.btn-warning:hover { box-shadow: 0 10px 28px rgba(255,111,0,0.30); transform: translateY(-2px); }
 
-/* END MISSION (CTT) button animations: match START and PRE-FLIGHT */
-#wait-btn:not([disabled]) { transition: transform 120ms ease, box-shadow 120ms ease; }
-#wait-btn:not([disabled]):hover { box-shadow: 0 8px 26px rgba(255, 99, 71, 0.18); transform: translateY(-2px); }
-#wait-btn:not([disabled]):active { transform: translateY(1px); }
-
-/* waitBtnControl grouping (refined) */
-.mission-control { display:flex; flex-direction:column; gap:6px; align-items:flex-start; padding:8px 12px; border-radius:10px; background: rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04); min-width:220px; margin-right:6px; }
-.mission-label { font-size:12px; color:var(--muted); font-weight:900; letter-spacing:0.8px; text-transform:uppercase; }
-.mission-buttons { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-
-/* PRE-FLIGHT button (blue) */
-.btn-preflight { background: linear-gradient(90deg,#2b6efb,#1e4ed8); color:#fff; border:none; padding:8px 12px; border-radius:8px; font-weight:800; box-shadow: 0 6px 18px rgba(30,78,216,0.12); cursor: pointer; }
-.btn-preflight:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(30,78,216,0.18); }
-
-/* Pre-flight status container (UI only) */
-.preflight-status { margin-top:8px; display:flex; flex-direction:column; gap:6px; padding:8px 10px; border-radius:8px; background: rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.03); font-size:13px; color:var(--muted); width:100%; max-width:100%; }
-.preflight-status .status-item { display:flex; justify-content:space-between; gap:8px; align-items:center; padding:4px 6px; border-radius:6px; }
-.preflight-status .component { font-weight:700; }
-.preflight-status .status { font-weight:900; padding:2px 8px; border-radius:6px; font-size:12px; }
-.preflight-status .status.ok { background: linear-gradient(90deg,#dfffe8,#baf6d0); color:#021; }
-.preflight-status .status.fail { background: linear-gradient(90deg,#ffdfe6,#ffd1d6); color:#210; }
-.preflight-status .status.wait { background: rgba(255,255,255,0.02); color:var(--muted); border:1px solid rgba(255,255,255,0.02); }
-
-/* Follow button: secondary visual weight */
-.btn-follow { background: transparent; border: 1px solid rgba(255,255,255,0.04); color: var(--muted); padding:6px 10px; border-radius:8px; font-weight:700; opacity:0.85; transition: box-shadow 120ms ease, transform 120ms ease, opacity 120ms; }
-.btn-follow:hover:not([disabled]) { box-shadow: 0 6px 18px rgba(0,0,0,0.12); transform: translateY(-1px); opacity: 1; }
-.btn-follow[disabled] { opacity: 0.55; cursor:not-allowed; }
-.btn-follow:active { transform: translateY(0); }
-
-/* Locked visuals for mission-related UI */
-.locked-ctrl { opacity: 0.55; pointer-events: none; filter: saturate(60%); }
-
-/* Flight status badge */
-.status-badge { padding:6px 10px; border-radius:8px; font-weight:800; background: rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.03); color: var(--muted); min-width:160px; text-align:center; font-size:13px; }
-.status-badge.started { background: linear-gradient(90deg,#a6f4c5,#3ed78e); color:#021; border-color: rgba(0,255,136,0.12); box-shadow: 0 6px 20px rgba(34,197,94,0.06); }
-.status-badge.waiting { background: linear-gradient(90deg,#ffd1c1,#ff8f8f); color:#210; border-color: rgba(255,77,77,0.12); }
-.status-badge.locked { background: linear-gradient(90deg,#f7d6a6,#ffd6a6); color:#2a1500; border-color: rgba(255,122,24,0.12); box-shadow: 0 6px 20px rgba(255,122,24,0.04); }
-
 .speed-control { display:flex; flex-direction:column; align-items:flex-start; gap:8px; }
 .speed-control label { font-size:12px; opacity:0.8; }
 .speed-control input[type="range"] { width:180px; }
-
-/* When mission-control is inside speed-control, ensure small spacing */
-.speed-control .mission-control { margin-top:6px; }
 
 .small { font-size:11px; opacity:0.8; margin-top:6px; }
 

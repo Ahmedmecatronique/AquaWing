@@ -91,13 +91,17 @@ html, body {
 }
 
 .mission-map-controls {
-    position: absolute;
-    top: 8px;
-    left: 8px;
-    z-index: 700;
+    position: absolute !important;
+    bottom: 8px !important;
+    top: auto !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+    z-index: 900 !important;
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
+    justify-content: center;
 }
 
 .mission-map-btn {

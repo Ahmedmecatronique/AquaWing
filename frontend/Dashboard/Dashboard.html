@@ -4,13 +4,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RPi Drone Control - Dashboard</title>
 
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
-    <link rel="stylesheet" href="/dashboard.css?v=1">
+    <link rel="stylesheet" href="/dashboard.css?v=4">
 </head>
 
 <body>
@@ -179,11 +177,11 @@
             </div>
             
             <nav class="sidebar-nav">
-                <button id="nav-dashboard" class="nav-item nav-active">
+                <button id="nav-dashboard" class="nav-item">
                     <span class="nav-icon">🗺️</span>
                     <span>Dashboard</span>
                 </button>
-                <button id="nav-missions" class="nav-item">
+                <button id="nav-missions" class="nav-item nav-active">
                     <span class="nav-icon">⛰️</span>
                     <span>Missions</span>
                 </button>
@@ -274,7 +272,7 @@
                 <iframe
                     id="missions-frame"
                     class="missions-frame"
-                    src="/missions-page?v=2"
+                    src="/missions-page?v=3"
                     title="Mission Control"
                     loading="lazy"
                     referrerpolicy="same-origin">
@@ -388,7 +386,7 @@
         <div class="optical-cameras-view" id="optical-cameras-view" style="display:none;"></div>
 
         <!-- MAIN CONTENT: Dashboard View -->
-        <main class="main-content">
+        <main class="main-content" style="display:none;">
             <!-- Mission Statistics Card -->
             <div class="mission-stats-card card" id="mission-stats-card" style="display:none;">
                 <div class="mission-stats-header">
@@ -502,19 +500,11 @@
         </div>
     </div>
 
-    <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-    <!-- CONTROL BAR removed -->
-
-
-
-
-
     <!-- Toast HUD -->
     <div id="toast" aria-live="polite" aria-atomic="true" class="toast-container" style="display:none;"></div>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>/* dev: stamped version */ window.__MAP_CSS_VERSION='v2'; window.__MAP_JS_VERSION='v1';</script>
-    <script defer src="/dashboard.js?v=1"></script>
+    <script defer src="/dashboard.js?v=6"></script>
 </body>
 </html>

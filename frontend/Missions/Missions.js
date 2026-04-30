@@ -42,6 +42,15 @@ function redrawMissionPath() {
     missionPolyline.setLatLngs(missionWaypoints.map((wp) => [wp.lat, wp.lon]));
 }
 
+function updateWaypointVisibility() {
+    if (!missionMap) return;
+    missionWaypointMarkers.forEach((marker) => {
+        const onMap = missionMap.hasLayer(marker);
+        if (missionWaypointsEnabled && !onMap) marker.addTo(missionMap);
+        if (!missionWaypointsEnabled && onMap) missionMap.removeLayer(marker);
+    });
+}
+
 function addMissionWaypoint(lat, lon) {
     if (!missionMap) return;
     const wp = { lat, lon };
@@ -55,7 +64,8 @@ function addMissionWaypoint(lat, lon) {
             iconSize: [30, 30],
             iconAnchor: [15, 15],
         }),
-    }).addTo(missionMap);
+    });
+    if (missionWaypointsEnabled) marker.addTo(missionMap);
     missionWaypointMarkers.push(marker);
     redrawMissionPath();
     updateWaypointCount();
@@ -128,6 +138,12 @@ function initMissionMap() {
         }),
         title: "Drone",
     }).addTo(missionMap);
+
+    const controls = document.querySelector(".mission-map-controls");
+    if (controls && typeof L !== "undefined" && L.DomEvent) {
+        L.DomEvent.disableClickPropagation(controls);
+        L.DomEvent.disableScrollPropagation(controls);
+    }
 
     setTimeout(() => missionMap && missionMap.invalidateSize(), 120);
     updateWaypointCount();
@@ -257,7 +273,20 @@ function runPreflight() {
     });
 }
 
+function forceBottomCenterControls() {
+    const controls = document.querySelector(".mission-map-controls");
+    if (!controls) return;
+    controls.style.position = "absolute";
+    controls.style.top = "auto";
+    controls.style.right = "auto";
+    controls.style.bottom = "8px";
+    controls.style.left = "50%";
+    controls.style.transform = "translateX(-50%)";
+    controls.style.zIndex = "900";
+}
+
 window.addEventListener("DOMContentLoaded", () => {
+    forceBottomCenterControls();
     initMissionMap();
     const startBtn = document.getElementById("start-flight-btn");
     const pauseBtn = document.getElementById("pause-mission-btn");
@@ -343,16 +372,27 @@ window.addEventListener("DOMContentLoaded", () => {
     }
 
     if (clearTrackBtn) {
-        clearTrackBtn.addEventListener("click", () => {
+        clearTrackBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             clearMissionTrack();
-            toast("Track cleared", "info");
+            clearMissionWaypoints();
+            toast("Track and waypoints cleared", "info");
         });
     }
 
     if (waypointsToggleBtn) {
-        waypointsToggleBtn.addEventListener("click", () => {
+        waypointsToggleBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             missionWaypointsEnabled = !missionWaypointsEnabled;
             waypointsToggleBtn.textContent = `Waypoints: ${missionWaypointsEnabled ? "ON" : "OFF"}`;
+            updateWaypointVisibility();
+            if (!missionWaypointsEnabled) {
+                toast("Waypoints hidden", "info");
+                return;
+            }
+            toast("Waypoints visible", "success");
         });
     }
 
