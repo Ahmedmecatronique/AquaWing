@@ -3,57 +3,197 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>AquaWing - Settings</title>
-    <link rel="stylesheet" href="/settings-page.css">
+    <title>AquaWing — Settings</title>
+    <link rel="stylesheet" href="/settings-page.css?v=2">
 </head>
-<body>
-    <main class="settings-root">
-        <div class="settings-cards-grid">
-            <section class="settings-section">
-                <h3>GENERAL</h3>
-                <label><input type="checkbox" id="settings-auto-connect" checked> Auto Connect on Startup</label>
-                <label><input type="checkbox" id="settings-show-notifications" checked> Show Notifications</label>
-                <label>Language
-                    <select id="settings-language">
-                        <option value="en" selected>English</option>
-                        <option value="fr">Français</option>
-                        <option value="ar">العربية</option>
-                    </select>
-                </label>
-            </section>
-
-            <section class="settings-section">
-                <h3>DISPLAY</h3>
-                <label>Theme
-                    <select id="settings-theme">
-                        <option value="dark" selected>Dark</option>
-                        <option value="light">Light</option>
-                        <option value="auto">Auto</option>
-                    </select>
-                </label>
-                <label>Map Style
-                    <select id="settings-map-style">
-                        <option value="standard" selected>Standard</option>
-                        <option value="satellite">Satellite</option>
-                        <option value="terrain">Terrain</option>
-                    </select>
-                </label>
-            </section>
-
-            <section class="settings-section">
-                <h3>TELEMETRY</h3>
-                <label>Update Rate (Hz)
-                    <input type="number" id="settings-update-rate" min="1" max="50" value="10">
-                </label>
-                <label><input type="checkbox" id="settings-record-telemetry" checked> Record Telemetry</label>
-            </section>
+<body class="st-body">
+<div class="st-shell">
+    <header class="st-header">
+        <div class="st-header-text">
+            <h1 class="st-title">SETTINGS</h1>
+            <p class="st-sub">Configure system preferences and telemetry settings.</p>
         </div>
+        <button type="button" id="settings-export-btn" class="st-btn-export">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Export Config
+        </button>
+    </header>
 
-        <div class="settings-actions">
-            <button id="settings-save-btn" class="btn-primary">Save Settings</button>
-            <button id="settings-reset-btn" class="btn-ghost">Reset to Default</button>
-        </div>
-    </main>
-    <script src="/settings-page.js"></script>
+    <div class="st-grid">
+        <!-- 1 GENERAL -->
+        <section class="st-card" aria-labelledby="card-general">
+            <div class="st-card-head">
+                <h2 id="card-general" class="st-card-title">GENERAL</h2>
+                <span class="st-card-ico" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z" stroke="currentColor" stroke-width="1.4"/><path d="M19.4 15a2 2 0 00.52 1.93l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a2 2 0 00-1.93-.52 2 2 0 00-1 1.68V21a2 2 0 11-4 0v-.09a2 2 0 00-1-1.74 2 2 0 00-2.15.54l-.06.06a2 2 0 11-2.83-2.83l.06-.06A2 2 0 003.09 15H3a2 2 0 110-4h.09a2 2 0 001.93-.52l-.06-.06a2 2 0 112.83-2.83l.06.06A2 2 0 009 8.94V9a2 2 0 114 0v.09a2 2 0 001 1.74 2 2 0 002.14-.53l.06-.06a2 2 0 012.82 2.82l-.06.06A2 2 0 0018 11h.91a2 2 0 110 4H19.4z" stroke="currentColor" stroke-width="1.15" opacity=".95"/></svg>
+                </span>
+            </div>
+            <div class="st-card-body">
+                <label class="st-toggle"><span>Auto Connect on Startup</span><input type="checkbox" id="settings-auto-connect" class="st-switch" checked></label>
+                <label class="st-toggle"><span>Show Notifications</span><input type="checkbox" id="settings-show-notifications" class="st-switch" checked></label>
+                <label class="st-toggle"><span>Start Minimized</span><input type="checkbox" id="settings-start-minimized" class="st-switch"></label>
+                <label class="st-field"><span class="st-label">Language</span>
+                    <select id="settings-language" class="st-input"><option value="en" selected>English</option><option value="fr">Français</option><option value="ar">العربية</option></select></label>
+                <label class="st-field"><span class="st-label">Units</span>
+                    <select id="settings-units" class="st-input"><option value="metric" selected>Metric</option><option value="imperial">Imperial</option></select></label>
+                <label class="st-field"><span class="st-label">Date Format</span>
+                    <select id="settings-date-format" class="st-input"><option value="yyyy-mm-dd" selected>YYYY-MM-DD</option><option value="dd-mm-yyyy">DD-MM-YYYY</option><option value="mm-dd-yyyy">MM-DD-YYYY</option></select></label>
+                <label class="st-field"><span class="st-label">Time Format</span>
+                    <select id="settings-time-format" class="st-input"><option value="24" selected>24 Hour</option><option value="12">12 Hour</option></select></label>
+            </div>
+        </section>
+
+        <!-- 2 DISPLAY -->
+        <section class="st-card">
+            <div class="st-card-head">
+                <h2 class="st-card-title">DISPLAY</h2>
+                <span class="st-card-ico" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.35"/><path d="M9 21h6" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/></svg>
+                </span>
+            </div>
+            <div class="st-card-body">
+                <label class="st-field"><span class="st-label">Theme</span>
+                    <select id="settings-theme" class="st-input"><option value="dark" selected>Dark</option><option value="light">Light</option><option value="auto">Auto</option></select></label>
+                <label class="st-field"><span class="st-label">Primary Color</span>
+                    <span class="st-color-wrap"><i class="st-swatch swatch-cyan" aria-hidden="true"></i>
+                        <select id="settings-primary-color" class="st-input"><option value="cyan" selected>Cyan</option><option value="orange">Orange</option><option value="green">Green</option></select></span></label>
+                <label class="st-field"><span class="st-label">Map Style</span>
+                    <select id="settings-map-style" class="st-input"><option value="standard" selected>Standard</option><option value="satellite">Satellite</option><option value="terrain">Terrain</option></select></label>
+                <label class="st-field"><span class="st-label">Dashboard Refresh Rate</span>
+                    <select id="settings-dashboard-refresh" class="st-input"><option value="slow">Slow (2s)</option><option value="normal" selected>Normal (1s)</option><option value="fast">Fast (500ms)</option></select></label>
+                <label class="st-field"><span class="st-label">Font Size</span>
+                    <select id="settings-font-size" class="st-input"><option value="s">Small</option><option value="m" selected>Medium</option><option value="l">Large</option></select></label>
+            </div>
+        </section>
+
+        <!-- 3 TELEMETRY -->
+        <section class="st-card">
+            <div class="st-card-head">
+                <h2 class="st-card-title">TELEMETRY</h2>
+                <span class="st-card-ico" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 17v3M8 13v7M12 10v10M16 14v6M20 17v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                </span>
+            </div>
+            <div class="st-card-body">
+                <label class="st-field"><span class="st-label">Update Rate (Hz)</span><input type="number" id="settings-update-rate" class="st-input" min="1" max="50" value="10"></label>
+                <label class="st-toggle"><span>Record Telemetry</span><input type="checkbox" id="settings-record-telemetry" class="st-switch" checked></label>
+                <label class="st-field"><span class="st-label">Telemetry Buffer (s)</span><input type="number" id="settings-telemetry-buffer" class="st-input" min="10" max="600" value="60"></label>
+                <label class="st-toggle"><span>Auto Save Logs</span><input type="checkbox" id="settings-auto-save-logs" class="st-switch" checked></label>
+                <label class="st-field"><span class="st-label">Log File Size Limit (MB)</span><input type="number" id="settings-log-max-mb" class="st-input" min="10" max="4096" value="100"></label>
+                <label class="st-toggle"><span>Send Heartbeat</span><input type="checkbox" id="settings-heartbeat-send" class="st-switch" checked></label>
+            </div>
+        </section>
+
+        <!-- 4 NOTIFICATIONS -->
+        <section class="st-card">
+            <div class="st-card-head">
+                <h2 class="st-card-title">NOTIFICATIONS</h2>
+                <span class="st-card-ico" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M18 16a6 6 0 10-12 0M9 21h6" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/><path d="M12 8V6a4 4 0 017-3" stroke="currentColor" stroke-width="1.2"/></svg>
+                </span>
+            </div>
+            <div class="st-card-body">
+                <div class="st-check-list">
+                    <label class="st-check"><input type="checkbox" id="settings-notif-low-battery" checked><span>Low Battery Alert</span></label>
+                    <label class="st-check"><input type="checkbox" id="settings-notif-gps-lost" checked><span>GPS Signal Lost</span></label>
+                    <label class="st-check"><input type="checkbox" id="settings-notif-motor" checked><span>Motor Fault</span></label>
+                    <label class="st-check"><input type="checkbox" id="settings-notif-telemetry" checked><span>Telemetry Interrupted</span></label>
+                    <label class="st-check"><input type="checkbox" id="settings-notif-temp" checked><span>Temperature Warning</span></label>
+                    <label class="st-check"><input type="checkbox" id="settings-notif-collision" checked><span>Collision Risk</span></label>
+                </div>
+                <label class="st-field"><span class="st-label">Notification Sound</span>
+                    <select id="settings-notif-sound" class="st-input"><option value="default" selected>Default</option><option value="chime">Chime</option><option value="silent">Silent</option></select></label>
+                <label class="st-field"><span class="st-label">Volume</span><input type="range" id="settings-notif-volume" class="st-range" min="0" max="100" value="79"><span id="settings-notif-volume-out" class="st-range-out">79%</span></label>
+            </div>
+        </section>
+
+        <!-- 5 SYSTEM -->
+        <section class="st-card">
+            <div class="st-card-head">
+                <h2 class="st-card-title">SYSTEM</h2>
+                <span class="st-card-ico" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="8" y="8" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.3"/><path d="M15 11h3a1 1 0 011 1v2a1 1 0 01-1 1h-3M12 21v-5M12 11V8M11 21h2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                </span>
+            </div>
+            <div class="st-card-body">
+                <label class="st-field"><span class="st-label">System ID</span><input type="text" id="settings-system-id" class="st-input" value="AQUAWING-01" autocomplete="off"></label>
+                <label class="st-field"><span class="st-label">Vehicle Type</span>
+                    <select id="settings-vehicle-type" class="st-input"><option value="surface" selected>Surface Drone</option><option value="aerial">Aerial</option><option value="surface-ship">Surface Vessel</option></select></label>
+                <label class="st-field st-field-password"><span class="st-label">Arming Password</span>
+                    <span class="st-pass-wrap"><input type="password" id="settings-arming-password" class="st-input" value="" autocomplete="new-password" placeholder="••••••••"><button type="button" id="settings-toggle-arm-pwd" class="st-icon-btn" title="Afficher / masquer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="1.3"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.3"/></svg></button></span></label>
+                <label class="st-field"><span class="st-label">Auto Disarm Timeout (s)</span><input type="number" id="settings-auto-disarm" class="st-input" min="0" max="3600" value="300"></label>
+                <label class="st-field"><span class="st-label">Failsafe Action</span>
+                    <select id="settings-failsafe-action" class="st-input"><option value="rtl" selected>Return to Launch</option><option value="land">Land</option><option value="hold">Hold Position</option></select></label>
+                <label class="st-field"><span class="st-label">Data Storage Path</span><input type="text" id="settings-data-storage-path" class="st-input" value="/var/aquawing/data"></label>
+            </div>
+        </section>
+
+        <!-- 6 DATA & STORAGE -->
+        <section class="st-card">
+            <div class="st-card-head">
+                <h2 class="st-card-title">DATA & STORAGE</h2>
+                <span class="st-card-ico" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2v11z" stroke="currentColor" stroke-width="1.3"/></svg>
+                </span>
+            </div>
+            <div class="st-card-body">
+                <label class="st-field"><span class="st-label">Max Log Files</span><input type="number" id="settings-max-log-files" class="st-input" min="1" max="5000" value="50"></label>
+                <label class="st-toggle"><span>Auto Delete Old Logs</span><input type="checkbox" id="settings-auto-delete-old-logs" class="st-switch" checked></label>
+                <label class="st-field"><span class="st-label">Min Free Space (GB)</span><input type="number" id="settings-min-free-gb" class="st-input" min="1" max="500" value="5"></label>
+                <label class="st-field"><span class="st-label">Export Format</span>
+                    <select id="settings-export-format" class="st-input"><option value="json" selected>JSON</option><option value="csv">CSV</option></select></label>
+                <button type="button" id="settings-clear-cache-btn" class="st-btn-cache">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z" stroke="currentColor" stroke-width="1.3"/></svg>
+                    Clear Cache
+                </button>
+            </div>
+        </section>
+
+        <!-- 7 CONNECTIONS -->
+        <section class="st-card">
+            <div class="st-card-head">
+                <h2 class="st-card-title">CONNECTIONS</h2>
+                <span class="st-card-ico" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M10 13a5 5 0 017.54.54l3 3a5 5 0 01-7.07 7.07l-1.72-1.71M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/></svg>
+                </span>
+            </div>
+            <div class="st-card-body">
+                <label class="st-field"><span class="st-label">Telemetry Port (baud)</span><input type="number" id="settings-telemetry-port" class="st-input" value="921600" min="9600"></label>
+                <label class="st-field"><span class="st-label">Telemetry Protocol</span>
+                    <select id="settings-telemetry-protocol" class="st-input"><option value="json-ws" selected>JSON over WebSocket</option><option value="mavlink">MAVLink</option></select></label>
+                <label class="st-field"><span class="st-label">Video Stream Protocol</span>
+                    <select id="settings-video-protocol" class="st-input"><option value="webrtc" selected>WebRTC</option><option value="mjpeg">MJPEG</option></select></label>
+                <label class="st-toggle"><span>WebSocket Reconnect</span><input type="checkbox" id="settings-ws-reconnect" class="st-switch" checked></label>
+                <label class="st-field"><span class="st-label">Reconnect Interval (s)</span><input type="number" id="settings-reconnect-interval" class="st-input" min="1" max="120" value="5"></label>
+            </div>
+        </section>
+
+        <!-- 8 SECURITY -->
+        <section class="st-card">
+            <div class="st-card-head">
+                <h2 class="st-card-title">SECURITY</h2>
+                <span class="st-card-ico" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 3l9 5v10c0 5-9 8-9 8s-9-3-9-8V8l9-5z" stroke="currentColor" stroke-width="1.3"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                </span>
+            </div>
+            <div class="st-card-body">
+                <label class="st-toggle"><span>Enable Authentication</span><input type="checkbox" id="settings-auth-enable" class="st-switch" checked></label>
+                <div class="st-row-split">
+                    <span class="st-label-inline">Dashboard password</span>
+                    <button type="button" id="settings-change-pass-btn" class="st-btn-inline">Change</button>
+                </div>
+                <label class="st-field"><span class="st-label">Session Timeout (min)</span><input type="number" id="settings-session-timeout" class="st-input" min="5" max="1440" value="30"></label>
+                <label class="st-toggle"><span>HTTPS Only</span><input type="checkbox" id="settings-https-only" class="st-switch" checked></label>
+                <label class="st-toggle"><span>Allow Remote Access</span><input type="checkbox" id="settings-remote-access" class="st-switch"></label>
+            </div>
+        </section>
+    </div>
+
+    <footer class="st-footer-actions">
+        <button type="button" id="settings-save-btn" class="st-btn st-btn-primary">Save Settings</button>
+        <button type="button" id="settings-reset-btn" class="st-btn st-btn-ghost">Reset to Default</button>
+    </footer>
+</div>
+<script src="/settings-page.js?v=2"></script>
 </body>
 </html>

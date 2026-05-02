@@ -3,47 +3,316 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>AquaWing - PID Settings</title>
-    <link rel="stylesheet" href="/pid-page.css">
+    <title>AquaWing — PID Settings</title>
+    <link rel="stylesheet" href="/pid-page.css?v=2">
 </head>
-<body>
-    <main class="pid-root">
-        <div class="pid-grid">
-            <section class="pid-card">
-                <h3>ROLL PID</h3>
-                <label>P <input type="number" id="pid-roll-p" step="0.01"></label>
-                <label>I <input type="number" id="pid-roll-i" step="0.01"></label>
-                <label>D <input type="number" id="pid-roll-d" step="0.01"></label>
-            </section>
-            <section class="pid-card">
-                <h3>PITCH PID</h3>
-                <label>P <input type="number" id="pid-pitch-p" step="0.01"></label>
-                <label>I <input type="number" id="pid-pitch-i" step="0.01"></label>
-                <label>D <input type="number" id="pid-pitch-d" step="0.01"></label>
-            </section>
-            <section class="pid-card">
-                <h3>YAW PID</h3>
-                <label>P <input type="number" id="pid-yaw-p" step="0.01"></label>
-                <label>I <input type="number" id="pid-yaw-i" step="0.01"></label>
-                <label>D <input type="number" id="pid-yaw-d" step="0.01"></label>
-            </section>
+<body class="pid-page-body">
+<div class="pid-app">
+    <header class="pid-top">
+        <div class="pid-top-left">
+            <h1 class="pid-brand">PID SETTINGS</h1>
+            <p class="pid-tagline">Fine tune your flight controller PID gains for optimal performance.</p>
         </div>
-
-        <section class="pid-card pid-alt">
-            <h3>ALTITUDE PID</h3>
-            <div class="pid-alt-grid">
-                <label>P <input type="number" id="pid-alt-p" step="0.01"></label>
-                <label>I <input type="number" id="pid-alt-i" step="0.01"></label>
-                <label>D <input type="number" id="pid-alt-d" step="0.01"></label>
+        <div class="pid-status-strip" aria-label="FC telemetry strip">
+            <div class="pid-strip-item"><span class="pid-strip-label">FLIGHT MODE</span><strong id="pid-flight-mode">Stabilize</strong></div>
+            <div class="pid-strip-item"><span class="pid-strip-label">LOOP RATE</span><strong>1,000 Hz</strong></div>
+            <div class="pid-strip-item"><span class="pid-strip-label">SAMPLE TIME</span><strong>1.00 ms</strong></div>
+            <div class="pid-strip-item pid-strip-profile">
+                <span class="pid-strip-label">PROFILE</span>
+                <select id="pid-profile-select" class="pid-select-mini" aria-label="Active profile">
+                    <option value="default" selected>Default</option>
+                    <option value="aggressive">Aggressive</option>
+                    <option value="smooth">Smooth</option>
+                    <option value="rescue">Rescue</option>
+                </select>
             </div>
-        </section>
-
-        <div class="pid-actions">
-            <button id="pid-apply-btn" class="btn-primary">Apply Settings</button>
-            <button id="pid-reset-btn" class="btn-ghost">Reset to Default</button>
-            <button id="pid-save-btn" class="btn-primary">Save Profile</button>
         </div>
-    </main>
-    <script src="/pid-page.js"></script>
+        <div class="pid-fc-card" aria-live="polite">
+            <div class="pid-fc-title">FC STATUS</div>
+            <div class="pid-fc-row">
+                <span class="pid-fc-dot"></span>
+                <span id="pid-fc-text">Connected</span>
+                <svg class="pid-wifi-ico" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M5 11a12 12 0 0 1 14 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                    <path d="M8.5 14.5a7 7 0 0 1 7 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                    <path d="M12 18h.01" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                </svg>
+            </div>
+        </div>
+    </header>
+
+    <div class="pid-workspace">
+        <div class="pid-primary">
+            <div class="pid-axes" role="region" aria-label="Per-axis PID">
+                <!-- Roll -->
+                <section class="pid-axis">
+                    <div class="pid-axis-head">
+                        <h2 class="pid-axis-title">ROLL PID</h2>
+                        <span class="pid-badge pid-badge--stable">Stable</span>
+                    </div>
+                    <div class="pid-gain" data-min="0" data-max="12" data-step="0.01">
+                        <span class="pid-gain-letter">P</span>
+                        <input type="range" class="pid-slider" aria-label="Roll P">
+                        <div class="pid-num">
+                            <button type="button" class="pid-stepper" data-delta="-0.05" tabindex="-1" aria-label="Decrease Roll P">−</button>
+                            <input type="number" id="pid-roll-p" step="0.01" inputmode="decimal">
+                            <button type="button" class="pid-stepper" data-delta="0.05" tabindex="-1" aria-label="Increase Roll P">+</button>
+                        </div>
+                    </div>
+                    <div class="pid-gain" data-min="0" data-max="2" data-step="0.005">
+                        <span class="pid-gain-letter">I</span>
+                        <input type="range" class="pid-slider" aria-label="Roll I">
+                        <div class="pid-num">
+                            <button type="button" class="pid-stepper" data-delta="-0.025" tabindex="-1">−</button>
+                            <input type="number" id="pid-roll-i" step="0.01" inputmode="decimal">
+                            <button type="button" class="pid-stepper" data-delta="0.025" tabindex="-1">+</button>
+                        </div>
+                    </div>
+                    <div class="pid-gain" data-min="0" data-max="0.25" data-step="0.001">
+                        <span class="pid-gain-letter">D</span>
+                        <input type="range" class="pid-slider" aria-label="Roll D">
+                        <div class="pid-num">
+                            <button type="button" class="pid-stepper" data-delta="-0.002" tabindex="-1">−</button>
+                            <input type="number" id="pid-roll-d" step="0.01" inputmode="decimal">
+                            <button type="button" class="pid-stepper" data-delta="0.002" tabindex="-1">+</button>
+                        </div>
+                    </div>
+                    <div class="pid-mini-wrap">
+                        <canvas id="pid-mini-roll" aria-label="Roll step response" height="74"></canvas>
+                    </div>
+                </section>
+
+                <!-- Pitch -->
+                <section class="pid-axis">
+                    <div class="pid-axis-head">
+                        <h2 class="pid-axis-title">PITCH PID</h2>
+                        <span class="pid-badge pid-badge--tuning">Tuning</span>
+                    </div>
+                    <div class="pid-gain" data-min="0" data-max="12" data-step="0.01">
+                        <span class="pid-gain-letter">P</span>
+                        <input type="range" class="pid-slider" aria-label="Pitch P">
+                        <div class="pid-num">
+                            <button type="button" class="pid-stepper" data-delta="-0.05" tabindex="-1">−</button>
+                            <input type="number" id="pid-pitch-p" step="0.01" inputmode="decimal">
+                            <button type="button" class="pid-stepper" data-delta="0.05" tabindex="-1">+</button>
+                        </div>
+                    </div>
+                    <div class="pid-gain" data-min="0" data-max="2" data-step="0.005">
+                        <span class="pid-gain-letter">I</span>
+                        <input type="range" class="pid-slider" aria-label="Pitch I">
+                        <div class="pid-num">
+                            <button type="button" class="pid-stepper" data-delta="-0.025" tabindex="-1">−</button>
+                            <input type="number" id="pid-pitch-i" step="0.01" inputmode="decimal">
+                            <button type="button" class="pid-stepper" data-delta="0.025" tabindex="-1">+</button>
+                        </div>
+                    </div>
+                    <div class="pid-gain" data-min="0" data-max="0.25" data-step="0.001">
+                        <span class="pid-gain-letter">D</span>
+                        <input type="range" class="pid-slider" aria-label="Pitch D">
+                        <div class="pid-num">
+                            <button type="button" class="pid-stepper" data-delta="-0.002" tabindex="-1">−</button>
+                            <input type="number" id="pid-pitch-d" step="0.01" inputmode="decimal">
+                            <button type="button" class="pid-stepper" data-delta="0.002" tabindex="-1">+</button>
+                        </div>
+                    </div>
+                    <div class="pid-mini-wrap">
+                        <canvas id="pid-mini-pitch" height="74"></canvas>
+                    </div>
+                </section>
+
+                <!-- Yaw -->
+                <section class="pid-axis">
+                    <div class="pid-axis-head">
+                        <h2 class="pid-axis-title">YAW PID</h2>
+                        <span class="pid-badge pid-badge--optimized">Optimized</span>
+                    </div>
+                    <div class="pid-gain" data-min="0" data-max="12" data-step="0.01">
+                        <span class="pid-gain-letter">P</span>
+                        <input type="range" class="pid-slider" aria-label="Yaw P">
+                        <div class="pid-num">
+                            <button type="button" class="pid-stepper" data-delta="-0.05" tabindex="-1">−</button>
+                            <input type="number" id="pid-yaw-p" step="0.01" inputmode="decimal">
+                            <button type="button" class="pid-stepper" data-delta="0.05" tabindex="-1">+</button>
+                        </div>
+                    </div>
+                    <div class="pid-gain" data-min="0" data-max="2" data-step="0.005">
+                        <span class="pid-gain-letter">I</span>
+                        <input type="range" class="pid-slider" aria-label="Yaw I">
+                        <div class="pid-num">
+                            <button type="button" class="pid-stepper" data-delta="-0.025" tabindex="-1">−</button>
+                            <input type="number" id="pid-yaw-i" step="0.01" inputmode="decimal">
+                            <button type="button" class="pid-stepper" data-delta="0.025" tabindex="-1">+</button>
+                        </div>
+                    </div>
+                    <div class="pid-gain" data-min="0" data-max="0.25" data-step="0.001">
+                        <span class="pid-gain-letter">D</span>
+                        <input type="range" class="pid-slider" aria-label="Yaw D">
+                        <div class="pid-num">
+                            <button type="button" class="pid-stepper" data-delta="-0.002" tabindex="-1">−</button>
+                            <input type="number" id="pid-yaw-d" step="0.01" inputmode="decimal">
+                            <button type="button" class="pid-stepper" data-delta="0.002" tabindex="-1">+</button>
+                        </div>
+                    </div>
+                    <div class="pid-mini-wrap">
+                        <canvas id="pid-mini-yaw" height="74"></canvas>
+                    </div>
+                </section>
+
+                <!-- Altitude -->
+                <section class="pid-axis pid-axis--alt">
+                    <div class="pid-axis-head">
+                        <h2 class="pid-axis-title">ALTITUDE PID</h2>
+                        <span class="pid-badge pid-badge--stable">Stable</span>
+                    </div>
+                    <div class="pid-gain" data-min="0" data-max="5" data-step="0.01">
+                        <span class="pid-gain-letter">P</span>
+                        <input type="range" class="pid-slider" aria-label="Altitude P">
+                        <div class="pid-num">
+                            <button type="button" class="pid-stepper" data-delta="-0.05" tabindex="-1">−</button>
+                            <input type="number" id="pid-alt-p" step="0.01" inputmode="decimal">
+                            <button type="button" class="pid-stepper" data-delta="0.05" tabindex="-1">+</button>
+                        </div>
+                    </div>
+                    <div class="pid-gain" data-min="0" data-max="0.75" data-step="0.002">
+                        <span class="pid-gain-letter">I</span>
+                        <input type="range" class="pid-slider" aria-label="Altitude I">
+                        <div class="pid-num">
+                            <button type="button" class="pid-stepper" data-delta="-0.01" tabindex="-1">−</button>
+                            <input type="number" id="pid-alt-i" step="0.01" inputmode="decimal">
+                            <button type="button" class="pid-stepper" data-delta="0.01" tabindex="-1">+</button>
+                        </div>
+                    </div>
+                    <div class="pid-gain" data-min="0" data-max="0.12" data-step="0.0005">
+                        <span class="pid-gain-letter">D</span>
+                        <input type="range" class="pid-slider" aria-label="Altitude D">
+                        <div class="pid-num">
+                            <button type="button" class="pid-stepper" data-delta="-0.001" tabindex="-1">−</button>
+                            <input type="number" id="pid-alt-d" step="0.01" inputmode="decimal">
+                            <button type="button" class="pid-stepper" data-delta="0.001" tabindex="-1">+</button>
+                        </div>
+                    </div>
+                    <div class="pid-mini-wrap">
+                        <canvas id="pid-mini-alt" height="74"></canvas>
+                    </div>
+                </section>
+            </div>
+
+            <div class="pid-bottom">
+                <section class="pid-panel pid-panel--wide">
+                    <div class="pid-panel-cap">
+                        <h3 class="pid-panel-title">ATTITUDE RESPONSE PREVIEW</h3>
+                        <label class="pid-step-label">Step Input
+                            <select id="pid-step-input" class="pid-select-mini">
+                                <option value="10" selected>10°</option>
+                                <option value="5">5°</option>
+                                <option value="15">15°</option>
+                                <option value="20">20°</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="pid-chart-big">
+                        <canvas id="pid-chart-attitude" height="200"></canvas>
+                    </div>
+                </section>
+
+                <section class="pid-panel">
+                    <h3 class="pid-panel-title">PROFILE PRESETS</h3>
+                    <div class="pid-preset-cards" role="tablist">
+                        <button type="button" class="pid-preset is-active" data-profile="default" role="tab" aria-selected="true">
+                            <span class="pid-preset-icon" aria-hidden="true">⚙</span>
+                            <strong>Default</strong>
+                            <span class="pid-preset-desc">Balanced indoor / GPS</span>
+                        </button>
+                        <button type="button" class="pid-preset" data-profile="aggressive">
+                            <span class="pid-preset-icon">▲</span>
+                            <strong>Aggressive</strong>
+                            <span class="pid-preset-desc">Snappy freestyle</span>
+                        </button>
+                        <button type="button" class="pid-preset" data-profile="smooth">
+                            <span class="pid-preset-icon">〜</span>
+                            <strong>Smooth</strong>
+                            <span class="pid-preset-desc">Cinematic / filming</span>
+                        </button>
+                        <button type="button" class="pid-preset" data-profile="rescue">
+                            <span class="pid-preset-icon">⚑</span>
+                            <strong>Rescue</strong>
+                            <span class="pid-preset-desc">Fail-safe softness</span>
+                        </button>
+                    </div>
+                    <button type="button" class="pid-btn-manage">Manage Profiles</button>
+                </section>
+
+                <section class="pid-panel pid-panel--status">
+                    <h3 class="pid-panel-title">SYSTEM STATUS</h3>
+                    <ul class="pid-sys-list">
+                        <li><span class="pid-sys-k">Armed</span><span class="pid-sys-v pid-sys-good">Yes</span></li>
+                        <li><span class="pid-sys-k">Battery</span><span class="pid-sys-v">15.2 V <span class="pid-sys-muted">(92%)</span></span></li>
+                        <li><span class="pid-sys-k">Temperature</span><span class="pid-sys-v">42°C</span></li>
+                        <li><span class="pid-sys-k">CPU Load</span><span class="pid-sys-v">18%</span></li>
+                        <li><span class="pid-sys-k">Gyro Health</span><span class="pid-sys-v pid-sys-good">100%</span></li>
+                    </ul>
+                </section>
+            </div>
+        </div>
+
+        <aside class="pid-sidebar" aria-label="Tuning aids">
+            <section class="pid-side-block">
+                <h3 class="pid-side-title">TUNING INSIGHTS</h3>
+                <ul class="pid-insights">
+                    <li><span class="pid-insight-k">Overshoot</span><span id="pid-metric-os" class="pid-insight-v">3.6%</span></li>
+                    <li><span class="pid-insight-k">Settling Time</span><span id="pid-metric-settle" class="pid-insight-v">0.42 s</span></li>
+                    <li><span class="pid-insight-k">Oscillation Risk</span><span id="pid-metric-risk" class="pid-insight-risk">Low</span></li>
+                </ul>
+            </section>
+
+            <section class="pid-side-block">
+                <h3 class="pid-side-title">RECOMMENDED RANGE</h3>
+                <table class="pid-range-table">
+                    <thead><tr><th>Param</th><th>Min</th><th>Max</th></tr></thead>
+                    <tbody>
+                        <tr><td>Roll P</td><td>3.2</td><td>7.8</td></tr>
+                        <tr><td>Roll I</td><td>0.08</td><td>1.40</td></tr>
+                        <tr><td>Roll D</td><td>0.015</td><td>0.15</td></tr>
+                        <tr><td>Pitch P/I/D</td><td colspan="2" class="pid-range-note">Match roll order</td></tr>
+                        <tr><td>Yaw P</td><td>2.0</td><td>9.5</td></tr>
+                        <tr><td>Alt P</td><td>0.4</td><td>2.6</td></tr>
+                        <tr><td>Alt I</td><td>0.02</td><td>0.45</td></tr>
+                        <tr><td>Alt D</td><td>0.002</td><td>0.065</td></tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section class="pid-tip">
+                <div class="pid-tip-head">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.4"/><path d="M12 10v8M12 8h.01" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                    <span>TIP</span>
+                </div>
+                <p>Increase <strong>D</strong> to damp overshoot before raising <strong>P</strong>. For yaw, prioritize <strong>P</strong> stability over <strong>I</strong> to avoid wound-up heading drift.</p>
+            </section>
+        </aside>
+    </div>
+
+    <footer class="pid-footer-actions">
+        <button type="button" id="pid-auto-tune-btn" class="pid-foot-btn pid-foot-btn--ghost">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 4v16M12 12l4 2 2-10-10 8-10-8 2 10 4-2z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+            Auto Tune
+        </button>
+        <button type="button" id="pid-apply-btn" class="pid-foot-btn pid-foot-btn--accent">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 13l5 6L21 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 17h8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+            Apply Settings
+        </button>
+        <button type="button" id="pid-reset-btn" class="pid-foot-btn pid-foot-btn--dark">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 11a8 8 0 1 1 2.84 6.56" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M4 17V11h6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Reset to Default
+        </button>
+        <button type="button" id="pid-save-btn" class="pid-foot-btn pid-foot-btn--accent">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 21h12V8l-3-3H6v16zM9 21V13h6v8M14 8V5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+            Save Profile
+        </button>
+    </footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
+<script src="/pid-page.js?v=2"></script>
 </body>
 </html>

@@ -337,6 +337,9 @@ def missions_page_js():
 
 _SYSTEMS_NO_CACHE_HEADERS = {"Cache-Control": "no-store, max-age=0, must-revalidate"}
 _OPTICAL_NO_CACHE_HEADERS = {"Cache-Control": "no-store, max-age=0, must-revalidate"}
+_PID_NO_CACHE_HEADERS = {"Cache-Control": "no-store, max-age=0, must-revalidate"}
+_HEATMAP_NO_CACHE_HEADERS = {"Cache-Control": "no-store, max-age=0, must-revalidate"}
+_SETTINGS_NO_CACHE_HEADERS = {"Cache-Control": "no-store, max-age=0, must-revalidate"}
 
 
 @app.get("/systems-page")
@@ -410,7 +413,7 @@ def pid_page(sid: str = Cookie(None), guest: Optional[str] = None):
 
     page_path = PID_SETTINGS_DIR / "PID Settings.html"
     if page_path.exists():
-        return FileResponse(str(page_path))
+        return FileResponse(str(page_path), headers=_PID_NO_CACHE_HEADERS)
     return {"error": "PID Settings.html not found"}
 
 
@@ -419,7 +422,7 @@ def pid_page_css():
     """Serve standalone PID Settings CSS."""
     css_path = PID_SETTINGS_DIR / "PID Settings.css"
     if css_path.exists():
-        return FileResponse(str(css_path), media_type="text/css")
+        return FileResponse(str(css_path), media_type="text/css", headers=_PID_NO_CACHE_HEADERS)
     return {"error": "PID Settings.css not found"}
 
 
@@ -428,7 +431,7 @@ def pid_page_js():
     """Serve standalone PID Settings JS."""
     js_path = PID_SETTINGS_DIR / "PID Settings.js"
     if js_path.exists():
-        return FileResponse(str(js_path), media_type="application/javascript")
+        return FileResponse(str(js_path), media_type="application/javascript", headers=_PID_NO_CACHE_HEADERS)
     return {"error": "PID Settings.js not found"}
 
 
@@ -441,7 +444,7 @@ def heatmap_page(sid: str = Cookie(None), guest: Optional[str] = None):
 
     page_path = HEATMAP_DIR / "Heatmap.html"
     if page_path.exists():
-        return FileResponse(str(page_path))
+        return FileResponse(str(page_path), headers=_HEATMAP_NO_CACHE_HEADERS)
     return {"error": "Heatmap.html not found"}
 
 
@@ -450,7 +453,7 @@ def heatmap_page_css():
     """Serve standalone Heatmap CSS."""
     css_path = HEATMAP_DIR / "Heatmap.css"
     if css_path.exists():
-        return FileResponse(str(css_path), media_type="text/css")
+        return FileResponse(str(css_path), media_type="text/css", headers=_HEATMAP_NO_CACHE_HEADERS)
     return {"error": "Heatmap.css not found"}
 
 
@@ -459,7 +462,7 @@ def heatmap_page_js():
     """Serve standalone Heatmap JS."""
     js_path = HEATMAP_DIR / "Heatmap.js"
     if js_path.exists():
-        return FileResponse(str(js_path), media_type="application/javascript")
+        return FileResponse(str(js_path), media_type="application/javascript", headers=_HEATMAP_NO_CACHE_HEADERS)
     return {"error": "Heatmap.js not found"}
 
 
@@ -472,7 +475,7 @@ def settings_page(sid: str = Cookie(None), guest: Optional[str] = None):
 
     page_path = SETTINGS_DIR / "Settings.html"
     if page_path.exists():
-        return FileResponse(str(page_path))
+        return FileResponse(str(page_path), headers=_SETTINGS_NO_CACHE_HEADERS)
     return {"error": "Settings.html not found"}
 
 
@@ -481,7 +484,7 @@ def settings_page_css():
     """Serve standalone Settings CSS."""
     css_path = SETTINGS_DIR / "Settings.css"
     if css_path.exists():
-        return FileResponse(str(css_path), media_type="text/css")
+        return FileResponse(str(css_path), media_type="text/css", headers=_SETTINGS_NO_CACHE_HEADERS)
     return {"error": "Settings.css not found"}
 
 
@@ -490,7 +493,7 @@ def settings_page_js():
     """Serve standalone Settings JS."""
     js_path = SETTINGS_DIR / "Settings.js"
     if js_path.exists():
-        return FileResponse(str(js_path), media_type="application/javascript")
+        return FileResponse(str(js_path), media_type="application/javascript", headers=_SETTINGS_NO_CACHE_HEADERS)
     return {"error": "Settings.js not found"}
 
 

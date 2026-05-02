@@ -3183,7 +3183,9 @@ body.tactical-mode * {
     flex-direction: column;
     padding: 0;
     overflow: hidden;
+    min-height: 0;
     height: calc(100vh - 48px);
+    max-height: calc(100vh - 48px);
     flex: 1;
     animation: slideInLeft 0.3s ease-out;
 }
@@ -3192,7 +3194,7 @@ body.tactical-mode * {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px;
+    padding: 10px 16px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     flex-shrink: 0;
 }
@@ -3206,15 +3208,17 @@ body.tactical-mode * {
     display: flex;
     flex-direction: column;
     flex: 1;
+    min-height: 0;
     overflow: hidden;
-    padding: 20px;
-    gap: 16px;
+    padding: 8px 10px 10px;
+    gap: 0;
 }
 
 .heatmap-frame {
+    flex: 1 1 auto;
     width: 100%;
-    height: calc(100vh - 48px - 40px - 90px);
-    min-height: 420px;
+    min-height: 0;
+    height: 100%;
     border: 1px solid rgba(255, 122, 24, 0.15);
     border-radius: 10px;
     background: rgba(8, 12, 20, 0.96);
@@ -3408,37 +3412,44 @@ body.tactical-mode * {
     font-family: 'Courier New', monospace;
 }
 
-/* Settings Panel - full available width */
+/* Settings Panel — iframe pleine hauteur (page maquette 8 cartes) */
 .settings-panel {
     flex: 1;
     min-width: 0;
+    min-height: 0;
     background: rgba(8, 12, 20, 0.95);
     border-right: 1px solid rgba(0, 255, 200, 0.1);
     display: flex;
     flex-direction: column;
-    padding: 20px;
-    overflow-y: auto;
-    height: calc(100vh - 48px - 40px);
+    padding: 0;
+    overflow: hidden;
+    height: calc(100vh - 48px);
+    max-height: calc(100vh - 48px);
 }
 
 .settings-panel-header {
-    margin-bottom: 20px;
-    padding-bottom: 12px;
+    flex-shrink: 0;
+    margin-bottom: 0;
+    padding: 10px 16px;
+    padding-bottom: 10px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .settings-panel-content {
     display: flex;
     flex-direction: column;
-    gap: 24px;
     flex: 1;
     min-height: 0;
+    padding: 8px 10px 10px;
+    gap: 0;
+    overflow: hidden;
 }
 
 .settings-frame {
     width: 100%;
-    height: calc(100vh - 48px - 40px - 90px);
-    min-height: 420px;
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
     border: 1px solid rgba(255, 122, 24, 0.15);
     border-radius: 10px;
     background: rgba(8, 12, 20, 0.96);

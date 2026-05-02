@@ -2577,6 +2577,13 @@ window.addEventListener('load', () => {
             if (pidPanel) {
                 pidPanel.style.display = 'flex';
                 console.log('PID settings panel shown');
+                const pf = document.getElementById('pid-frame');
+                if (pf) {
+                    try {
+                        const base = pf.getAttribute('data-pid-src') || '/pid-page';
+                        pf.src = `${base}?ui=piddash-v1&t=${Date.now()}`;
+                    } catch (_) { /* noop */ }
+                }
             }
         } else if (activeEl === navElectricalWiring) {
             // Electrical Wiring: show electrical wiring panel
@@ -2633,6 +2640,13 @@ window.addEventListener('load', () => {
             if (heatmapPanel) {
                 heatmapPanel.style.display = 'flex';
                 console.log('Heatmap panel shown');
+                const hf = document.getElementById('heatmap-frame');
+                if (hf) {
+                    try {
+                        const base = hf.getAttribute('data-heatmap-src') || '/heatmap-page';
+                        hf.src = `${base}?ui=hmap-v4&t=${Date.now()}`;
+                    } catch (_) { /* noop */ }
+                }
                 // Ensure it's in the main layout
                 const mainLayout = document.querySelector('.main-layout');
                 if (mainLayout && !mainLayout.contains(heatmapPanel)) {
@@ -2662,6 +2676,13 @@ window.addEventListener('load', () => {
             if (settingsPanel) {
                 settingsPanel.style.display = 'flex';
                 console.log('Settings panel shown');
+                const sf = document.getElementById('settings-frame');
+                if (sf) {
+                    try {
+                        const base = sf.getAttribute('data-settings-src') || '/settings-page';
+                        sf.src = `${base}?ui=setdash-v2&t=${Date.now()}`;
+                    } catch (_) { /* noop */ }
+                }
             }
             // Hide main content
             if (mainContent) mainContent.style.display = 'none';

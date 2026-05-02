@@ -402,7 +402,7 @@ def create_app() -> FastAPI:
 
         page_path = pid_settings_dir / "PID Settings.html"
         if page_path.exists():
-            return FileResponse(str(page_path))
+            return FileResponse(str(page_path), headers=_systems_nocache)
         return {"error": "PID Settings.html not found"}
 
     @app.get("/pid-page.css")
@@ -412,7 +412,7 @@ def create_app() -> FastAPI:
         """
         css_path = pid_settings_dir / "PID Settings.css"
         if css_path.exists():
-            return FileResponse(str(css_path), media_type="text/css")
+            return FileResponse(str(css_path), media_type="text/css", headers=_systems_nocache)
         return {"error": "PID Settings.css not found"}
 
     @app.get("/pid-page.js")
@@ -422,7 +422,7 @@ def create_app() -> FastAPI:
         """
         js_path = pid_settings_dir / "PID Settings.js"
         if js_path.exists():
-            return FileResponse(str(js_path), media_type="application/javascript")
+            return FileResponse(str(js_path), media_type="application/javascript", headers=_systems_nocache)
         return {"error": "PID Settings.js not found"}
 
     @app.get("/heatmap-page")
@@ -435,7 +435,7 @@ def create_app() -> FastAPI:
 
         page_path = heatmap_dir / "Heatmap.html"
         if page_path.exists():
-            return FileResponse(str(page_path))
+            return FileResponse(str(page_path), headers=_systems_nocache)
         return {"error": "Heatmap.html not found"}
 
     @app.get("/heatmap-page.css")
@@ -445,7 +445,7 @@ def create_app() -> FastAPI:
         """
         css_path = heatmap_dir / "Heatmap.css"
         if css_path.exists():
-            return FileResponse(str(css_path), media_type="text/css")
+            return FileResponse(str(css_path), media_type="text/css", headers=_systems_nocache)
         return {"error": "Heatmap.css not found"}
 
     @app.get("/heatmap-page.js")
@@ -455,7 +455,7 @@ def create_app() -> FastAPI:
         """
         js_path = heatmap_dir / "Heatmap.js"
         if js_path.exists():
-            return FileResponse(str(js_path), media_type="application/javascript")
+            return FileResponse(str(js_path), media_type="application/javascript", headers=_systems_nocache)
         return {"error": "Heatmap.js not found"}
 
     @app.get("/settings-page")
@@ -468,7 +468,7 @@ def create_app() -> FastAPI:
 
         page_path = settings_dir / "Settings.html"
         if page_path.exists():
-            return FileResponse(str(page_path))
+            return FileResponse(str(page_path), headers=_systems_nocache)
         return {"error": "Settings.html not found"}
 
     @app.get("/settings-page.css")
@@ -478,7 +478,7 @@ def create_app() -> FastAPI:
         """
         css_path = settings_dir / "Settings.css"
         if css_path.exists():
-            return FileResponse(str(css_path), media_type="text/css")
+            return FileResponse(str(css_path), media_type="text/css", headers=_systems_nocache)
         return {"error": "Settings.css not found"}
 
     @app.get("/settings-page.js")
@@ -488,7 +488,7 @@ def create_app() -> FastAPI:
         """
         js_path = settings_dir / "Settings.js"
         if js_path.exists():
-            return FileResponse(str(js_path), media_type="application/javascript")
+            return FileResponse(str(js_path), media_type="application/javascript", headers=_systems_nocache)
         return {"error": "Settings.js not found"}
 
     # ========================================================================

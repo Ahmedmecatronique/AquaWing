@@ -1,34 +1,202 @@
 <!doctype html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>AquaWing - Heatmap</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-    <link rel="stylesheet" href="/heatmap-page.css">
+    <title>AquaWing — Heatmap maritime</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+    <link rel="stylesheet" href="/heatmap-page.css?v=4">
 </head>
-<body>
-    <main class="heatmap-root">
-        <div class="heatmap-toolbar">
-            <button id="heatmap-clear-btn" class="btn">Clear Points</button>
-            <button id="heatmap-clear-history-btn" class="btn btn-ghost">Effacer historique</button>
+<body class="hm-body">
+<div class="hm-app">
+    <header class="hm-header">
+        <div class="hm-header-left">
+            <button type="button" id="heatmap-clear-btn" class="hm-btn hm-btn--primary">
+                Clear Points
+            </button>
+            <button type="button" id="heatmap-clear-history-btn" class="hm-btn hm-btn--ghost">
+                Effacer historique
+            </button>
         </div>
-        <div class="heatmap-stats">
-            <div>Total: <strong id="heatmap-total-detections">0</strong></div>
-            <div>Drowning: <strong id="heatmap-drowning-count">0</strong></div>
-            <div>Normal: <strong id="heatmap-normal-count">0</strong></div>
-        </div>
-        <div class="heatmap-main">
-            <div id="heatmap-map" class="heatmap-map"></div>
-            <aside class="heatmap-history">
-                <div class="history-title">HISTORIQUE DES CAS</div>
-                <div id="heatmap-history-content" class="history-content">
-                    <div class="history-empty">Aucun cas enregistré</div>
+        <div class="hm-kpi-row" aria-label="Résumé détections">
+            <article class="hm-kpi hm-kpi--total">
+                <span class="hm-kpi-ico" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 17l6-6 4 4 6-8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.4"/><circle cx="16" cy="16" r="2" stroke="currentColor" stroke-width="1.4"/></svg>
+                </span>
+                <div class="hm-kpi-text">
+                    <span class="hm-kpi-label">Total</span>
+                    <strong class="hm-kpi-val hm-kpi-val--cyan" id="heatmap-total-detections">0</strong>
                 </div>
-            </aside>
+            </article>
+            <article class="hm-kpi hm-kpi--victim">
+                <span class="hm-kpi-ico" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="7" r="3" stroke="currentColor" stroke-width="1.4"/><path d="M7 21v-2a5 5 0 0110 0v2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M12 10v8" stroke="currentColor" stroke-width="1.2"/></svg>
+                </span>
+                <div class="hm-kpi-text">
+                    <span class="hm-kpi-label">Victimes</span>
+                    <strong class="hm-kpi-val hm-kpi-val--red" id="heatmap-kpi-victims">0</strong>
+                </div>
+            </article>
+            <article class="hm-kpi hm-kpi--elevated">
+                <span class="hm-kpi-ico" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 4v14M12 14l6-6M12 14L6 8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                </span>
+                <div class="hm-kpi-text">
+                    <span class="hm-kpi-label">Alerte élevée</span>
+                    <strong class="hm-kpi-val hm-kpi-val--orange" id="heatmap-kpi-elevated">0</strong>
+                </div>
+            </article>
+            <article class="hm-kpi hm-kpi--normal">
+                <span class="hm-kpi-ico" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.4"/><path d="M8 13l3 3 5-8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                </span>
+                <div class="hm-kpi-text">
+                    <span class="hm-kpi-label">Normaux</span>
+                    <strong class="hm-kpi-val hm-kpi-val--blue" id="heatmap-normal-count">0</strong>
+                </div>
+            </article>
         </div>
+        <aside class="hm-ai" aria-label="Analyse IA">
+            <div class="hm-ai-label">ANALYSE IA</div>
+            <div class="hm-ai-grid">
+                <div class="hm-ai-item">
+                    <span class="hm-ai-muted">Global Risk</span>
+                    <div class="hm-ai-body">
+                        <div class="hm-ai-risk-text" id="hm-ai-global-risk"><span id="hm-risk-score">–</span> <span id="hm-risk-label" class="hm-risk-flag">–</span></div>
+                        <div class="hm-ai-sparkline" aria-hidden="true"><div class="hm-spark"></div></div>
+                    </div>
+                </div>
+                <div class="hm-ai-item">
+                    <span class="hm-ai-muted">Alertes actives</span>
+                    <div class="hm-ai-body">
+                        <div class="hm-ai-row">
+                            <span class="hm-bell">🔔</span>
+                            <span id="hm-zones-monitored"><strong id="hm-zone-count">0</strong> Zones surveillées</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="hm-ai-item">
+                    <span class="hm-ai-muted">Dernière détection</span>
+                    <div class="hm-ai-body">
+                        <div class="hm-ai-row">
+                            <span class="hm-target-ico">◎</span>
+                            <span id="hm-last-detect-meta">–</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="hm-ai-item">
+                    <span class="hm-ai-muted">ETA intervention</span>
+                    <div class="hm-ai-body">
+                        <div class="hm-ai-row">
+                            <span class="hm-clock">⏱</span>
+                            <span id="hm-eta">–:––</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </header>
+
+    <main class="hm-main">
+        <section class="hm-map-shell">
+            <div id="heatmap-map" class="heatmap-map leaflet-dark" aria-label="Carte surveillance"></div>
+            <div class="hm-map-tools">
+                <button type="button" class="hm-map-tool" id="hm-zoom-in" title="Zoom +" aria-label="Zoom avant">+</button>
+                <button type="button" class="hm-map-tool" id="hm-zoom-out" title="Zoom −" aria-label="Zoom arrière">−</button>
+                <button type="button" class="hm-map-tool hm-map-tool--locate" id="hm-locate" title="Centre" aria-label="Recentrer">⌖</button>
+            </div>
+            <footer class="hm-map-legend">
+                <div class="hm-legend-block">
+                    <span class="hm-legend-caption">INTENSITÉ DE LA CHALEUR</span>
+                    <div class="hm-legend-heat-bar" aria-hidden="true"></div>
+                </div>
+                <div class="hm-legend-block hm-legend-risks">
+                    <span class="hm-legend-caption">NIVEAU DE RISQUE</span>
+                    <div class="hm-risk-dots">
+                        <span class="hm-dot hm-dot--blue"><i></i> Normal</span>
+                        <span class="hm-dot hm-dot--orange"><i></i> Modéré</span>
+                        <span class="hm-dot hm-dot--yellow"><i></i> Élevé</span>
+                        <span class="hm-dot hm-dot--red"><i></i> Victime</span>
+                    </div>
+                </div>
+            </footer>
+        </section>
+
+        <aside class="hm-sidebar">
+            <div class="hm-side-head">
+                <h2 class="hm-side-title">HISTORIQUE DES CAS</h2>
+                <button type="button" id="hm-filter-toggle" class="hm-btn-mini">Filtrer</button>
+            </div>
+            <div id="heatmap-history-content" class="hm-table-wrap">
+                <table class="hm-table" aria-describedby="hist-caption">
+                    <thead>
+                        <tr>
+                            <th>Heure</th>
+                            <th>Zone</th>
+                            <th>Conf. %</th>
+                            <th>Statut</th>
+                        </tr>
+                    </thead>
+                    <tbody id="hm-history-body">
+                    </tbody>
+                </table>
+                <div class="history-empty" id="hm-history-empty">Aucun cas enregistré</div>
+            </div>
+            <button type="button" id="hm-show-more" class="hm-see-more">Voir plus ▾</button>
+        </aside>
     </main>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="/heatmap-page.js"></script>
+
+    <footer class="hm-footer-row">
+        <section class="hm-widget hm-widget--zones">
+            <h3 class="hm-widget-title">Zones critiques</h3>
+            <div class="hm-zones-inner">
+                <div class="hm-radar" aria-hidden="true">
+                    <div class="hm-radar-ring"></div>
+                    <div class="hm-radar-sweep"></div>
+                    <span class="hm-radar-num" id="hm-critical-zones-num">0</span>
+                </div>
+                <ol class="hm-zone-list" id="hm-critical-list"></ol>
+            </div>
+        </section>
+
+        <section class="hm-widget hm-widget--last">
+            <h3 class="hm-widget-title">Dernière alerte</h3>
+            <div class="hm-last-card" id="hm-last-alert-card">
+                <div class="hm-last-icon" id="hm-last-icon">
+                    <svg width="52" height="52" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="7" r="3.5" stroke="currentColor" stroke-width="1.6"/><path d="M8 21c0-2.76 4-6 4-6s4 3.24 4 6v1H8v-1z" stroke="currentColor" stroke-width="1.4"/><path d="M6 14h12" stroke="currentColor" stroke-width="1.2" opacity=".4"/></svg>
+                </div>
+                <div class="hm-last-body">
+                    <div class="hm-last-place" id="hm-last-place">—</div>
+                    <div class="hm-last-coords" id="hm-last-coords">—</div>
+                    <div class="hm-last-meta">
+                        <span class="hm-last-conf" id="hm-last-conf">—</span>
+                        <a href="#" class="hm-last-link" id="hm-focus-map">Voir sur la carte</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="hm-widget hm-widget--rate">
+            <h3 class="hm-widget-title">Taux de détection</h3>
+            <div class="hm-rate-inner">
+                <div class="hm-gauge-wrap">
+                    <canvas id="hm-gauge-chart" width="140" height="140" aria-label="Taux global"></canvas>
+                    <div class="hm-gauge-center">
+                        <strong id="hm-global-pct">87%</strong>
+                        <span>Global</span>
+                    </div>
+                </div>
+                <div class="hm-line-wrap">
+                    <canvas id="hm-trend-chart" height="120" aria-label="Tendance"></canvas>
+                </div>
+            </div>
+        </section>
+    </footer>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js" crossorigin=""></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin=""></script>
+<script src="/heatmap-page.js?v=4"></script>
 </body>
 </html>
