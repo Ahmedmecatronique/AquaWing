@@ -40,6 +40,8 @@ HEATMAP_DIR = Path(__file__).parent.parent / "frontend" / "Heatmap"
 SETTINGS_DIR = Path(__file__).parent.parent / "frontend" / "Settings"
 DASHBOARD_DIR = Path(__file__).parent.parent / "frontend" / "Dashboard"
 
+_MISSIONS_NO_CACHE_HEADERS = {"Cache-Control": "no-store, max-age=0, must-revalidate"}
+
 # Development flag: when True, bypass auth for /dashboard to simplify local testing.
 # IMPORTANT: set to False in production.
 DEV_BYPASS_AUTH = False
@@ -282,7 +284,7 @@ def electrical_wiring_page(sid: str = Cookie(None), guest: Optional[str] = None)
 
     page_path = ELECTRICAL_WIRING_DIR / "Electrical Wiring.html"
     if page_path.exists():
-        return FileResponse(str(page_path))
+        return FileResponse(str(page_path), headers=_ELECTRICAL_NO_CACHE_HEADERS)
     return {"error": "Electrical Wiring.html not found"}
 
 
@@ -291,7 +293,7 @@ def electrical_wiring_css():
     """Serve standalone Electrical Wiring CSS."""
     css_path = ELECTRICAL_WIRING_DIR / "Electrical Wiring.css"
     if css_path.exists():
-        return FileResponse(str(css_path), media_type="text/css")
+        return FileResponse(str(css_path), media_type="text/css", headers=_ELECTRICAL_NO_CACHE_HEADERS)
     return {"error": "Electrical Wiring.css not found"}
 
 
@@ -300,7 +302,7 @@ def electrical_wiring_js():
     """Serve standalone Electrical Wiring JS."""
     js_path = ELECTRICAL_WIRING_DIR / "Electrical Wiring.js"
     if js_path.exists():
-        return FileResponse(str(js_path), media_type="application/javascript")
+        return FileResponse(str(js_path), media_type="application/javascript", headers=_ELECTRICAL_NO_CACHE_HEADERS)
     return {"error": "Electrical Wiring.js not found"}
 
 
@@ -313,7 +315,7 @@ def missions_page(sid: str = Cookie(None), guest: Optional[str] = None):
 
     page_path = MISSIONS_DIR / "Missions.html"
     if page_path.exists():
-        return FileResponse(str(page_path))
+        return FileResponse(str(page_path), headers=_MISSIONS_NO_CACHE_HEADERS)
     return {"error": "Missions.html not found"}
 
 
@@ -322,7 +324,7 @@ def missions_page_css():
     """Serve standalone Missions CSS."""
     css_path = MISSIONS_DIR / "Missions.css"
     if css_path.exists():
-        return FileResponse(str(css_path), media_type="text/css")
+        return FileResponse(str(css_path), media_type="text/css", headers=_MISSIONS_NO_CACHE_HEADERS)
     return {"error": "Missions.css not found"}
 
 
@@ -331,7 +333,7 @@ def missions_page_js():
     """Serve standalone Missions JS."""
     js_path = MISSIONS_DIR / "Missions.js"
     if js_path.exists():
-        return FileResponse(str(js_path), media_type="application/javascript")
+        return FileResponse(str(js_path), media_type="application/javascript", headers=_MISSIONS_NO_CACHE_HEADERS)
     return {"error": "Missions.js not found"}
 
 
@@ -340,6 +342,7 @@ _OPTICAL_NO_CACHE_HEADERS = {"Cache-Control": "no-store, max-age=0, must-revalid
 _PID_NO_CACHE_HEADERS = {"Cache-Control": "no-store, max-age=0, must-revalidate"}
 _HEATMAP_NO_CACHE_HEADERS = {"Cache-Control": "no-store, max-age=0, must-revalidate"}
 _SETTINGS_NO_CACHE_HEADERS = {"Cache-Control": "no-store, max-age=0, must-revalidate"}
+_ELECTRICAL_NO_CACHE_HEADERS = {"Cache-Control": "no-store, max-age=0, must-revalidate"}
 
 
 @app.get("/systems-page")

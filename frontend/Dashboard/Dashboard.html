@@ -13,8 +13,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="/dashboard.css?v=legacy-06b2452" />
-    <link rel="stylesheet" href="/dashboard-aquawing.css?v=10" />
+    <link rel="stylesheet" href="/dashboard.css?v=legacy-fullwidth-v2" />
+    <link rel="stylesheet" href="/dashboard-aquawing.css?v=12-mission-bar" />
 </head>
 
 <body>
@@ -235,9 +235,9 @@
                 <iframe
                     id="missions-frame"
                     class="missions-frame"
-                    src="/missions-page"
+                    data-missions-src="/missions-page"
+                    src="/missions-page?ui=mis-sat-v2"
                     title="Mission Control"
-                    loading="lazy"
                     referrerpolicy="same-origin">
                 </iframe>
             </div>
@@ -303,9 +303,9 @@
                 <iframe
                     id="electrical-wiring-frame"
                     class="electrical-wiring-frame"
-                    src="/electrical-wiring"
+                    data-ew-src="/electrical-wiring"
+                    src="/electrical-wiring?ui=ewdash-v2"
                     title="Electrical Wiring"
-                    loading="lazy"
                     referrerpolicy="same-origin">
                 </iframe>
             </div>
@@ -321,7 +321,7 @@
                     id="heatmap-frame"
                     class="heatmap-frame"
                     data-heatmap-src="/heatmap-page"
-                    src="/heatmap-page?ui=hmap-v4"
+                    src="/heatmap-page?ui=hmap-v7"
                     title="Heatmap"
                     referrerpolicy="same-origin">
                 </iframe>
@@ -439,6 +439,34 @@
 
             <div class="aw-aqua-col aw-aqua-col--center">
                 <div class="aw-aqua-center-stack">
+                    <section class="aw-card-aq aw-mission-strip" aria-label="Contrôle mission et trajectoire">
+                        <div class="aw-mission-strip__top">
+                            <span class="aw-mission-strip__ttl">Contrôle mission</span>
+                            <span id="flight-status" class="aw-flight-status" aria-live="polite">Idle</span>
+                        </div>
+                        <div id="route-distance" class="aw-route-distance" style="display:none;">Route: <b>0.00 km</b></div>
+                        <div class="aw-mission-strip__toolbar">
+                            <button type="button" id="waypoints-toggle" class="aw-toolbar-btn">Waypoints: OFF</button>
+                            <button type="button" id="send-route-btn" class="aw-toolbar-btn aw-toolbar-btn--accent" disabled>Envoyer route</button>
+                            <button type="button" id="clear-route-btn" class="aw-toolbar-btn" disabled>Effacer route</button>
+                            <button type="button" id="save-mission-btn" class="aw-toolbar-btn">Sauver mission</button>
+                            <button type="button" id="load-mission-btn" class="aw-toolbar-btn">Charger mission</button>
+                        </div>
+                        <div class="aw-mission-strip__toolbar aw-mission-strip__toolbar--flight">
+                            <button type="button" id="preflight-btn" class="aw-toolbar-btn">Pre-flight</button>
+                            <button type="button" id="start-flight-btn" class="aw-toolbar-btn aw-toolbar-btn--go">START FLIGHT</button>
+                            <button type="button" id="pause-mission-btn" class="aw-toolbar-btn" disabled aria-disabled="true">PAUSE</button>
+                            <button type="button" id="resume-mission-btn" class="aw-toolbar-btn" disabled aria-disabled="true">RESUME</button>
+                            <button type="button" id="emergency-rtl-btn" class="aw-toolbar-btn aw-toolbar-btn--warn">RTL</button>
+                            <button type="button" id="wait-btn" class="aw-toolbar-btn aw-toolbar-btn--danger" disabled aria-disabled="true">END MISSION</button>
+                        </div>
+                        <div id="preflight-status" class="preflight-status aw-preflight-compact" style="display:none;" aria-live="polite">
+                            <div class="status-item"><span class="component">Batterie</span><span class="status wait">WAIT</span></div>
+                            <div class="status-item"><span class="component">Moteurs</span><span class="status wait">WAIT</span></div>
+                            <div class="status-item"><span class="component">Capteurs</span><span class="status wait">WAIT</span></div>
+                        </div>
+                    </section>
+
                     <div class="mission-stats-card aw-card-aq aw-strip" id="mission-stats-card">
                         <div class="mission-stats-header">
                             <div class="panel-title">Statistiques de mission</div>
@@ -465,7 +493,7 @@
 
                     <div class="aw-map-wrap-aq">
                         <div class="map-container">
-                            <div id="map" class="map-canvas"></div>
+                            <div id="map" class="map-canvas leaflet-dark"></div>
                         </div>
                     </div>
 
@@ -590,7 +618,7 @@
                 <div class="telemetry-status">
                     <div id="arm-status" class="status-chip">DISARMED</div>
                     <div id="mode" class="mode-chip">MODE</div>
-                    <div id="flight-status" class="status-badge" aria-live="polite">Idle</div>
+                    <div class="status-badge" aria-hidden="true">—</div>
                 </div>
             </div>
 
@@ -653,25 +681,6 @@
                 <div class="speed-control">
                     <label for="speed-control-telemetry-hidden">Speed (panneau caché)</label>
                     <input id="speed-control-telemetry-hidden" type="range" min="0" max="15" step="0.1" value="5" tabindex="-1" aria-hidden="true">
-
-                    <div class="mission-control" role="group" aria-label="Mission Control">
-                        <div class="mission-label">Mission Control</div>
-                        <div class="mission-buttons">
-                            <button id="start-flight-btn" class="btn btn-success" aria-pressed="false" aria-disabled="false">START FLIGHT</button>
-                            <button id="pause-mission-btn" class="btn btn-warning" disabled aria-disabled="true">PAUSE</button>
-                            <button id="resume-mission-btn" class="btn btn-success" disabled aria-disabled="true">RESUME</button>
-                            <button id="preflight-btn" class="btn btn-preflight" aria-pressed="false">PRE-FLIGHT CHECK</button>
-                            <button id="emergency-rtl-btn" class="btn btn-warning" aria-label="Emergency Return to Launch">EMERGENCY RTL</button>
-                            <button id="wait-btn" class="btn btn-danger" disabled aria-disabled="true">END MISSION</button>
-                        </div>
-
-                        <!-- Pre-flight status area (UI only) -->
-                        <div id="preflight-status" class="preflight-status" aria-live="polite" aria-atomic="true">
-                            <div class="status-item"><span class="component">Main Battery</span><span class="status wait">WAIT</span></div>
-                            <div class="status-item"><span class="component">Motors</span><span class="status wait">WAIT</span></div>
-                            <div class="status-item"><span class="component">Sensors</span><span class="status wait">WAIT</span></div>
-                        </div>
-                    </div>
                 </div>
 
                 <div style="display:flex; gap:12px; align-items:center;">
@@ -809,7 +818,6 @@
             <div class="map-panel card">
                 <div class="panel-header">
                     <div class="panel-title">Map</div>
-                    <div id="route-distance" class="small" style="display:none;margin-left:8px">Route: <b>0.00 km</b></div>
                     <div class="panel-controls">
                         <button id="map-toggle" class="btn-primary">Map: ON</button>
                     </div>
@@ -881,6 +889,6 @@
     <div id="toast" aria-live="polite" aria-atomic="true" class="toast-container" style="display:none;"></div>
 
     <script>/* dev: stamped version */ window.__MAP_CSS_VERSION='v2'; window.__MAP_JS_VERSION='v1';</script>
-    <script defer src="/dashboard.js?v=settings-mock-v1"></script>
+    <script defer src="/dashboard.js?v=mission-bar-v1"></script>
 </body>
 </html>

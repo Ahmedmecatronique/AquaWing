@@ -527,10 +527,10 @@ function initMap() {
     // Create map centered on Tunis
     map = L.map('map').setView(MAP_CENTER, 15);
     
-    // Add OpenStreetMap tiles
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
-        maxZoom: 19
+    /* Même fond satellite + rendu foncé que la page Heatmap (Esri World Imagery) */
+    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+        attribution: "Tiles © Esri",
+        maxZoom: 19,
     }).addTo(map);
     
     // Initialize polyline (flight path)
@@ -1065,26 +1065,36 @@ const waypointsToggleBtn = document.getElementById('waypoints-toggle');
 const sendRouteBtn = document.getElementById('send-route-btn');
 const clearRouteBtn = document.getElementById('clear-route-btn');
 
+function syncWaypointToolbarUi() {
+    if (!waypointsToggleBtn) return;
+    waypointsToggleBtn.textContent = waypointsEnabled ? 'Waypoints: ON' : 'Waypoints: OFF';
+    waypointsToggleBtn.setAttribute('aria-pressed', String(waypointsEnabled));
+
+    const showWp = !!waypointsEnabled;
+    const wpDisp = showWp ? 'inline-flex' : 'none';
+    if (sendRouteBtn) sendRouteBtn.style.display = wpDisp;
+    if (clearRouteBtn) clearRouteBtn.style.display = wpDisp;
+    const saveMissionBtnSync = document.getElementById('save-mission-btn');
+    const loadMissionBtnSync = document.getElementById('load-mission-btn');
+    if (saveMissionBtnSync) saveMissionBtnSync.style.display = wpDisp;
+    if (loadMissionBtnSync) loadMissionBtnSync.style.display = wpDisp;
+
+    const rd = document.getElementById('route-distance');
+    if (rd) {
+        if (!showWp) rd.style.display = 'none';
+        else updateDistanceDisplay();
+    }
+
+    updateRouteControls();
+}
+
 if (waypointsToggleBtn) {
     waypointsToggleBtn.addEventListener('click', () => {
         waypointsEnabled = !waypointsEnabled;
-        if (window.Toggles) window.Toggles.setState(waypointsToggleBtn, waypointsEnabled);
-        
-        // Show/hide route control buttons
-        if (sendRouteBtn) sendRouteBtn.style.display = waypointsEnabled ? 'inline-block' : 'none';
-        if (clearRouteBtn) clearRouteBtn.style.display = waypointsEnabled ? 'inline-block' : 'none';
-        const saveMissionBtn = document.getElementById('save-mission-btn');
-        const loadMissionBtn = document.getElementById('load-mission-btn');
-        if (saveMissionBtn) saveMissionBtn.style.display = waypointsEnabled ? 'inline-block' : 'none';
-        if (loadMissionBtn) loadMissionBtn.style.display = waypointsEnabled ? 'inline-block' : 'none';
-        // Show/hide route distance
-        const rd = document.getElementById('route-distance'); if (rd) rd.style.display = waypointsEnabled ? 'block' : 'none';
-        
-        // Clear route when toggling off
-        if (!waypointsEnabled) {
-            clearAllWaypoints();
-        }
+        if (!waypointsEnabled) clearAllWaypoints();
+        syncWaypointToolbarUi();
     });
+    syncWaypointToolbarUi();
 }
 // ============================================================================
 // SYSTEM TEST (frontend-only simulated pre-flight checks)
@@ -1312,15 +1322,15 @@ function updateFlightControls() {
 
     // update status badge
     if (flightStatusEl) {
-        flightStatusEl.classList.remove('started','waiting','locked');
+        flightStatusEl.classList.remove('started', 'waiting', 'locked');
         if (missionLocked) {
-            flightStatusEl.textContent = 'Mission completed – waiting';
+            flightStatusEl.textContent = 'Mission terminée';
             flightStatusEl.classList.add('locked');
         } else if (flightStarted) {
-            flightStatusEl.textContent = 'Mission in progress';
+            flightStatusEl.textContent = 'Vol en cours';
             flightStatusEl.classList.add('started');
         } else {
-            flightStatusEl.textContent = 'Idle';
+            flightStatusEl.textContent = 'Au repos';
         }
     }
 }
@@ -2446,7 +2456,14 @@ window.addEventListener('load', () => {
             if (missionsPanel) {
                 missionsPanel.style.display = 'flex';
                 console.log('Missions panel shown');
-                /* L’iframe charge en lazy ; repousser les WP pour retrouver les pastilles numérotées */
+                const mf = document.getElementById('missions-frame');
+                if (mf) {
+                    try {
+                        const base = mf.getAttribute('data-missions-src') || '/missions-page';
+                        mf.src = `${base}?ui=mis-sat-v2&t=${Date.now()}`;
+                    } catch (_) { /* noop */ }
+                }
+                /* Repousser les WP après chargement iframe (listener load + délais) */
                 pushDashboardWaypointsToMissionFrame();
                 requestAnimationFrame(() => pushDashboardWaypointsToMissionFrame());
                 setTimeout(() => pushDashboardWaypointsToMissionFrame(), 280);
@@ -2464,18 +2481,10 @@ window.addEventListener('load', () => {
             if (camsAreaM) camsAreaM.style.display = 'none';
             if (opticalCamerasViewM) opticalCamerasViewM.style.display = 'none';
             
-            // Enable waypoints by default
-            if (waypointsToggleBtn && !waypointsEnabled) {
+            /* Activer waypoints à l’ouverture Missions (iframe) — barre visible partagée */
+            if (!waypointsEnabled) {
                 waypointsEnabled = true;
-                if (window.Toggles) window.Toggles.setState(waypointsToggleBtn, true);
-                const sendRouteBtn = document.getElementById('send-route-btn');
-                const clearRouteBtn = document.getElementById('clear-route-btn');
-                const saveMissionBtn = document.getElementById('save-mission-btn');
-                const loadMissionBtn = document.getElementById('load-mission-btn');
-                if (sendRouteBtn) sendRouteBtn.style.display = 'inline-block';
-                if (clearRouteBtn) clearRouteBtn.style.display = 'inline-block';
-                if (saveMissionBtn) saveMissionBtn.style.display = 'inline-block';
-                if (loadMissionBtn) loadMissionBtn.style.display = 'inline-block';
+                syncWaypointToolbarUi();
             }
         } else if (activeEl === navSystems) {
             // Systems: show systems panel
@@ -2611,6 +2620,13 @@ window.addEventListener('load', () => {
             if (electricalWiringPanel) {
                 electricalWiringPanel.style.display = 'flex';
                 console.log('Electrical Wiring panel shown');
+                const ef = document.getElementById('electrical-wiring-frame');
+                if (ef) {
+                    try {
+                        const base = ef.getAttribute('data-ew-src') || '/electrical-wiring';
+                        ef.src = `${base}?ui=ewdash-v2&t=${Date.now()}`;
+                    } catch (_) { /* noop */ }
+                }
             }
         } else if (activeEl === navHeatmap) {
             // Heatmap: show heatmap panel with map
@@ -2644,7 +2660,7 @@ window.addEventListener('load', () => {
                 if (hf) {
                     try {
                         const base = hf.getAttribute('data-heatmap-src') || '/heatmap-page';
-                        hf.src = `${base}?ui=hmap-v4&t=${Date.now()}`;
+                        hf.src = `${base}?ui=hmap-v7&t=${Date.now()}`;
                     } catch (_) { /* noop */ }
                 }
                 // Ensure it's in the main layout
@@ -2743,6 +2759,14 @@ window.addEventListener('load', () => {
     if (missionsIframe && !missionsIframe.dataset.awWaypointSyncAttached) {
         missionsIframe.dataset.awWaypointSyncAttached = '1';
         missionsIframe.addEventListener('load', () => {
+            try {
+                const w = missionsIframe.contentWindow;
+                if (w && typeof w.awInvalidateMissionMapSize === 'function') {
+                    requestAnimationFrame(() => w.awInvalidateMissionMapSize());
+                    setTimeout(() => w.awInvalidateMissionMapSize(), 200);
+                    setTimeout(() => w.awInvalidateMissionMapSize(), 600);
+                }
+            } catch (_e) { /* cross-origin / not ready */ }
             pushDashboardWaypointsToMissionFrame();
             requestAnimationFrame(() => pushDashboardWaypointsToMissionFrame());
             setTimeout(() => pushDashboardWaypointsToMissionFrame(), 160);
@@ -3001,6 +3025,10 @@ const simState = {
 
 // Settings & Sidebar wiring (Dashboard / Systèmes / Caméra)
 (function(){
+    // Ancienne grille (telemetry / power masquée) uniquement ; la vue Aqua utilise setActiveNav()
+    const aquaDashVisible = !!document.querySelector('main.main-content.aw-aqua-dash');
+    if (aquaDashVisible) return;
+
     // default thresholds (already set in simState declaration above)
     if (typeof simState.battLowThreshold === 'undefined') simState.battLowThreshold = 10.8;
     if (typeof simState.motorMaxTemp === 'undefined') simState.motorMaxTemp = 85;

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>AquaWing - Mission Control</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-    <link rel="stylesheet" href="/missions-page.css?v=12">
+    <link rel="stylesheet" href="/missions-page.css?v=14">
 </head>
 <body>
     <main class="missions-root">
@@ -71,12 +71,12 @@
                     <button id="mission-clear-track-btn" class="mission-map-btn">Clear Track</button>
                     <button id="mission-waypoints-toggle" class="mission-map-btn">Waypoints: ON</button>
                 </div>
-                <div id="mission-map" class="mission-map" aria-label="Mission map"></div>
+                <div id="mission-map" class="mission-map leaflet-dark" aria-label="Mission map"></div>
             </section>
         </div>
     </main>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="/missions-page.js?v=12"></script>
+    <script src="/missions-page.js?v=14"></script>
 </body>
 </html>

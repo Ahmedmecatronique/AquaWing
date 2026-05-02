@@ -110,6 +110,7 @@ def create_app() -> FastAPI:
     login_dir = Path(__file__).resolve().parent.parent / "frontend" / "login"
     electrical_wiring_dir = Path(__file__).resolve().parent.parent / "frontend" / "Electrical Wiring"
     missions_dir = Path(__file__).resolve().parent.parent / "frontend" / "Missions"
+    _missions_nocache_headers = {"Cache-Control": "no-store, max-age=0, must-revalidate"}
     systems_dir = Path(__file__).resolve().parent.parent / "frontend" / "Systems"
     optical_dir = Path(__file__).resolve().parent.parent / "frontend" / "Optical"
     pid_settings_dir = Path(__file__).resolve().parent.parent / "frontend" / "PID Settings"
@@ -268,7 +269,7 @@ def create_app() -> FastAPI:
 
         page_path = electrical_wiring_dir / "Electrical Wiring.html"
         if page_path.exists():
-            return FileResponse(str(page_path))
+            return FileResponse(str(page_path), headers=_systems_nocache)
         return {"error": "Electrical Wiring.html not found"}
 
     @app.get("/electrical-wiring.css")
@@ -278,7 +279,7 @@ def create_app() -> FastAPI:
         """
         css_path = electrical_wiring_dir / "Electrical Wiring.css"
         if css_path.exists():
-            return FileResponse(str(css_path), media_type="text/css")
+            return FileResponse(str(css_path), media_type="text/css", headers=_systems_nocache)
         return {"error": "Electrical Wiring.css not found"}
 
     @app.get("/electrical-wiring.js")
@@ -288,7 +289,7 @@ def create_app() -> FastAPI:
         """
         js_path = electrical_wiring_dir / "Electrical Wiring.js"
         if js_path.exists():
-            return FileResponse(str(js_path), media_type="application/javascript")
+            return FileResponse(str(js_path), media_type="application/javascript", headers=_systems_nocache)
         return {"error": "Electrical Wiring.js not found"}
 
     @app.get("/missions-page")
@@ -301,7 +302,7 @@ def create_app() -> FastAPI:
 
         page_path = missions_dir / "Missions.html"
         if page_path.exists():
-            return FileResponse(str(page_path))
+            return FileResponse(str(page_path), headers=_missions_nocache_headers)
         return {"error": "Missions.html not found"}
 
     @app.get("/missions-page.css")
@@ -311,7 +312,7 @@ def create_app() -> FastAPI:
         """
         css_path = missions_dir / "Missions.css"
         if css_path.exists():
-            return FileResponse(str(css_path), media_type="text/css")
+            return FileResponse(str(css_path), media_type="text/css", headers=_missions_nocache_headers)
         return {"error": "Missions.css not found"}
 
     @app.get("/missions-page.js")
@@ -321,7 +322,7 @@ def create_app() -> FastAPI:
         """
         js_path = missions_dir / "Missions.js"
         if js_path.exists():
-            return FileResponse(str(js_path), media_type="application/javascript")
+            return FileResponse(str(js_path), media_type="application/javascript", headers=_missions_nocache_headers)
         return {"error": "Missions.js not found"}
 
     _systems_nocache = {"Cache-Control": "no-store, max-age=0, must-revalidate"}

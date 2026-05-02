@@ -260,8 +260,8 @@ function initMissionMap() {
     const node = document.getElementById("mission-map");
     if (!node || typeof L === "undefined") return;
     missionMap = L.map(node).setView(MISSION_MAP_CENTER, 15);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "© OpenStreetMap contributors",
+    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+        attribution: "Tiles © Esri",
         maxZoom: 19,
     }).addTo(missionMap);
 
@@ -314,6 +314,16 @@ function initMissionMap() {
     }
 
     setTimeout(() => missionMap && missionMap.invalidateSize(), 120);
+    window.awInvalidateMissionMapSize = function () {
+        try {
+            if (missionMap && typeof missionMap.invalidateSize === "function") {
+                missionMap.invalidateSize({ animate: false });
+            }
+        } catch (_e) {
+            /* noop */
+        }
+    };
+    window.addEventListener("resize", () => window.awInvalidateMissionMapSize && window.awInvalidateMissionMapSize());
     updateWaypointCount();
     pullWaypointsFromDashboardParent();
     requestAnimationFrame(() => pullWaypointsFromDashboardParent());

@@ -37,20 +37,24 @@ body.hm-body {
     flex-direction: column;
     height: 100%;
     min-height: 0;
-    padding: 8px 10px 10px;
-    gap: 8px;
+    padding: 4px 8px 6px;
+    gap: 6px;
     background:
         radial-gradient(ellipse 100% 50% at 50% -10%, rgba(0, 229, 255, 0.045), transparent 45%),
         var(--hm-bg);
 }
 
-/* —— Header —— */
+/* —— Header : uniquement boutons + KPI —— */
 .hm-header {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1.1fr) minmax(260px, 380px);
-    gap: 8px 12px;
-    align-items: center;
     flex-shrink: 0;
+}
+
+.hm-header-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 10px;
+    min-width: 0;
 }
 
 .hm-header-left {
@@ -58,14 +62,15 @@ body.hm-body {
     flex-wrap: wrap;
     gap: 8px;
     align-items: center;
+    flex-shrink: 0;
 }
 
 .hm-btn {
     border: none;
     border-radius: 8px;
-    padding: 10px 16px;
+    padding: 8px 14px;
     font-weight: 800;
-    font-size: 12px;
+    font-size: 11px;
     letter-spacing: 0.03em;
     cursor: pointer;
     font-family: inherit;
@@ -94,18 +99,21 @@ body.hm-body {
 .hm-kpi-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    justify-content: center;
+    gap: 6px;
+    justify-content: flex-start;
+    align-items: stretch;
+    flex: 1 1 auto;
+    min-width: min(280px, 100%);
 }
 
 .hm-kpi {
-    flex: 1;
-    min-width: 118px;
-    max-width: 160px;
+    flex: 0 0 auto;
+    min-width: 96px;
+    max-width: 136px;
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
+    gap: 8px;
+    padding: 7px 10px;
     border-radius: 10px;
     border: 1px solid rgba(255, 255, 255, 0.07);
     background: linear-gradient(160deg, rgba(16, 24, 36, 0.95), rgba(8, 12, 22, 0.88));
@@ -113,8 +121,8 @@ body.hm-body {
 }
 
 .hm-kpi-ico {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -160,7 +168,7 @@ body.hm-body {
 }
 
 .hm-kpi-val {
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 800;
     font-variant-numeric: tabular-nums;
 }
@@ -183,137 +191,14 @@ body.hm-body {
     color: #6ab0ff;
 }
 
-.hm-ai {
-    border: 1px solid var(--hm-border);
-    border-radius: 10px;
-    padding: 10px 12px;
-    background: rgba(10, 16, 28, 0.88);
-}
-
-.hm-ai-label {
-    font-size: 9px;
-    font-weight: 800;
-    letter-spacing: 0.14em;
-    color: var(--hm-muted);
-    margin-bottom: 8px;
-}
-
-.hm-ai-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    column-gap: 16px;
-    row-gap: 10px;
-    align-items: start;
-}
-
-.hm-ai-item {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    min-width: 0;
-    font-size: 11px;
-}
-
-/* Ligne fines entre rangée du haut / rangée du bas du bloc IA */
-.hm-ai-item:nth-child(3),
-.hm-ai-item:nth-child(4) {
-    padding-top: 10px;
-    margin-top: 2px;
-    border-top: 1px solid rgba(255, 255, 255, 0.07);
-}
-
-.hm-ai-muted {
-    display: block;
-    font-size: 9px;
-    font-weight: 700;
-    line-height: 1.25;
-    min-height: 1.25em;
-    color: var(--hm-muted);
-    letter-spacing: 0.04em;
-    margin-bottom: 0;
-}
-
-/* Même bloc de hauteur pour aligner valeurs ligne 1 (sparkline inclus) */
-.hm-ai-body {
-    min-height: 52px;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    gap: 6px;
-}
-
-.hm-ai-item:nth-child(2) .hm-ai-body,
-.hm-ai-item:nth-child(3) .hm-ai-body,
-.hm-ai-item:nth-child(4) .hm-ai-body {
-    justify-content: center;
-}
-
-.hm-ai-sparkline {
-    height: 20px;
-    display: flex;
-    align-items: center;
-}
-
-.hm-ai-risk-text {
-    font-weight: 800;
-    color: var(--hm-red);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-    line-height: 1.35;
-}
-
-.hm-risk-flag {
-    font-size: 10px;
-    padding: 2px 8px;
-    border-radius: 999px;
-    border: 1px solid rgba(255, 51, 85, 0.5);
-    background: rgba(40, 10, 16, 0.6);
-}
-
-.hm-ai-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 600;
-    min-height: 28px;
-    line-height: 1.35;
-}
-
-.hm-bell {
-    opacity: 0.9;
-    filter: drop-shadow(0 0 8px rgba(255, 204, 51, 0.4));
-}
-
-.hm-target-ico {
-    color: var(--hm-orange);
-    font-size: 14px;
-}
-
-.hm-clock {
-    opacity: 0.85;
-}
-
-.hm-spark {
-    width: 100%;
-    max-width: 140px;
-    height: 20px;
-    margin-top: 0;
-    background: linear-gradient(90deg, transparent, rgba(255, 51, 85, 0.55), transparent);
-    border-radius: 2px;
-    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='%23fff' d='M0 15 L6 18 L14 14 L26 28 L52 26 L52 0 L0 0 z'/%3E%3C/svg%3E");
-    opacity: 0.75;
-}
-
 /* —— Map + sidebar —— */
 /* Carte = principale (> ~70%), historique largeur bornée (~300px) pour éviter inversion visuelle */
 .hm-main {
-    flex: 1 1 auto;
-    min-height: 220px;
+    flex: 1 1 0%;
+    min-height: 0;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(268px, 308px);
-    gap: 8px;
+    grid-template-columns: minmax(0, 1fr) minmax(248px, min(30vw, 300px));
+    gap: 6px;
     align-items: stretch;
 }
 
@@ -456,7 +341,7 @@ body.hm-body {
     flex-direction: column;
     min-height: 0;
     min-width: 0;
-    padding: 10px;
+    padding: 8px 9px;
     border-radius: 12px;
     border: 1px solid var(--hm-border);
     background: var(--hm-panel);
@@ -467,9 +352,10 @@ body.hm-body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
-    min-height: 36px;
+    gap: 8px;
+    margin-bottom: 6px;
+    min-height: 32px;
+    flex-shrink: 0;
 }
 
 .hm-side-title {
@@ -595,7 +481,7 @@ body.hm-body {
 }
 
 .hm-see-more {
-    margin-top: 8px;
+    margin-top: 6px;
     width: 100%;
     padding: 10px 8px;
     border: 1px dashed rgba(255, 255, 255, 0.12);
@@ -622,22 +508,26 @@ body.hm-body {
 /* —— Footer widgets —— */
 .hm-footer-row {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, 1.1fr);
-    gap: 10px;
-    flex-shrink: 0;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr) minmax(0, 1.25fr);
+    gap: 6px;
+    flex: 0 0 auto;
+    min-height: 0;
 }
 
 .hm-widget {
     border-radius: 12px;
     border: 1px solid var(--hm-border);
     background: var(--hm-panel);
-    padding: 10px 12px;
-    min-height: 136px;
+    padding: 8px 10px;
+    min-height: clamp(100px, 13vh, 152px);
     box-shadow: 0 8px 28px rgba(0, 0, 0, 0.32);
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
 }
 
 .hm-widget-title {
-    margin: 0 0 10px;
+    margin: 0 0 6px;
     font-size: 10px;
     font-weight: 800;
     letter-spacing: 0.1em;
@@ -646,8 +536,10 @@ body.hm-body {
 
 .hm-zones-inner {
     display: flex;
-    gap: 14px;
-    align-items: flex-start;
+    gap: 12px;
+    align-items: center;
+    flex: 1;
+    min-height: 0;
 }
 
 .hm-radar {
@@ -709,9 +601,11 @@ body.hm-body {
 
 .hm-last-card {
     display: flex;
-    gap: 14px;
-    align-items: flex-start;
-    padding: 8px 0;
+    gap: 12px;
+    align-items: center;
+    padding: 4px 0;
+    flex: 1;
+    min-height: 0;
 }
 
 .hm-last-icon {
@@ -784,9 +678,10 @@ body.hm-body {
 
 .hm-rate-inner {
     display: flex;
-    gap: 12px;
+    gap: 10px;
     align-items: stretch;
-    min-height: 130px;
+    flex: 1;
+    min-height: clamp(108px, 15vh, 188px);
 }
 
 .hm-gauge-wrap {
@@ -826,29 +721,35 @@ body.hm-body {
 .hm-line-wrap {
     flex: 1;
     min-width: 0;
+    min-height: clamp(96px, 14vh, 180px);
     position: relative;
 }
 
 .hm-line-wrap canvas {
     width: 100% !important;
-    height: 120px !important;
+    height: 100% !important;
+    min-height: 96px;
 }
 
 @media (max-width: 1300px) {
-    .hm-header {
-        grid-template-columns: 1fr;
+    .hm-header-toolbar {
+        width: 100%;
     }
 
-    .hm-ai-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+    .hm-kpi-row {
+        flex: 1 1 100%;
     }
 
     .hm-main {
         grid-template-columns: 1fr;
-        grid-template-rows: minmax(280px, 45vh) minmax(200px, 1fr);
+        grid-template-rows: minmax(min(340px, 48vh), 1fr) minmax(160px, 32vh);
     }
 
     .hm-footer-row {
         grid-template-columns: 1fr;
+    }
+
+    .hm-widget {
+        min-height: auto;
     }
 }

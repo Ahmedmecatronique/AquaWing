@@ -16,12 +16,15 @@ body .main-content.aw-aqua-dash {
   --aw-card: #151921;
   --aw-cyan: #22d3ee;
   --aw-green: #00e676;
-  flex: 1;
+  /* Occupe toute la zone à droite du menu (évite bande vide viewport) */
+  flex: 1 1 0%;
+  width: 100%;
+  max-width: none;
   min-width: 0;
   min-height: 0;
   display: grid;
-  /* Gauche | carte (réduite) | caméras + panneaux (élargie) */
-  grid-template-columns: minmax(220px, 0.82fr) minmax(320px, 1.62fr) minmax(292px, 1.52fr);
+  /* Colonnes proportionnelles qui somment 100 % de la largeur du main */
+  grid-template-columns: minmax(200px, 1fr) minmax(280px, 2.15fr) minmax(240px, 1.9fr);
   gap: 8px;
   padding: 8px;
   align-items: stretch;
@@ -41,6 +44,7 @@ body .main-content.aw-aqua-dash {
 }
 
 .aw-aqua-col {
+  min-width: 0;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -267,6 +271,118 @@ body .main-content.aw-aqua-dash {
   min-height: 0;
   flex: 1;
   overflow: hidden;
+}
+
+/* Barre mission / waypoints — visible dans la vue principale */
+.aw-mission-strip {
+  flex-shrink: 0;
+}
+
+.aw-mission-strip__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.aw-mission-strip__ttl {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(234, 242, 255, 0.75);
+}
+
+.aw-flight-status {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--aw-border);
+  color: rgba(234, 242, 255, 0.85);
+}
+
+.aw-flight-status.started {
+  color: var(--aw-green);
+  border-color: rgba(0, 230, 118, 0.35);
+}
+
+.aw-flight-status.locked {
+  color: #fbbf24;
+  border-color: rgba(251, 191, 36, 0.35);
+}
+
+.aw-route-distance {
+  font-size: 11px;
+  color: rgba(234, 242, 255, 0.65);
+  margin: 0 0 8px;
+}
+
+.aw-mission-strip__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.aw-mission-strip__toolbar--flight {
+  margin-bottom: 0;
+}
+
+.aw-toolbar-btn {
+  appearance: none;
+  border: 1px solid var(--aw-border);
+  background: rgba(10, 16, 28, 0.9);
+  color: #eaf2ff;
+  border-radius: 8px;
+  padding: 6px 11px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  font-family: inherit;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.aw-toolbar-btn:hover:not(:disabled) {
+  border-color: rgba(0, 229, 255, 0.35);
+}
+
+.aw-toolbar-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.aw-toolbar-btn--accent {
+  border-color: rgba(0, 229, 255, 0.35);
+}
+
+.aw-toolbar-btn--go {
+  background: rgba(52, 240, 153, 0.16);
+  border-color: rgba(52, 240, 153, 0.45);
+  color: #baf7d9;
+}
+
+.aw-toolbar-btn--warn {
+  background: rgba(255, 184, 54, 0.14);
+  border-color: rgba(255, 184, 54, 0.45);
+  color: #ffe0b0;
+}
+
+.aw-toolbar-btn--danger {
+  background: rgba(255, 107, 122, 0.14);
+  border-color: rgba(255, 107, 122, 0.45);
+  color: #ffc8ce;
+}
+
+.aw-preflight-compact .status-item {
+  padding: 4px 0;
 }
 
 #mission-stats-card.aw-strip {

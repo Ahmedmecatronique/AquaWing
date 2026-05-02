@@ -5,11 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>AquaWing — Heatmap maritime</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-    <link rel="stylesheet" href="/heatmap-page.css?v=4">
+    <link rel="stylesheet" href="/heatmap-page.css?v=7">
 </head>
 <body class="hm-body">
 <div class="hm-app">
     <header class="hm-header">
+        <div class="hm-header-toolbar">
         <div class="hm-header-left">
             <button type="button" id="heatmap-clear-btn" class="hm-btn hm-btn--primary">
                 Clear Points
@@ -56,45 +57,7 @@
                 </div>
             </article>
         </div>
-        <aside class="hm-ai" aria-label="Analyse IA">
-            <div class="hm-ai-label">ANALYSE IA</div>
-            <div class="hm-ai-grid">
-                <div class="hm-ai-item">
-                    <span class="hm-ai-muted">Global Risk</span>
-                    <div class="hm-ai-body">
-                        <div class="hm-ai-risk-text" id="hm-ai-global-risk"><span id="hm-risk-score">–</span> <span id="hm-risk-label" class="hm-risk-flag">–</span></div>
-                        <div class="hm-ai-sparkline" aria-hidden="true"><div class="hm-spark"></div></div>
-                    </div>
-                </div>
-                <div class="hm-ai-item">
-                    <span class="hm-ai-muted">Alertes actives</span>
-                    <div class="hm-ai-body">
-                        <div class="hm-ai-row">
-                            <span class="hm-bell">🔔</span>
-                            <span id="hm-zones-monitored"><strong id="hm-zone-count">0</strong> Zones surveillées</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="hm-ai-item">
-                    <span class="hm-ai-muted">Dernière détection</span>
-                    <div class="hm-ai-body">
-                        <div class="hm-ai-row">
-                            <span class="hm-target-ico">◎</span>
-                            <span id="hm-last-detect-meta">–</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="hm-ai-item">
-                    <span class="hm-ai-muted">ETA intervention</span>
-                    <div class="hm-ai-body">
-                        <div class="hm-ai-row">
-                            <span class="hm-clock">⏱</span>
-                            <span id="hm-eta">–:––</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </aside>
+        </div>
     </header>
 
     <main class="hm-main">
@@ -187,7 +150,7 @@
                     </div>
                 </div>
                 <div class="hm-line-wrap">
-                    <canvas id="hm-trend-chart" height="120" aria-label="Tendance"></canvas>
+                    <canvas id="hm-trend-chart" height="140" aria-label="Tendance"></canvas>
                 </div>
             </div>
         </section>
@@ -197,6 +160,6 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js" crossorigin=""></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin=""></script>
-<script src="/heatmap-page.js?v=4"></script>
+<script src="/heatmap-page.js?v=7"></script>
 </body>
 </html>

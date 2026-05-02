@@ -646,11 +646,16 @@ html, body { height: 100%; width: 100%; background: #0a0e1a; font-family: 'Outfi
 
 .app-layout {
     display: flex;
+    flex-direction: row;
+    align-items: stretch;
     width: 100%;
+    max-width: 100%;
+    min-width: 0;
     height: 100vh;
     overflow: hidden;
     padding-top: 48px;
     padding-bottom: 40px;
+    box-sizing: border-box;
     position: relative;
 }
 
@@ -1181,8 +1186,10 @@ html, body { height: 100%; width: 100%; background: #0a0e1a; font-family: 'Outfi
 /* MAIN CONTENT */
 /* MAIN CONTENT - Auto-resizable */
 .main-content {
-    flex: 1;
+    flex: 1 1 0%;
     min-width: 0; /* Critical for flexbox shrinking */
+    width: 100%;
+    max-width: none;
     display: flex;
     flex-direction: row;
     background: #0a0e1a;
@@ -1192,6 +1199,7 @@ html, body { height: 100%; width: 100%; background: #0a0e1a; font-family: 'Outfi
     overflow-y: auto;
     overflow-x: hidden;
     transition: all 0.3s ease;
+    box-sizing: border-box;
 }
 
 /* AI Detection Panel */
@@ -2301,6 +2309,26 @@ body.tactical-mode * {
 .leaflet-control-zoom-in, .leaflet-control-zoom-out { color: #00ffc8 !important; }
 .leaflet-control-zoom-in:hover, .leaflet-control-zoom-out:hover { background: rgba(0,255,200,0.15) !important; }
 
+/* Carte dashboard : même rendu foncé / satellite que Heatmap (#map avec .leaflet-dark) */
+#map.leaflet-container.leaflet-dark {
+    background: #020508 !important;
+}
+
+#map.leaflet-dark .leaflet-tile-pane img {
+    filter: brightness(0.62) contrast(1.12) saturate(0.82);
+}
+
+#map.leaflet-dark .leaflet-control-attribution {
+    background: rgba(8, 12, 20, 0.75) !important;
+    color: rgba(255, 255, 255, 0.45) !important;
+    font-size: 9px;
+    border-radius: 4px;
+}
+
+#map.leaflet-dark .leaflet-control-attribution a {
+    color: #00e5ff !important;
+}
+
 /* Drone marker styling */
 .drone-marker {
     display: flex;
@@ -3131,24 +3159,27 @@ body.tactical-mode * {
     min-width: 140px;
 }
 
-/* Electrical Wiring Panel - same design system as PID/Systems */
+/* Electrical Wiring — iframe pleine hauteur (maquette câblage) */
 .electrical-wiring-panel {
     flex: 1;
     min-width: 0;
+    min-height: 0;
     background: rgba(8, 12, 20, 0.95);
     border-right: 1px solid rgba(0, 255, 200, 0.1);
     display: flex;
     flex-direction: column;
-    padding: 20px;
+    padding: 0;
     overflow: hidden;
-    height: calc(100vh - 48px - 40px);
+    height: calc(100vh - 48px);
+    max-height: calc(100vh - 48px);
     animation: slideInLeft 0.3s ease-out;
 }
 
 .electrical-wiring-panel-header {
     flex-shrink: 0;
-    margin-bottom: 16px;
-    padding-bottom: 12px;
+    margin-bottom: 0;
+    padding: 10px 16px;
+    padding-bottom: 10px;
     border-bottom: 1px solid rgba(255, 122, 24, 0.15);
 }
 
@@ -3163,13 +3194,18 @@ body.tactical-mode * {
 .electrical-wiring-panel-content {
     flex: 1;
     min-height: 0;
-    overflow: auto;
+    padding: 8px 10px 10px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
 }
 
 .electrical-wiring-frame {
     width: 100%;
+    flex: 1 1 auto;
+    min-height: 0;
     height: 100%;
-    min-height: calc(100vh - 48px - 40px - 64px);
     border: 1px solid rgba(255, 122, 24, 0.15);
     border-radius: 10px;
     background: rgba(8, 12, 20, 0.96);
@@ -3210,7 +3246,7 @@ body.tactical-mode * {
     flex: 1;
     min-height: 0;
     overflow: hidden;
-    padding: 8px 10px 10px;
+    padding: 6px 8px 8px;
     gap: 0;
 }
 

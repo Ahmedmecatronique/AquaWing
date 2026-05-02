@@ -12,10 +12,6 @@
     /** @type {Array<{ lat: number, lon: number, level: string, ts: number, conf: number, zone: string, id: string }>} */
     let points = [];
 
-    let etaSeconds = 0;
-    let etaTimerId = null;
-    /** @type {ReturnType<typeof setInterval>|null} */
-    let uiTickId = null;
     /** @type {{ normal: boolean, elevated: boolean, victim: boolean, moderate: boolean }} */
     /** Affiche tous les niveaux ou seulement les cas non normaux */
     let historyCriticalOnly = false;
@@ -109,25 +105,8 @@
         };
     }
 
-    function globalRisk(k) {
-        if (points.length === 0) return { score: 0, label: "—" };
-        const penalty = Math.min(45, Math.max(0, points.length - 6) * 2.2);
-        const score = clamp(Math.round(k.victims * 34 + k.elevated * 12 + penalty), 12, 99);
-        let label = "Faible";
-        if (score >= 70) label = "Élevé";
-        else if (score >= 42) label = "Modéré";
-        else label = "Normal";
-        return { score, label };
-    }
-
     function clamp(n, lo, hi) {
         return Math.min(hi, Math.max(lo, n));
-    }
-
-    function uniqueZonesSurveilled() {
-        const z = new Set();
-        points.forEach((p) => z.add(`${p.lat.toFixed(2)},${p.lon.toFixed(2)}`));
-        return clamp(z.size, points.length ? 1 : 0, 999);
     }
 
     function fmtTime(ms) {
@@ -137,56 +116,6 @@
 
     function pad(n) {
         return String(n).padStart(2, "0");
-    }
-
-    function fmtAgo(ms) {
-        const sec = Math.max(0, Math.round((Date.now() - ms) / 1000));
-        if (sec < 60) return `${sec}s`;
-        const m = Math.floor(sec / 60);
-        return `${m} min`;
-    }
-
-    function refreshAnalyticsDom() {
-        const k = computeKpis();
-        const risk = globalRisk(k);
-        document.getElementById("hm-risk-score").textContent = points.length ? `${risk.score}/100` : "—";
-        const lbl = document.getElementById("hm-risk-label");
-        if (lbl) {
-            lbl.textContent = points.length ? risk.label : "—";
-            lbl.style.borderColor =
-                risk.score >= 70 ? "rgba(255,51,85,0.55)" : risk.score >= 42 ? "rgba(255,170,68,0.45)" : "rgba(0,200,83,0.45)";
-            lbl.style.color =
-                risk.score >= 70 ? "#ff8a9a" : risk.score >= 42 ? "#ffcc88" : "#7dffb0";
-            lbl.style.background =
-                risk.score >= 70 ? "rgba(40,10,16,0.6)" : risk.score >= 42 ? "rgba(50,35,10,0.5)" : "rgba(10,40,25,0.5)";
-        }
-        const zc = document.getElementById("hm-zone-count");
-        if (zc) zc.textContent = String(Math.max(uniqueZonesSurveilled(), k.total ? 1 : 0));
-        const last = points[points.length - 1];
-        const ld = document.getElementById("hm-last-detect-meta");
-        if (ld) {
-            if (!last) ld.textContent = "—";
-            else ld.textContent = `${fmtTime(last.ts)} · il y a ${fmtAgo(last.ts)}`;
-        }
-    }
-
-    function startEtaIfNeeded() {
-        if (etaTimerId) clearInterval(etaTimerId);
-        const k = computeKpis();
-        etaSeconds = clamp(180 - k.victims * 22 - k.elevated * 8, 24, 240);
-        const tick = () => {
-            const el = document.getElementById("hm-eta");
-            if (!el) return;
-            if (points.length === 0) {
-                el.textContent = "—:––";
-                return;
-            }
-            el.textContent = `${pad(Math.floor(etaSeconds / 60))}:${pad(etaSeconds % 60)}`;
-            etaSeconds--;
-            if (etaSeconds < 0) etaSeconds = clamp(30 + computeKpis().victims * 15, 30, 200);
-        };
-        tick();
-        etaTimerId = setInterval(tick, 1000);
     }
 
     function detectionRatePct(k) {
@@ -247,7 +176,8 @@
 
         if (tEl) {
             const ctx2 = tEl.getContext("2d");
-            const grad = ctx2.createLinearGradient(0, 0, 0, 120);
+            const gh = Math.max(tEl.parentElement?.clientHeight || 120, 96);
+            const grad = ctx2.createLinearGradient(0, 0, 0, gh);
             grad.addColorStop(0, "rgba(0, 229, 255, 0.22)");
             grad.addColorStop(1, "rgba(0, 229, 255, 0)");
             if (trendChart) trendChart.destroy();
@@ -287,6 +217,16 @@
                     },
                 },
             });
+            const lineWrap = tEl.closest(".hm-line-wrap");
+            if (lineWrap && typeof ResizeObserver !== "undefined") {
+                new ResizeObserver(() => {
+                    try {
+                        trendChart.resize();
+                    } catch (_e) {
+                        /* noop */
+                    }
+                }).observe(lineWrap);
+            }
         }
     }
 
@@ -406,12 +346,10 @@
         if (eEl) eEl.textContent = String(k.elevated);
         const nEl = document.getElementById("heatmap-normal-count");
         if (nEl) nEl.textContent = String(k.normal);
-        refreshAnalyticsDom();
         renderHistory();
         renderCriticalZones();
         renderLastAlert();
         updateGauge(detectionRatePct(k));
-        startEtaIfNeeded();
     }
 
     function addPoint(lat, lon) {
@@ -514,17 +452,5 @@
 
         initChartsOnce();
         updateStats();
-
-        uiTickId = setInterval(() => {
-            refreshAnalyticsDom();
-            const last = points[points.length - 1];
-            const ld = document.getElementById("hm-last-detect-meta");
-            if (ld && last) ld.textContent = `${fmtTime(last.ts)} · il y a ${fmtAgo(last.ts)}`;
-        }, 3000);
-    });
-
-    window.addEventListener("beforeunload", () => {
-        if (etaTimerId) clearInterval(etaTimerId);
-        if (uiTickId) clearInterval(uiTickId);
     });
 })();
