@@ -2424,7 +2424,13 @@ window.addEventListener('load', () => {
             if (heatmapPanel) heatmapPanel.style.display = 'none';
             
             if (mainContent) {
-                mainContent.style.display = 'flex';
+                // Vue Aqua (.aw-aqua-dash) : ne pas imposer flex en inline — cela écrase la grille CSS → zone réduite après navigation.
+                if (mainContent.classList.contains('aw-aqua-dash')) {
+                    mainContent.style.display = '';
+                    mainContent.style.flexDirection = '';
+                } else {
+                    mainContent.style.display = 'flex';
+                }
                 mainContent.classList.remove('missions-view');
             }
             if (dashboardCams) dashboardCams.style.display = 'grid';
