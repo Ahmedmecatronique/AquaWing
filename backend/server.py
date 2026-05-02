@@ -369,7 +369,7 @@ def create_app() -> FastAPI:
 
         page_path = optical_dir / "Optical.html"
         if page_path.exists():
-            return FileResponse(str(page_path))
+            return FileResponse(str(page_path), headers=_systems_nocache)
         return {"error": "Optical.html not found"}
 
     @app.get("/optical-page.css")
@@ -379,7 +379,7 @@ def create_app() -> FastAPI:
         """
         css_path = optical_dir / "Optical.css"
         if css_path.exists():
-            return FileResponse(str(css_path), media_type="text/css")
+            return FileResponse(str(css_path), media_type="text/css", headers=_systems_nocache)
         return {"error": "Optical.css not found"}
 
     @app.get("/optical-page.js")
@@ -389,7 +389,7 @@ def create_app() -> FastAPI:
         """
         js_path = optical_dir / "Optical.js"
         if js_path.exists():
-            return FileResponse(str(js_path), media_type="application/javascript")
+            return FileResponse(str(js_path), media_type="application/javascript", headers=_systems_nocache)
         return {"error": "Optical.js not found"}
 
     @app.get("/pid-page")

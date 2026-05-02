@@ -2535,6 +2535,13 @@ window.addEventListener('load', () => {
                 opticalPanel.style.display = 'flex';
                 opticalPanel.classList.remove('collapsed');
                 console.log('Optical panel shown');
+                const of = document.getElementById('optical-frame');
+                if (of) {
+                    try {
+                        const base = of.getAttribute('data-optical-src') || '/optical-page';
+                        of.src = `${base}?ui=optdash-v1&t=${Date.now()}`;
+                    } catch (_) { /* noop */ }
+                }
             }
             if (opticalCamerasView) opticalCamerasView.style.display = 'none';
             // Hide main content

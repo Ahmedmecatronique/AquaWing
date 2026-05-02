@@ -336,6 +336,7 @@ def missions_page_js():
 
 
 _SYSTEMS_NO_CACHE_HEADERS = {"Cache-Control": "no-store, max-age=0, must-revalidate"}
+_OPTICAL_NO_CACHE_HEADERS = {"Cache-Control": "no-store, max-age=0, must-revalidate"}
 
 
 @app.get("/systems-page")
@@ -378,7 +379,7 @@ def optical_page(sid: str = Cookie(None), guest: Optional[str] = None):
 
     page_path = OPTICAL_DIR / "Optical.html"
     if page_path.exists():
-        return FileResponse(str(page_path))
+        return FileResponse(str(page_path), headers=_OPTICAL_NO_CACHE_HEADERS)
     return {"error": "Optical.html not found"}
 
 
@@ -387,7 +388,7 @@ def optical_page_css():
     """Serve standalone Optical CSS."""
     css_path = OPTICAL_DIR / "Optical.css"
     if css_path.exists():
-        return FileResponse(str(css_path), media_type="text/css")
+        return FileResponse(str(css_path), media_type="text/css", headers=_OPTICAL_NO_CACHE_HEADERS)
     return {"error": "Optical.css not found"}
 
 
@@ -396,7 +397,7 @@ def optical_page_js():
     """Serve standalone Optical JS."""
     js_path = OPTICAL_DIR / "Optical.js"
     if js_path.exists():
-        return FileResponse(str(js_path), media_type="application/javascript")
+        return FileResponse(str(js_path), media_type="application/javascript", headers=_OPTICAL_NO_CACHE_HEADERS)
     return {"error": "Optical.js not found"}
 
 
