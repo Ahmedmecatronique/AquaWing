@@ -279,6 +279,238 @@ function resumeDemo(){
     }, 500);
 }
 
+// ============================================================================
+// AquaWing — contenu dashboard (jauge, sparklines, Chart.js)
+// ============================================================================
+const DASH_SPARK_LEN = 40;
+const dashSpark = { v: [], a: [], wh: [], t: [] };
+const dashHistPoints = [];
+let dashZonesChart = null;
+let dashHistChart = null;
+let dashHistMetric = 'alt';
+let dashHistRangeMs = 60 * 1000;
+
+function updateDashGaugeArc(speed) {
+    const arc = document.getElementById('aw-dash-gauge-arc');
+    if (!arc) return;
+    const maxS = 15;
+    const p = Math.max(0, Math.min(100, (Number(speed) / maxS) * 100));
+    arc.setAttribute('stroke-dasharray', `${p} ${100 - p}`);
+}
+
+function pushDashSpark(key, val) {
+    const arr = dashSpark[key];
+    if (!arr) return;
+    arr.push(Number(val));
+    while (arr.length > DASH_SPARK_LEN) arr.shift();
+}
+
+function drawDashSpark(canvasId, arr, stroke) {
+    const c = document.getElementById(canvasId);
+    if (!c || !c.getContext) return;
+    const ctx = c.getContext('2d');
+    const w = c.width;
+    const h = c.height;
+    ctx.clearRect(0, 0, w, h);
+    if (arr.length < 2) return;
+    let min = Math.min(...arr);
+    let max = Math.max(...arr);
+    if (max - min < 1e-6) max = min + 1e-6;
+    ctx.beginPath();
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = 1.25;
+    arr.forEach((v, i) => {
+        const x = (i / (arr.length - 1)) * (w - 2) + 1;
+        const y = h - 2 - ((v - min) / (max - min)) * (h - 4);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+}
+
+function redrawDashSparksTelemetry(data, vlt, cur, tempNum) {
+    pushDashSpark('v', vlt);
+    pushDashSpark('a', cur);
+    const whEst = Math.abs(vlt * cur) * 0.002;
+    pushDashSpark('wh', whEst);
+    pushDashSpark('t', tempNum);
+    drawDashSpark('dash-spark-v', dashSpark.v, '#00e676');
+    drawDashSpark('dash-spark-a', dashSpark.a, '#22d3ee');
+    drawDashSpark('dash-spark-wh', dashSpark.wh, '#ffb020');
+    drawDashSpark('dash-spark-t', dashSpark.t, '#fb7185');
+}
+
+function updateAquaTelemetryMain(data, alt, speed, battery) {
+    const setN = (id, x, fix) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = typeof x === 'number' && fix !== null ? x.toFixed(fix) : String(x);
+    };
+    updateDashGaugeArc(speed);
+    setN('dash-speed-live', speed, 1);
+    const pct = Math.max(0, Math.min(100, battery));
+    setN('dash-tile-bat-pct', pct, 0);
+    const vlt = data.battery_voltage_v != null ? Number(data.battery_voltage_v) : pct * 0.168;
+    setN('dash-tile-bat-v', vlt, 1);
+    setN('dash-tile-gps-n', Number(data.gps_sats || 0), 0);
+    setN('dash-tile-alt', alt, 1);
+    setN('dash-tile-vspeed', speed, 2);
+    setN('dash-tile-head', Number(data.heading || 0), 0);
+    setN('dash-tile-dist', distanceTraveled / 1000, 2);
+    const cur = Number(data.current || 0);
+    const tempNum = Number(data.battery_temp ?? 42);
+    setN('dash-tel-v', vlt, 1);
+    setN('dash-tel-a', cur, 1);
+    setN('dash-tel-wh', Math.max(0, vlt * cur * 0.01), 1);
+    setN('dash-tel-temp', tempNum, 0);
+    redrawDashSparksTelemetry(data, vlt, cur, tempNum);
+}
+
+function pushDashHistory(ts, alt, speed, battery) {
+    const t = ts * (ts < 1e12 ? 1000 : 1);
+    dashHistPoints.push({ t, alt: Number(alt), speed: Number(speed), bat: Number(battery) });
+    const cutoff = Date.now() - dashHistRangeMs;
+    while (dashHistPoints.length && dashHistPoints[0].t < cutoff) dashHistPoints.shift();
+    if (dashHistPoints.length > 400) dashHistPoints.splice(0, dashHistPoints.length - 400);
+}
+
+function refreshDashHistoryChart() {
+    if (!dashHistChart) return;
+    const key = dashHistMetric === 'speed' ? 'speed' : dashHistMetric === 'bat' ? 'bat' : 'alt';
+    const vals = dashHistPoints.map(p => p[key]);
+    const labels = dashHistPoints.map(p => {
+        const d = new Date(p.t);
+        return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    });
+    dashHistChart.data.labels = labels;
+    dashHistChart.data.datasets[0].data = vals;
+    const lab = dashHistMetric === 'speed' ? 'Vitesse (m/s)' : dashHistMetric === 'bat' ? 'Batterie (%)' : 'Altitude (m)';
+    dashHistChart.data.datasets[0].label = lab;
+    dashHistChart.update('none');
+}
+
+function updateDashMissionProgressUI() {
+    const bar = document.getElementById('dash-mission-progress-bar');
+    const pctEl = document.getElementById('dash-mission-pct');
+    const meta = document.getElementById('dash-mission-progress-meta');
+    if (!bar || !pctEl) return;
+    const total = calculateRouteTotalDistance();
+    let pct = 0;
+    if (missionStartTime && total > 0) {
+        pct = Math.min(100, (distanceTraveled / total) * 100);
+    } else if (missionStartTime) {
+        pct = Math.min(99, ((Date.now() - missionStartTime) / 180000) * 100);
+    }
+    bar.style.width = pct.toFixed(1) + '%';
+    pctEl.textContent = Math.round(pct) + '%';
+    if (meta) {
+        meta.textContent = missionStartTime ? 'Mission en cours' : 'En attente de démarrage';
+    }
+}
+
+function updateDashZonesFromArea(areaM2) {
+    const scanned = typeof areaM2 === 'number' ? areaM2 : 0;
+    const target = 50000;
+    const remaining = Math.max(0, target - scanned);
+    const total = Math.max(target, scanned + remaining);
+    const tel = document.getElementById('dash-zone-scanned');
+    const tr = document.getElementById('dash-zone-remaining');
+    const tt = document.getElementById('dash-zone-total');
+    if (tel) tel.textContent = Math.round(scanned).toString();
+    if (tr) tr.textContent = Math.round(remaining).toString();
+    if (tt) tt.textContent = Math.round(total).toString();
+    if (dashZonesChart) {
+        const s = total > 0 ? Math.min(1, scanned / total) : 0;
+        dashZonesChart.data.datasets[0].data = [Math.max(0.001, s), Math.max(0.001, 1 - s)];
+        dashZonesChart.update('none');
+    }
+}
+
+function initAquawingDashboard() {
+    try {
+        updateDashGaugeArc(0);
+        const sc = document.getElementById('speed-control');
+        const dcmd = document.getElementById('dash-cmd-speed');
+        const side = document.getElementById('speed-control-sidebar');
+        if (sc && dcmd) dcmd.textContent = parseFloat(sc.value).toFixed(1);
+        if (sc && side) {
+            side.value = sc.value;
+            const svd = document.getElementById('speed-value-display');
+            if (svd) svd.textContent = parseFloat(sc.value).toFixed(1);
+        }
+        if (typeof Chart === 'undefined') {
+            updateDashZonesFromArea(0);
+            return;
+        }
+        const donutEl = document.getElementById('chart-dash-zones');
+        if (donutEl) {
+            dashZonesChart = new Chart(donutEl, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Scanné', 'Restant'],
+                    datasets: [{
+                        data: [0, 1],
+                        backgroundColor: ['#00e676', '#252d3a'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '66%',
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+        const histEl = document.getElementById('chart-dash-history');
+        if (histEl) {
+            dashHistChart = new Chart(histEl, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Altitude (m)',
+                        data: [],
+                        fill: true,
+                        tension: 0.35,
+                        borderColor: '#00e676',
+                        backgroundColor: 'rgba(0, 230, 118, 0.14)',
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { color: '#94a3b8', maxRotation: 0 }, grid: { color: 'rgba(255,255,255,0.04)' } },
+                        y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.06)' }, beginAtZero: true }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+        const metricSel = document.getElementById('dash-history-metric');
+        if (metricSel) {
+            metricSel.addEventListener('change', () => {
+                dashHistMetric = metricSel.value;
+                refreshDashHistoryChart();
+            });
+        }
+        document.querySelectorAll('.aw-pill-tab[data-range]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.aw-pill-tab[data-range]').forEach(b => b.classList.remove('is-active'));
+                btn.classList.add('is-active');
+                const r = btn.getAttribute('data-range');
+                dashHistRangeMs = r === '1m' ? 60e3 : r === '5m' ? 300e3 : r === '15m' ? 900e3 : 3600e3;
+                refreshDashHistoryChart();
+            });
+        });
+        updateDashZonesFromArea(0);
+    } catch (e) {
+        console.warn('initAquawingDashboard', e);
+    }
+}
+
 function stopDemo(){
     if(demoTimer) { clearInterval(demoTimer); demoTimer = null; }
     frontendFlying = false;
@@ -330,9 +562,9 @@ function initMap() {
         }
     });
 
-    // Move Leaflet zoom control to bottom-right so HUD doesn't overlap it
+    // Zoom +/- en haut-gauche (aligné captures AquaWing)
     try{
-        if (map && map.zoomControl) map.zoomControl.setPosition('bottomright');
+        if (map && map.zoomControl) map.zoomControl.setPosition('topleft');
     }catch(e){ console.warn('Could not reposition zoom control', e); }
 }
 
@@ -552,6 +784,13 @@ function updateTelemetry(data) {
         // Re-render power panel immediately if telemetry provided
         renderPowerPanel();
     } catch(e){ /* ignore mapping errors */ }
+
+    try {
+        updateAquaTelemetryMain(data, alt, speed, battery);
+        pushDashHistory(ts, alt, speed, battery);
+        refreshDashHistoryChart();
+        updateDashMissionProgressUI();
+    } catch (e) { /* aquawing widgets optionnels */ }
 
     // Update control-bar HUD (demo overlay)
     updateControlBar(lat, lon, alt, speed, battery);
@@ -2086,6 +2325,8 @@ if (speedControl) {
     speedControl.addEventListener('input', (ev)=>{
         const v = Number(ev.target.value);
         if (setSpeedValue) setSpeedValue.textContent = v.toFixed(1);
+        const dcmd = document.getElementById('dash-cmd-speed');
+        if (dcmd) dcmd.textContent = v.toFixed(1);
         if (ws && ws.readyState === WebSocket.OPEN) {
             try { ws.send(JSON.stringify({cmd:'set_speed', value: v})); } catch(e) { console.warn('WS send failed', e); }
         }
@@ -2099,6 +2340,7 @@ if (speedControl) {
 window.addEventListener('load', () => {
     console.log('Initializing RPi Drone Control Map...');
     initMap();
+    initAquawingDashboard();
     // WebSocket connects lazily when user sends a command (to avoid backend circular demo telemetry)
     // Demo does NOT auto-start — user must define a trajectory then click START FLIGHT
     setVideo(false);
@@ -2172,7 +2414,7 @@ window.addEventListener('load', () => {
             if (dashboardCams) dashboardCams.style.display = 'grid';
             if (mapContainer) {
                 mapContainer.style.display = 'block';
-                mapContainer.style.flex = '0 0 35%';
+                mapContainer.style.flex = '';
             }
             if (rightColumn) rightColumn.style.display = 'flex';
         } else if (activeEl === navMissions) {
@@ -3350,9 +3592,8 @@ function startMissionTimer() {
     updateMissionRuntime();
     updateMissionStatsCard();
     
-    // Show mission stats card
     const statsCard = document.getElementById('mission-stats-card');
-    if (statsCard) statsCard.style.display = 'block';
+    if (statsCard && !statsCard.classList.contains('aw-strip')) statsCard.style.display = 'block';
 }
 
 function stopMissionTimer() {
@@ -3360,9 +3601,8 @@ function stopMissionTimer() {
     const statsEl = document.getElementById('mission-runtime-stats');
     if (statsEl) statsEl.style.display = 'none';
     
-    // Hide mission stats card
     const statsCard = document.getElementById('mission-stats-card');
-    if (statsCard) statsCard.style.display = 'none';
+    if (statsCard && !statsCard.classList.contains('aw-strip')) statsCard.style.display = 'none';
     
     // Reset values
     missionDetectionCount = 0;
@@ -3466,6 +3706,9 @@ function updateMissionStatsCard() {
         } else {
             areaEl.textContent = `${Math.round(areaM2)} m²`;
         }
+        try {
+            updateDashZonesFromArea(areaM2);
+        } catch (e) { /* noop */ }
     }
     
     // Update detection count
@@ -3479,6 +3722,7 @@ function updateMissionStatsCard() {
 setInterval(() => {
     updateMissionRuntime();
     updateMissionStatsCard();
+    try { updateDashMissionProgressUI(); } catch (e) { /* noop */ }
 }, 1000);
 
 // Track mission path and calculate distance

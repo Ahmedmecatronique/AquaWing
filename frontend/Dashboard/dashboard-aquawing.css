@@ -1,0 +1,611 @@
+/**
+ * AquaWing — contenu tableau de bord uniquement (.main-content.aw-aqua-dash).
+ * Sidebar / top-bar / bottom-bar inchangés ailleurs.
+ */
+:root.aw-aqua-root {
+  --aw-bg-deep: #0b0e14;
+  --aw-card: #151921;
+  --aw-card-edge: #161b22;
+  --aw-cyan: #22d3ee;
+  --aw-green: #00e676;
+  --aw-orange: #ff9100;
+  --aw-border: rgba(255, 255, 255, 0.07);
+}
+
+.main-content.aw-aqua-dash {
+  --aw-card: #151921;
+  --aw-cyan: #22d3ee;
+  --aw-green: #00e676;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  /* Colonne centrale ~2× plus large que les marges latérales */
+  grid-template-columns: minmax(232px, 0.92fr) minmax(460px, 2.38fr) minmax(246px, 1fr);
+  gap: 10px;
+  padding: 10px;
+  align-items: stretch;
+  box-sizing: border-box;
+  background: #0b0e14;
+  overflow: hidden;
+}
+
+.aw-aqua-col {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-x: hidden;
+}
+
+.aw-aqua-col--scroll {
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.aw-card-aq {
+  background: linear-gradient(180deg, #151921 0%, rgba(21, 25, 33, 0.97) 100%);
+  border: 1px solid var(--aw-border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+}
+
+.aw-card-aq__title {
+  font-family: "Inter", "Outfit", system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: rgba(234, 242, 255, 0.85);
+  text-transform: uppercase;
+  margin: 0 0 12px;
+}
+
+/* —— Vitesse —— */
+.aw-speed-gauge {
+  position: relative;
+  height: 128px;
+  display: grid;
+  place-items: center;
+}
+
+.aw-speed-gauge__svg {
+  width: 200px;
+  height: auto;
+}
+
+.aw-speed-gauge__readout {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  font-family: "Inter", "Outfit", system-ui, sans-serif;
+}
+
+.aw-speed-gauge__readout strong {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: #eaf2ff;
+}
+
+.aw-speed-gauge__unit {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(234, 242, 255, 0.45);
+}
+
+.aw-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  font-family: "Inter", "Outfit", system-ui, sans-serif;
+  font-size: 11px;
+  color: rgba(234, 242, 255, 0.55);
+}
+
+.aw-slider-row strong {
+  color: var(--aw-orange);
+  font-size: 14px;
+}
+
+.aw-slider-row input[type="range"] {
+  flex: 1;
+  accent-color: var(--aw-orange);
+  min-height: 24px;
+}
+
+/* Tuiles drone 2×2 */
+.aw-drones-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.aw-dtile {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 10px 10px 10px 36px;
+  position: relative;
+  font-family: "Inter", "Outfit", system-ui, sans-serif;
+}
+
+.aw-dtile::before {
+  content: "";
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  opacity: 0.9;
+}
+
+.aw-dtile--bat::before {
+  background: linear-gradient(180deg, var(--aw-cyan), #0088aa);
+}
+
+.aw-dtile--gps::before {
+  background: linear-gradient(180deg, var(--aw-green), #00aa66);
+}
+
+.aw-dtile--alt::before {
+  background: linear-gradient(180deg, var(--aw-green), #008866);
+}
+
+.aw-dtile--cap::before {
+  background: linear-gradient(180deg, var(--aw-green), #44aa66);
+}
+
+.aw-dtile__k {
+  display: block;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: rgba(234, 242, 255, 0.45);
+}
+
+.aw-dtile__v {
+  display: block;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--aw-green);
+}
+
+.aw-dtile--alt .aw-dtile__v,
+.aw-dtile--cap .aw-dtile__v {
+  color: var(--aw-cyan);
+}
+
+.aw-dtile__s {
+  font-size: 11px;
+  color: rgba(234, 242, 255, 0.5);
+}
+
+/* Télémétrie lignes */
+.aw-telry {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.aw-telry__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.aw-telry__label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: rgba(234, 242, 255, 0.5);
+}
+
+.aw-telry__value {
+  font-size: 14px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.aw-telry__value--cyan {
+  color: #38bdf8;
+}
+
+.aw-telry__spark {
+  width: 112px;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+/* Centre */
+.aw-aqua-center-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  flex: 1;
+}
+
+#mission-stats-card.aw-strip {
+  display: flex !important;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+  padding: 12px 16px !important;
+  margin: 0;
+}
+
+#mission-stats-card.aw-strip .mission-stats-header {
+  display: none;
+}
+
+#mission-stats-card.aw-strip .mission-stats-content {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px 16px;
+}
+
+#mission-stats-card.aw-strip .mission-stat-item {
+  flex: unset;
+  min-width: 0;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 4px;
+}
+
+#mission-stats-card.aw-strip .mission-stat-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(234, 242, 255, 0.5);
+}
+
+#mission-stats-card.aw-strip .mission-stat-value {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--aw-green);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 1200px) {
+  #mission-stats-card.aw-strip .mission-stats-content {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.aw-map-wrap-aq {
+  flex: 1 1 auto;
+  min-height: min(320px, 42vh);
+  display: flex;
+  flex-direction: column;
+}
+
+.aw-map-wrap-aq .map-container {
+  flex: 1;
+  width: 100% !important;
+  min-height: 220px !important;
+  max-height: none;
+  border-radius: 10px !important;
+  overflow: hidden;
+  border: 1px solid var(--aw-border);
+}
+
+.aw-aqua-dash .map-controls-overlay {
+  display: flex;
+  bottom: 12px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  top: auto !important;
+  right: auto !important;
+}
+
+/* Carte Leaflet sous la grille aqua : neutraliser anciennes proportions */
+.main-content.aw-aqua-dash .map-container {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+}
+
+.aw-center-split-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  align-items: stretch;
+  flex-shrink: 0;
+  min-height: 0;
+}
+
+.aw-center-split-row > .aw-card-aq {
+  min-height: 0;
+}
+
+.aw-progress-heading.aw-slider-row {
+  margin-top: 0;
+  justify-content: flex-start;
+}
+
+.aw-mission-pct {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: rgba(234, 242, 255, 0.9);
+}
+
+.aw-zones-inner.aw-row-2col {
+  grid-template-columns: 1fr minmax(112px, 34%);
+}
+
+.aw-chart-mini--donut {
+  height: 130px;
+  min-height: 110px;
+  max-height: 150px;
+}
+
+.aw-progress-card .aw-progress-meta {
+  font-size: 12px;
+  color: rgba(234, 242, 255, 0.45);
+  margin-top: 6px;
+}
+
+.aw-progress-track {
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  margin-top: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.aw-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--aw-cyan), var(--aw-green));
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.aw-row-2col {
+  display: grid;
+  grid-template-columns: 1fr minmax(100px, 140px);
+  gap: 12px;
+  align-items: center;
+}
+
+.aw-zone-legend {
+  font-family: "Inter", "Outfit", system-ui, sans-serif;
+  font-size: 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: rgba(234, 242, 255, 0.75);
+}
+
+.aw-zone-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+
+.aw-chart-mini {
+  position: relative;
+  height: 180px;
+  min-height: 140px;
+}
+
+.aw-chart-mini canvas {
+  max-height: 100%;
+}
+
+.aw-history-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-family: "Inter", "Outfit", system-ui, sans-serif;
+  font-size: 11px;
+}
+
+.aw-history-toolbar select {
+  background: #0c1220;
+  color: #eaf2ff;
+  border: 1px solid var(--aw-border);
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-weight: 600;
+}
+
+.aw-pill-tab {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: transparent;
+  color: rgba(234, 242, 255, 0.55);
+  border-radius: 8px;
+  padding: 4px 12px;
+  font-weight: 700;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.aw-pill-tab.is-active {
+  background: rgba(0, 230, 118, 0.12);
+  border-color: var(--aw-green);
+  color: var(--aw-green);
+}
+
+/* Flux caméra */
+.aw-aqua-dash .cams-area.dashboard-cams {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 0;
+  min-height: 0;
+}
+
+.aw-aqua-dash .camera-panel {
+  min-height: 0;
+  flex: 1;
+}
+
+.aw-aqua-dash .camera-panel .video-content {
+  aspect-ratio: 4 / 3;
+  min-height: 120px;
+  max-height: 200px;
+}
+
+.aw-line-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.aw-line-badge .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--aw-green);
+  box-shadow: 0 0 8px var(--aw-green);
+}
+
+/* Ancre la densité façon dashboard large */
+.main-content.aw-aqua-dash .mission-stats-card.aw-strip.aw-card-aq {
+  background: rgba(21, 25, 33, 0.88);
+}
+
+.aw-aqua-dash .telemetry-label,
+.main-content.aw-aqua-dash .panel-title {
+  font-family: "Inter", "Outfit", system-ui, sans-serif;
+}
+
+.aw-alerts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-family: "Inter", "Outfit", system-ui, sans-serif;
+  font-size: 12px;
+}
+
+.aw-alerts li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.aw-alert-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--aw-green);
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
+.aw-det-box {
+  min-height: 72px;
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  font-size: 12px;
+  color: rgba(234, 242, 255, 0.45);
+}
+
+.aw-det-box svg {
+  flex-shrink: 0;
+  opacity: 0.5;
+}
+
+.aw-sys-mini {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  font-family: "Inter", "Outfit", system-ui, sans-serif;
+  font-size: 11px;
+}
+
+.aw-sys-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.aw-sys-item svg {
+  flex-shrink: 0;
+  color: var(--aw-green);
+}
+
+@media (max-width: 1280px) {
+  .main-content.aw-aqua-dash {
+    grid-template-columns: 1fr 1fr;
+    grid-auto-rows: minmax(0, auto);
+    overflow-y: auto;
+  }
+
+  .aw-aqua-col--left {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .aw-aqua-col--left .aw-card-aq {
+    flex: 1 1 200px;
+  }
+
+  .aw-aqua-col--center {
+    grid-column: 1 / 2;
+    min-height: 400px;
+  }
+
+  .aw-aqua-col--right {
+    grid-column: 2 / 3;
+  }
+
+  .aw-center-split-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .main-content.aw-aqua-dash {
+    grid-template-columns: 1fr;
+  }
+
+  .aw-aqua-col--center,
+  .aw-aqua-col--right {
+    grid-column: 1;
+  }
+
+  .aw-aqua-dash .cams-area.dashboard-cams {
+    grid-template-columns: 1fr;
+  }
+
+  #mission-stats-card.aw-strip .mission-stats-content {
+    grid-template-columns: 1fr 1fr;
+  }
+}

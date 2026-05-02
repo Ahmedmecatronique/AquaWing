@@ -255,6 +255,15 @@ def dashboard_css():
     return {"error": "Dashboard.css not found"}
 
 
+@app.get("/dashboard-aquawing.css")
+def dashboard_aquawing_css():
+    """Contenu tableau de bord AquaWing (layout 3 colonnes), sans sidebar."""
+    path = DASHBOARD_DIR / "dashboard-aquawing.css"
+    if path.exists():
+        return FileResponse(str(path), media_type="text/css")
+    return {"error": "dashboard-aquawing.css not found"}
+
+
 @app.get("/dashboard.js")
 def dashboard_js():
     """Serve dashboard script."""

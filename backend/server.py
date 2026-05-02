@@ -241,6 +241,13 @@ def create_app() -> FastAPI:
             return FileResponse(str(css_path), media_type="text/css")
         return {"error": "Dashboard.css not found"}
 
+    @app.get("/dashboard-aquawing.css")
+    async def dashboard_aquawing_css():
+        path = dashboard_dir / "dashboard-aquawing.css"
+        if path.exists():
+            return FileResponse(str(path), media_type="text/css")
+        return {"error": "dashboard-aquawing.css not found"}
+
     @app.get("/dashboard.js")
     async def dashboard_js():
         """

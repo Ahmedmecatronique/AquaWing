@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr" class="aw-aqua-root">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,9 +9,12 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
     <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="/dashboard.css?v=legacy-06b2452">
+    <link rel="stylesheet" href="/dashboard.css?v=legacy-06b2452" />
+    <link rel="stylesheet" href="/dashboard-aquawing.css?v=2" />
 </head>
 
 <body>
@@ -232,7 +235,7 @@
             <div class="speed-control-panel-content">
                 <div class="speed-control-wrapper">
                     <label for="speed-control-sidebar">SPEED (M/S)</label>
-                    <input id="speed-control-sidebar" type="range" min="0" max="10" step="0.1" value="0">
+                    <input id="speed-control-sidebar" type="range" min="0" max="15" step="0.1" value="5">
                     <div class="speed-value-display">
                         <span id="speed-value-display">0.0</span> m/s
                     </div>
@@ -388,95 +391,266 @@
         <!-- Optical Cameras View (shown when Optical tab is active) -->
         <div class="optical-cameras-view" id="optical-cameras-view" style="display:none;"></div>
 
-        <!-- MAIN CONTENT: Dashboard View -->
-        <main class="main-content">
-            <!-- Mission Statistics Card -->
-            <div class="mission-stats-card card" id="mission-stats-card" style="display:none;">
-                <div class="mission-stats-header">
-                    <div class="panel-title">MISSION STATISTICS</div>
-                </div>
-                <div class="mission-stats-content">
-                    <div class="mission-stat-item">
-                        <div class="mission-stat-label">Mission Timer</div>
-                        <div class="mission-stat-value" id="mission-stat-time">00:00:00</div>
-                    </div>
-                    <div class="mission-stat-item">
-                        <div class="mission-stat-label">Distance Covered</div>
-                        <div class="mission-stat-value" id="mission-stat-distance">0.00 km</div>
-                    </div>
-                    <div class="mission-stat-item">
-                        <div class="mission-stat-label">Area Scanned</div>
-                        <div class="mission-stat-value" id="mission-stat-area">0 m²</div>
-                    </div>
-                    <div class="mission-stat-item">
-                        <div class="mission-stat-label">Detections</div>
-                        <div class="mission-stat-value" id="mission-stat-detections">0</div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Map Container -->
-            <div class="map-container">
-                <div id="map" class="map-canvas"></div>
-                <div class="map-controls-overlay">
-                    <button id="follow-toggle" class="ctrl-btn btn-primary" title="Suivre automatiquement la position du drone sur la carte">Follow: OFF</button>
-                    <button id="center-btn" class="ctrl-btn btn-ghost" title="Centrer la carte sur la position actuelle du drone">Center</button>
-                    <button id="clear-btn" class="ctrl-btn btn-ghost" title="Effacer le tracé de vol affiché sur la carte">Clear Track</button>
-                    <button id="waypoints-toggle" class="ctrl-btn btn-ghost" title="Activer/désactiver le mode waypoints - Cliquez sur la carte pour ajouter des points">Waypoints: OFF</button>
-                </div>
-            </div>
-            
-            <!-- Cameras Area (always visible in Dashboard) -->
-            <div class="cams-area dashboard-cams">
-                <div class="camera-panel rgb card" data-url="/video">
-                    <div class="panel-header">
-                        <div class="panel-title">Camera — RGB</div>
-                        <div class="panel-controls">
-                            <label class="small" for="rgb-resolution">Res:</label>
-                            <select id="rgb-resolution" aria-label="RGB resolution">
-                                <option value="640x480">640×480</option>
-                                <option value="800x600">800×600</option>
-                                <option value="1280x720" selected>1280×720</option>
-                            </select>
-                            <button id="video-toggle" class="btn-primary">RGB: OFF</button>
-                            <div id="video-status" class="status-dot off">OFF</div>
+        <!-- MAIN CONTENT: Dashboard View (AquaWing 3 colonnes — sidebar non modifiée) -->
+        <main class="main-content aw-aqua-dash">
+            <div class="aw-aqua-col aw-aqua-col--left aw-aqua-col--scroll">
+                <section class="aw-card-aq">
+                    <h3 class="aw-card-aq__title">Contrôle de vitesse</h3>
+                    <div class="aw-speed-gauge">
+                        <svg class="aw-speed-gauge__svg" viewBox="0 0 200 130" aria-hidden="true">
+                            <defs>
+                                <linearGradient id="awGradSpdDash" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" stop-color="#22d3ee"/>
+                                    <stop offset="100%" stop-color="#f97316"/>
+                                </linearGradient>
+                            </defs>
+                            <path d="M 32 102 A 68 68 0 1 1 168 102" fill="none" stroke="#2a3548" stroke-width="10" stroke-linecap="round"/>
+                            <path id="aw-dash-gauge-arc" d="M 32 102 A 68 68 0 1 1 168 102" fill="none" stroke="url(#awGradSpdDash)" stroke-width="10" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100"/>
+                        </svg>
+                        <div class="aw-speed-gauge__readout">
+                            <strong id="dash-speed-live">0.0</strong>
+                            <span class="aw-speed-gauge__unit">m/s</span>
                         </div>
                     </div>
-                    <div class="video-content">
-                        <img id="video-stream" class="video-stream" src="" alt="RGB stream" />
-                        <canvas id="rgb-overlay" class="video-overlay" aria-hidden="true"></canvas>
-                        <div id="video-placeholder" class="video-placeholder">
-                            <div class="video-loader"></div>
-                            <div class="video-placeholder-text">Connecting to RGB Camera...</div>
-                        </div>
-                        <div class="camera-stats small">
-                            <span id="rgb-res">1280×720</span> • <span id="rgb-bitrate">0 kb/s</span>
-                            <span id="rgb-ai" class="ai-comment" style="margin-left:10px;color:var(--accent);font-weight:700"></span>
-                        </div>
+                    <div class="aw-slider-row">
+                        <span class="aw-slider-row__lbl">Cible</span>
+                        <input id="speed-control" type="range" min="0" max="15" step="0.1" value="5" aria-label="Vitesse cible" />
+                        <span class="aw-slider-row__out"><strong id="dash-cmd-speed">5.0</strong> <span>m/s</span></span>
                     </div>
-                </div>
+                </section>
 
-                <div class="camera-panel thermal card" data-url="/thermal">
-                    <div class="panel-header">
-                        <div class="panel-title">Camera — Thermal</div>
-                        <div class="panel-controls">
-                            <button id="thermal-toggle" class="btn-primary">Thermal: OFF</button>
-                            <div id="thermal-status" class="status-dot off">OFF</div>
+                <section class="aw-card-aq">
+                    <h3 class="aw-card-aq__title">État du drone</h3>
+                    <div class="aw-drones-grid">
+                        <div class="aw-dtile aw-dtile--bat">
+                            <span class="aw-dtile__k">Batterie</span>
+                            <span class="aw-dtile__v"><span id="dash-tile-bat-pct">100</span>%</span>
+                            <span class="aw-dtile__s"><span id="dash-tile-bat-v">16.8</span> V</span>
+                        </div>
+                        <div class="aw-dtile aw-dtile--gps">
+                            <span class="aw-dtile__k">GPS</span>
+                            <span class="aw-dtile__v"><span id="dash-tile-gps-n">0</span> SATS</span>
+                            <span class="aw-dtile__s">3D FIX</span>
+                        </div>
+                        <div class="aw-dtile aw-dtile--alt">
+                            <span class="aw-dtile__k">Altitude</span>
+                            <span class="aw-dtile__v"><span id="dash-tile-alt">0.0</span> m</span>
+                            <span class="aw-dtile__s"><span id="dash-tile-vspeed">0.00</span> m/s</span>
+                        </div>
+                        <div class="aw-dtile aw-dtile--cap">
+                            <span class="aw-dtile__k">Cap</span>
+                            <span class="aw-dtile__v"><span id="dash-tile-head">0</span>°</span>
+                            <span class="aw-dtile__s"><span id="dash-tile-dist">0.00</span> km</span>
                         </div>
                     </div>
-                    <div class="video-content">
-                        <img id="thermal-stream" class="thermal-stream" src="" alt="Thermal stream" />
-                        <canvas id="thermal-overlay" class="video-overlay" aria-hidden="true"></canvas>
-                        <div id="thermal-placeholder" class="video-placeholder">
-                            <div class="video-loader"></div>
-                            <div class="video-placeholder-text">Connecting to Camera...</div>
+                </section>
+
+                <section class="aw-card-aq">
+                    <h3 class="aw-card-aq__title">Télémétrie</h3>
+                    <div class="aw-telry">
+                        <div class="aw-telry__row">
+                            <div>
+                                <div class="aw-telry__label">Tension</div>
+                                <div class="aw-telry__value aw-telry__value--cyan"><span id="dash-tel-v">16.8</span> <small>V</small></div>
+                            </div>
+                            <canvas class="aw-telry__spark" id="dash-spark-v" width="112" height="32" aria-hidden="true"></canvas>
                         </div>
-                        <div class="camera-stats small">
-                            <span id="thermal-res">--</span> • <span id="thermal-fps">0 fps</span>
-                            <span id="thermal-ai" class="ai-comment" style="margin-left:10px;color:var(--accent);font-weight:700"></span>
+                        <div class="aw-telry__row">
+                            <div>
+                                <div class="aw-telry__label">Courant</div>
+                                <div class="aw-telry__value aw-telry__value--cyan"><span id="dash-tel-a">0.0</span> <small>A</small></div>
+                            </div>
+                            <canvas class="aw-telry__spark" id="dash-spark-a" width="112" height="32" aria-hidden="true"></canvas>
+                        </div>
+                        <div class="aw-telry__row">
+                            <div>
+                                <div class="aw-telry__label">Consommation</div>
+                                <div class="aw-telry__value" style="color:#fbbf24"><span id="dash-tel-wh">0.0</span> <small>Wh</small></div>
+                            </div>
+                            <canvas class="aw-telry__spark" id="dash-spark-wh" width="112" height="32" aria-hidden="true"></canvas>
+                        </div>
+                        <div class="aw-telry__row">
+                            <div>
+                                <div class="aw-telry__label">Température</div>
+                                <div class="aw-telry__value" style="color:#fb7185"><span id="dash-tel-temp">42</span> <small>°C</small></div>
+                            </div>
+                            <canvas class="aw-telry__spark" id="dash-spark-t" width="112" height="32" aria-hidden="true"></canvas>
                         </div>
                     </div>
+                </section>
+            </div>
+
+            <div class="aw-aqua-col aw-aqua-col--center">
+                <div class="aw-aqua-center-stack">
+                    <div class="mission-stats-card aw-card-aq aw-strip" id="mission-stats-card">
+                        <div class="mission-stats-header">
+                            <div class="panel-title">Statistiques de mission</div>
+                        </div>
+                        <div class="mission-stats-content">
+                            <div class="mission-stat-item">
+                                <div class="mission-stat-label">Temps mission</div>
+                                <div class="mission-stat-value" id="mission-stat-time">00:00:00</div>
+                            </div>
+                            <div class="mission-stat-item">
+                                <div class="mission-stat-label">Distance couverte</div>
+                                <div class="mission-stat-value" id="mission-stat-distance">0.00 km</div>
+                            </div>
+                            <div class="mission-stat-item">
+                                <div class="mission-stat-label">Zone scannée</div>
+                                <div class="mission-stat-value" id="mission-stat-area">0 m²</div>
+                            </div>
+                            <div class="mission-stat-item">
+                                <div class="mission-stat-label">Détections</div>
+                                <div class="mission-stat-value" id="mission-stat-detections">0</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="aw-map-wrap-aq">
+                        <div class="map-container">
+                            <div id="map" class="map-canvas"></div>
+                            <div class="map-controls-overlay">
+                                <button id="follow-toggle" class="ctrl-btn btn-primary" type="button" title="Suivre le drone">Follow: OFF</button>
+                                <button id="center-btn" class="ctrl-btn btn-ghost" type="button" title="Centrer">Center</button>
+                                <button id="clear-btn" class="ctrl-btn btn-ghost" type="button" title="Effacer le tracé">Clear Track</button>
+                                <button id="waypoints-toggle" class="ctrl-btn btn-ghost" type="button" title="Waypoints">Waypoints: OFF</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="aw-center-split-row">
+                        <section class="aw-card-aq aw-progress-card">
+                            <h3 class="aw-card-aq__title">Progression de mission</h3>
+                            <div class="aw-slider-row aw-progress-heading">
+                                <span id="dash-mission-pct" class="aw-mission-pct">0%</span>
+                            </div>
+                            <div class="aw-progress-track"><div class="aw-progress-fill" id="dash-mission-progress-bar"></div></div>
+                            <div class="aw-progress-meta" id="dash-mission-progress-meta">En attente de démarrage</div>
+                        </section>
+
+                        <section class="aw-card-aq aw-zones-card">
+                            <h3 class="aw-card-aq__title">Zones scannées</h3>
+                            <div class="aw-row-2col aw-zones-inner">
+                                <div class="aw-chart-mini aw-chart-mini--donut"><canvas id="chart-dash-zones" aria-label="Zones scannées"></canvas></div>
+                                <div class="aw-zone-legend">
+                                    <div><span class="aw-zone-dot" style="background:#00e676"></span>Scanné : <span id="dash-zone-scanned">0</span> m²</div>
+                                    <div><span class="aw-zone-dot" style="background:#334155"></span>Restant : <span id="dash-zone-remaining">0</span> m²</div>
+                                    <div><span class="aw-zone-dot" style="background:#64748b"></span>Total : <span id="dash-zone-total">0</span> m²</div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+
+                    <section class="aw-card-aq">
+                        <h3 class="aw-card-aq__title">Historique des données</h3>
+                        <div class="aw-history-toolbar">
+                            <label for="dash-history-metric">Métrique</label>
+                            <select id="dash-history-metric" aria-label="Métrique graphique">
+                                <option value="alt" selected>Altitude</option>
+                                <option value="speed">Vitesse</option>
+                                <option value="bat">Batterie</option>
+                            </select>
+                            <button type="button" class="aw-pill-tab is-active" data-range="1m">1M</button>
+                            <button type="button" class="aw-pill-tab" data-range="5m">5M</button>
+                            <button type="button" class="aw-pill-tab" data-range="15m">15M</button>
+                            <button type="button" class="aw-pill-tab" data-range="1h">1H</button>
+                        </div>
+                        <div class="aw-chart-mini" style="height:200px">
+                            <canvas id="chart-dash-history" aria-label="Historique"></canvas>
+                        </div>
+                    </section>
                 </div>
+            </div>
+
+            <div class="aw-aqua-col aw-aqua-col--right aw-aqua-col--scroll">
+                <section class="aw-card-aq">
+                    <h3 class="aw-card-aq__title">Flux caméra</h3>
+                    <div class="cams-area dashboard-cams">
+                        <div class="camera-panel rgb card" data-url="/video">
+                            <div class="panel-header">
+                                <div class="panel-title">Caméra RGB</div>
+                                <div class="panel-controls">
+                                    <label class="small" for="rgb-resolution">Rés :</label>
+                                    <select id="rgb-resolution" aria-label="Résolution RGB">
+                                        <option value="640x480">640×480</option>
+                                        <option value="800x600">800×600</option>
+                                        <option value="1280x720" selected>1280×720</option>
+                                    </select>
+                                    <button type="button" id="video-toggle" class="btn-primary">RGB: OFF</button>
+                                    <div id="video-status" class="status-dot off">OFF</div>
+                                </div>
+                            </div>
+                            <div class="video-content">
+                                <img id="video-stream" class="video-stream" src="" alt="Flux RGB" />
+                                <canvas id="rgb-overlay" class="video-overlay" aria-hidden="true"></canvas>
+                                <div id="video-placeholder" class="video-placeholder">
+                                    <div class="video-loader"></div>
+                                    <div class="video-placeholder-text">Connexion caméra RGB…</div>
+                                </div>
+                                <div class="camera-stats small aw-line-badge">
+                                    <span class="dot" aria-hidden="true"></span>
+                                    <span id="rgb-status-line">EN LIGNE</span>
+                                    <span style="margin-left:8px;opacity:.7"><span id="rgb-res">1280×720</span> • <span id="rgb-bitrate">0 kb/s</span></span>
+                                    <span id="rgb-ai" class="ai-comment" style="margin-left:10px;color:var(--accent);font-weight:700"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="camera-panel thermal card" data-url="/thermal">
+                            <div class="panel-header">
+                                <div class="panel-title">Caméra thermique</div>
+                                <div class="panel-controls">
+                                    <button type="button" id="thermal-toggle" class="btn-primary">Thermal: OFF</button>
+                                    <div id="thermal-status" class="status-dot off">OFF</div>
+                                </div>
+                            </div>
+                            <div class="video-content">
+                                <img id="thermal-stream" class="thermal-stream" src="" alt="Flux thermique" />
+                                <canvas id="thermal-overlay" class="video-overlay" aria-hidden="true"></canvas>
+                                <div id="thermal-placeholder" class="video-placeholder">
+                                    <div class="video-loader"></div>
+                                    <div class="video-placeholder-text">Connexion thermique…</div>
+                                </div>
+                                <div class="camera-stats small aw-line-badge">
+                                    <span class="dot" aria-hidden="true"></span>
+                                    <span id="thermal-status-line">EN LIGNE</span>
+                                    <span style="margin-left:8px;opacity:.7"><span id="thermal-res">--</span> • <span id="thermal-fps">0 fps</span></span>
+                                    <span id="thermal-ai" class="ai-comment" style="margin-left:10px;color:var(--accent);font-weight:700"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="aw-card-aq">
+                    <h3 class="aw-card-aq__title">Alertes</h3>
+                    <ul class="aw-alerts" id="dash-alerts-list">
+                        <li><span class="aw-alert-dot" aria-hidden="true"></span><span>Système connecté <span style="opacity:.45">— il y a 1 min</span></span></li>
+                        <li><span class="aw-alert-dot" aria-hidden="true"></span><span>GPS fix acquis <span style="opacity:.45">— il y a 1 min</span></span></li>
+                        <li><span class="aw-alert-dot" aria-hidden="true"></span><span>Caméras en ligne <span style="opacity:.45">— il y a 1 min</span></span></li>
+                    </ul>
+                </section>
+
+                <section class="aw-card-aq">
+                    <h3 class="aw-card-aq__title">Détections</h3>
+                    <div class="aw-det-box" id="dash-detections-box">
+                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                            <circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>
+                        </svg>
+                        <span>Aucune détection. Les détections apparaîtront ici.</span>
+                    </div>
+                </section>
+
+                <section class="aw-card-aq">
+                    <h3 class="aw-card-aq__title">Systèmes</h3>
+                    <div class="aw-sys-mini">
+                        <div class="aw-sys-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Moteurs</div>
+                        <div class="aw-sys-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>IMU</div>
+                        <div class="aw-sys-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>GPS</div>
+                        <div class="aw-sys-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Caméra RGB</div>
+                        <div class="aw-sys-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Compas</div>
+                        <div class="aw-sys-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Caméra thermique</div>
+                    </div>
+                </section>
             </div>
         </main>
     </div>
@@ -579,8 +753,8 @@
 
             <div class="telemetry-footer">
                 <div class="speed-control">
-                    <label for="speed-control">Speed</label>
-                    <input id="speed-control" type="range" min="0" max="10" step="0.1" value="0">
+                    <label for="speed-control-telemetry-hidden">Speed (panneau caché)</label>
+                    <input id="speed-control-telemetry-hidden" type="range" min="0" max="15" step="0.1" value="5" tabindex="-1" aria-hidden="true">
 
                     <div class="mission-control" role="group" aria-label="Mission Control">
                         <div class="mission-label">Mission Control</div>
@@ -742,7 +916,7 @@
                         <button id="map-toggle" class="btn-primary">Map: ON</button>
                     </div>
                 </div>
-                <div id="map" class="map-canvas"></div>
+                <div id="map-legacy-dashboard-grid" class="map-canvas"></div>
             </div>
 
             <div class="cams-area">
@@ -799,23 +973,16 @@
         </section>
     </div>
     <!-- End of hidden dashboard-grid -->
-        </main>
-    </div>
-    <!-- End of app-layout -->
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-    <!-- CONTROL BAR removed -->
-
-
-
+    <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 
     <!-- Toast HUD -->
     <div id="toast" aria-live="polite" aria-atomic="true" class="toast-container" style="display:none;"></div>
 
     <script>/* dev: stamped version */ window.__MAP_CSS_VERSION='v2'; window.__MAP_JS_VERSION='v1';</script>
-    <script defer src="/dashboard.js?v=legacy-06b2452"></script>
+    <script defer src="/dashboard.js?v=aquawing-dash-layout-2"></script>
 </body>
 </html>
