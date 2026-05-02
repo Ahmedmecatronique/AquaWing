@@ -1,44 +1,164 @@
 <!doctype html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>AquaWing - Systems</title>
-    <link rel="stylesheet" href="/systems-page.css">
+    <title>AquaWing — Systems</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/systems-page.css?v=4">
 </head>
 <body>
-    <main class="systems-content">
-        <div class="systems-section">
-            <div class="systems-section-title">Power / Electrical</div>
-            <div class="systems-metrics">
-                <div class="systems-metric"><div class="systems-label">Battery Voltage</div><div class="systems-value">12.6 V</div></div>
-                <div class="systems-metric"><div class="systems-label">Battery Current</div><div class="systems-value">0.0 A</div></div>
-                <div class="systems-metric"><div class="systems-label">Power</div><div class="systems-value">0 W</div></div>
-                <div class="systems-metric"><div class="systems-label">Bus Voltage</div><div class="systems-value">12.6 V</div></div>
-                <div class="systems-metric"><div class="systems-label">Battery Temp</div><div class="systems-value">30°C</div></div>
-            </div>
-        </div>
+    <div class="sys-shell">
+        <main class="sys-dash" aria-label="Tableau systèmes">
+            <!-- Ligne 1 -->
+            <section class="sys-panel sys-panel--power">
+                <h2 class="sys-panel__title">POWER / ELECTRICAL</h2>
+                <div class="sys-power__body">
+                    <div class="sys-power__metrics">
+                        <div class="sys-kv"><span class="sys-kv__k">Battery Voltage</span><span class="sys-kv__v" id="sys-batt-v">12.6 V</span></div>
+                        <div class="sys-kv"><span class="sys-kv__k">Battery Current</span><span class="sys-kv__v" id="sys-batt-a">9.2 A</span></div>
+                        <div class="sys-kv"><span class="sys-kv__k">Power</span><span class="sys-kv__v" id="sys-power-w">116 W</span></div>
+                        <div class="sys-kv"><span class="sys-kv__k">Bus Voltage</span><span class="sys-kv__v" id="sys-bus-v">12.4 V</span></div>
+                        <div class="sys-kv"><span class="sys-kv__k">Battery Temp</span><span class="sys-kv__v" id="sys-batt-t">30°C</span></div>
+                        <div class="sys-kv"><span class="sys-kv__k">Capacity</span><span class="sys-kv__v sys-kv__v--cyan" id="sys-cap">87%</span></div>
+                    </div>
+                    <div class="sys-power__gauge">
+                        <div class="sys-ring" aria-hidden="true">
+                            <svg class="sys-ring__svg" viewBox="0 0 120 120">
+                                <circle class="sys-ring__track" cx="60" cy="60" r="48" fill="none" stroke-width="10"/>
+                                <circle class="sys-ring__arc" id="sys-batt-health-arc" cx="60" cy="60" r="48" fill="none" stroke-width="10" stroke-linecap="round" transform="rotate(-90 60 60)"/>
+                            </svg>
+                            <div class="sys-ring__label">
+                                <strong id="sys-batt-pct">87%</strong>
+                                <span>GOOD</span>
+                                <small class="sys-ring__hdr">BATTERY HEALTH</small>
+                            </div>
+                        </div>
+                        <div class="sys-mah-row">
+                            <span class="sys-mah-icon" aria-hidden="true">🔋</span>
+                            <span id="sys-mah">7320 mAh / 8400 mAh</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-        <div class="systems-section">
-            <div class="systems-section-title">Motors</div>
-            <div class="systems-motors-grid">
-                <div class="systems-motor-card"><div class="motor-label">Motor 1</div><div class="motor-status">OK</div><div class="motor-temp">45°C</div></div>
-                <div class="systems-motor-card"><div class="motor-label">Motor 2</div><div class="motor-status">OK</div><div class="motor-temp">45°C</div></div>
-                <div class="systems-motor-card"><div class="motor-label">Motor 3</div><div class="motor-status">OK</div><div class="motor-temp">45°C</div></div>
-            </div>
-        </div>
+            <section class="sys-panel sys-panel--motors">
+                <h2 class="sys-panel__title">MOTORS</h2>
+                <div class="sys-motors" id="sys-motors-root">
+                    <article class="sys-motor" data-i="1">
+                        <header class="sys-motor__hd">Motor 1</header>
+                        <div class="sys-motor__ok">OK</div>
+                        <div class="sys-motor__row"><span>RPM</span><strong data-rpm>5120</strong></div>
+                        <div class="sys-motor__row"><span>TEMP</span><strong data-temp>45°C</strong></div>
+                        <span class="sys-chip sys-chip--green">ESC OK</span>
+                    </article>
+                    <article class="sys-motor" data-i="2">
+                        <header class="sys-motor__hd">Motor 2</header>
+                        <div class="sys-motor__ok">OK</div>
+                        <div class="sys-motor__row"><span>RPM</span><strong data-rpm>5088</strong></div>
+                        <div class="sys-motor__row"><span>TEMP</span><strong data-temp>44°C</strong></div>
+                        <span class="sys-chip sys-chip--green">ESC OK</span>
+                    </article>
+                    <article class="sys-motor" data-i="3">
+                        <header class="sys-motor__hd">Motor 3</header>
+                        <div class="sys-motor__ok">OK</div>
+                        <div class="sys-motor__row"><span>RPM</span><strong data-rpm>5155</strong></div>
+                        <div class="sys-motor__row"><span>TEMP</span><strong data-temp>46°C</strong></div>
+                        <span class="sys-chip sys-chip--green">ESC OK</span>
+                    </article>
+                    <article class="sys-motor" data-i="4">
+                        <header class="sys-motor__hd">Motor 4</header>
+                        <div class="sys-motor__ok">OK</div>
+                        <div class="sys-motor__row"><span>RPM</span><strong data-rpm>5095</strong></div>
+                        <div class="sys-motor__row"><span>TEMP</span><strong data-temp>45°C</strong></div>
+                        <span class="sys-chip sys-chip--green">ESC OK</span>
+                    </article>
+                </div>
+            </section>
 
-        <div class="systems-section">
-            <div class="systems-section-title">Sensors</div>
-            <div class="systems-metrics">
-                <div class="systems-metric"><div class="systems-label">IMU</div><div class="systems-value status-normal">OK</div></div>
-                <div class="systems-metric"><div class="systems-label">GPS</div><div class="systems-value status-normal">FIX</div></div>
-                <div class="systems-metric"><div class="systems-label">Barometer</div><div class="systems-value">1013 hPa</div></div>
-                <div class="systems-metric"><div class="systems-label">Compass</div><div class="systems-value status-normal">OK</div></div>
-            </div>
-        </div>
-    </main>
+            <section class="sys-panel sys-panel--sensors">
+                <h2 class="sys-panel__title">SENSORS</h2>
+                <div class="sys-sensors-grid">
+                    <div class="sys-sensor-cell"><svg class="sys-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg><span class="sys-sensor-cell__lbl">IMU</span><span class="sys-sensor-cell__v sys-ok">OK</span></div>
+                    <div class="sys-sensor-cell"><svg class="sys-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 21c4-4 7-8 7-12a7 7 0 10-14 0c0 4 3 8 7 12z"/><circle cx="12" cy="9" r="2.2"/></svg><span class="sys-sensor-cell__lbl">GPS</span><span class="sys-sensor-cell__v sys-ok">FIX (12 sats)</span></div>
+                    <div class="sys-sensor-cell"><svg class="sys-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M4 18h16M6 14l3-6 4 4 3-6 2 8"/></svg><span class="sys-sensor-cell__lbl">BAROMETER</span><span class="sys-sensor-cell__v sys-cyan">1013 hPa</span></div>
+                    <div class="sys-sensor-cell"><svg class="sys-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="9"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg><span class="sys-sensor-cell__lbl">COMPASS</span><span class="sys-sensor-cell__v sys-ok">OK</span></div>
+                    <div class="sys-sensor-cell"><svg class="sys-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M3 12h4l2 8 4-16 2 8h6"/></svg><span class="sys-sensor-cell__lbl">LIDAR</span><span class="sys-sensor-cell__v sys-ok">ACTIVE</span></div>
+                    <div class="sys-sensor-cell"><svg class="sys-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="7" width="18" height="12" rx="2"/><circle cx="8" cy="13" r="2"/><path d="M14 11h5M14 15h3"/></svg><span class="sys-sensor-cell__lbl">OPTICAL FLOW</span><span class="sys-sensor-cell__v sys-ok">OK</span></div>
+                </div>
+            </section>
 
-    <script src="/systems-page.js"></script>
+            <!-- Ligne 2 -->
+            <section class="sys-panel sys-panel--comms">
+                <h2 class="sys-panel__title">COMMUNICATIONS</h2>
+                <table class="sys-table sys-table--comms">
+                    <thead><tr><th></th><th>Status</th><th>Signal</th><th>Latency</th></tr></thead>
+                    <tbody>
+                        <tr><td class="sys-table__name">FC LINK</td><td class="sys-ok">OK</td><td><div class="sys-sig" data-pct="100"></div><span class="sys-sig__pct">100%</span></td><td class="sys-cyan">12 ms</td></tr>
+                        <tr><td class="sys-table__name">TELEMETRY LINK</td><td class="sys-ok">OK</td><td><div class="sys-sig" data-pct="92"></div><span class="sys-sig__pct">92%</span></td><td class="sys-cyan">24 ms</td></tr>
+                        <tr><td class="sys-table__name">RC LINK</td><td class="sys-ok">OK</td><td><div class="sys-sig" data-pct="88"></div><span class="sys-sig__pct">88%</span></td><td class="sys-cyan">18 ms</td></tr>
+                        <tr><td class="sys-table__name">VIDEO LINK</td><td class="sys-ok">OK</td><td><div class="sys-sig" data-pct="95"></div><span class="sys-sig__pct">95%</span></td><td class="sys-cyan">45 ms</td></tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section class="sys-panel sys-panel--therm">
+                <h2 class="sys-panel__title">THERMALS / TEMPERATURES</h2>
+                <div class="sys-chart-wrap">
+                    <canvas id="sys-chart-thermal" aria-label="Températures"></canvas>
+                </div>
+                <div class="sys-thermal-readouts">
+                    <div class="sys-tr"><span>CPU</span><strong id="sys-t-cpu" class="sys-cyan">42°C</strong></div>
+                    <div class="sys-tr"><span>ESC AVG</span><strong id="sys-t-esc" class="sys-cyan">45°C</strong></div>
+                    <div class="sys-tr"><span>BATTERY</span><strong id="sys-t-bat" class="sys-cyan">30°C</strong></div>
+                    <div class="sys-tr"><span>AMBIENT</span><strong id="sys-t-amb" class="sys-cyan">24°C</strong></div>
+                </div>
+            </section>
+
+            <section class="sys-panel sys-panel--health">
+                <h2 class="sys-panel__title">SYSTEM HEALTH / FAILSAFES</h2>
+                <ul class="sys-checklist">
+                    <li><span class="sys-check">✓</span> Armable <span class="sys-r">OK</span></li>
+                    <li><span class="sys-check">✓</span> Geofence <span class="sys-r">OK</span></li>
+                    <li><span class="sys-check">✓</span> GPS Lock Stable <span class="sys-r">OK</span></li>
+                    <li><span class="sys-check">✓</span> EKF Healthy <span class="sys-r">OK</span></li>
+                    <li><span class="sys-check">✓</span> Power Stable <span class="sys-r">OK</span></li>
+                    <li><span class="sys-check">✓</span> RTL Ready <span class="sys-r">OK</span></li>
+                </ul>
+            </section>
+
+            <!-- Ligne 3 -->
+            <section class="sys-panel sys-panel--log">
+                <h2 class="sys-panel__title">SYSTEM LOG / ALERTS</h2>
+                <div class="sys-log-wrap">
+                    <ul class="sys-log" id="sys-log-root">
+                        <li><time>12:13:45</time><span class="sys-log__ic">✓</span><span class="sys-log__msg">Motor check passed</span><span class="sys-log__tag sys-log__tag--ok">SUCCESS</span></li>
+                        <li><time>12:13:42</time><span class="sys-log__ic">✓</span><span class="sys-log__msg">GPS 3D fix acquired</span><span class="sys-log__tag sys-log__tag--info">INFO</span></li>
+                        <li><time>12:13:38</time><span class="sys-log__ic">✓</span><span class="sys-log__msg">Baro calibration OK</span><span class="sys-log__tag sys-log__tag--ok">SUCCESS</span></li>
+                        <li><time>12:13:35</time><span class="sys-log__ic">✓</span><span class="sys-log__msg">EKF attitude stable</span><span class="sys-log__tag sys-log__tag--info">INFO</span></li>
+                        <li><time>12:13:30</time><span class="sys-log__ic">✓</span><span class="sys-log__msg">Power rail nominal</span><span class="sys-log__tag sys-log__tag--ok">SUCCESS</span></li>
+                    </ul>
+                </div>
+            </section>
+
+            <section class="sys-panel sys-panel--esc">
+                <h2 class="sys-panel__title">ESC / PERFORMANCE</h2>
+                <table class="sys-table sys-table--esc">
+                    <thead><tr><th></th><th>LOAD</th><th>EFFICIENCY</th><th>TEMP</th></tr></thead>
+                    <tbody id="sys-esc-tbody">
+                        <tr><td class="sys-table__name">ESC 1</td><td><div class="sys-bar-wrap"><span class="sys-bar sys-bar--load" style="--p:41%"></span></div><span class="sys-load-p">41%</span></td><td class="sys-eff">92%</td><td class="sys-cyan">45°C</td></tr>
+                        <tr><td class="sys-table__name">ESC 2</td><td><div class="sys-bar-wrap"><span class="sys-bar sys-bar--load" style="--p:38%"></span></div><span class="sys-load-p">38%</span></td><td class="sys-eff">93%</td><td class="sys-cyan">44°C</td></tr>
+                        <tr><td class="sys-table__name">ESC 3</td><td><div class="sys-bar-wrap"><span class="sys-bar sys-bar--load" style="--p:43%"></span></div><span class="sys-load-p">43%</span></td><td class="sys-eff">91%</td><td class="sys-cyan">46°C</td></tr>
+                        <tr><td class="sys-table__name">ESC 4</td><td><div class="sys-bar-wrap"><span class="sys-bar sys-bar--load" style="--p:39%"></span></div><span class="sys-load-p">39%</span></td><td class="sys-eff">92%</td><td class="sys-cyan">45°C</td></tr>
+                    </tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="/systems-page.js?v=4"></script>
 </body>
 </html>

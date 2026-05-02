@@ -335,6 +335,9 @@ def missions_page_js():
     return {"error": "Missions.js not found"}
 
 
+_SYSTEMS_NO_CACHE_HEADERS = {"Cache-Control": "no-store, max-age=0, must-revalidate"}
+
+
 @app.get("/systems-page")
 def systems_page(sid: str = Cookie(None), guest: Optional[str] = None):
     """Serve standalone Systems page."""
@@ -344,7 +347,7 @@ def systems_page(sid: str = Cookie(None), guest: Optional[str] = None):
 
     page_path = SYSTEMS_DIR / "Systems.html"
     if page_path.exists():
-        return FileResponse(str(page_path))
+        return FileResponse(str(page_path), headers=_SYSTEMS_NO_CACHE_HEADERS)
     return {"error": "Systems.html not found"}
 
 
@@ -353,7 +356,7 @@ def systems_page_css():
     """Serve standalone Systems CSS."""
     css_path = SYSTEMS_DIR / "Systems.css"
     if css_path.exists():
-        return FileResponse(str(css_path), media_type="text/css")
+        return FileResponse(str(css_path), media_type="text/css", headers=_SYSTEMS_NO_CACHE_HEADERS)
     return {"error": "Systems.css not found"}
 
 
@@ -362,7 +365,7 @@ def systems_page_js():
     """Serve standalone Systems JS."""
     js_path = SYSTEMS_DIR / "Systems.js"
     if js_path.exists():
-        return FileResponse(str(js_path), media_type="application/javascript")
+        return FileResponse(str(js_path), media_type="application/javascript", headers=_SYSTEMS_NO_CACHE_HEADERS)
     return {"error": "Systems.js not found"}
 
 

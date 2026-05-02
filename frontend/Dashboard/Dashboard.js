@@ -106,6 +106,42 @@ let waypointMarkers = [];     // [L.marker objects]
 let routeLine = null;         // L.polyline for route
 let savedMissions = [];        // List of saved missions from API
 let currentMissionName = null; // Currently loaded mission name
+/** True while replacing dashboard WP from iframe — évite de renvoyer le même état dans l'iframe. */
+let suppressMissionIframeWaypointSync = false;
+
+function getMissionsFrameWindowSafe() {
+    try {
+        return document.getElementById('missions-frame')?.contentWindow || null;
+    } catch (_e) {
+        return null;
+    }
+}
+
+function pushDashboardWaypointsToMissionFrame() {
+    if (suppressMissionIframeWaypointSync) return;
+    const w = getMissionsFrameWindowSafe();
+    if (!w || typeof w.applyDashboardWaypoints !== 'function') return;
+    try {
+        w.applyDashboardWaypoints(waypoints.map((wp) => ({ lat: wp.lat, lon: wp.lon })));
+    } catch (e) {
+        console.warn('sync waypoints → Missions iframe', e);
+    }
+}
+
+/** Exposé à l’iframe Mission : liste courante pour afficher les WP numérotés au chargement. */
+window.getDashboardWaypointsForMission = function () {
+    return waypoints.map((wp) => ({ lat: wp.lat, lon: wp.lon }));
+};
+
+function syncDashboardDroneToMissionFrame(lat, lon, heading) {
+    const w = getMissionsFrameWindowSafe();
+    if (!w || typeof w.applyDashboardDrone !== 'function') return;
+    try {
+        w.applyDashboardDrone(lat, lon, heading);
+    } catch (e) {
+        console.warn('sync drone → Missions iframe', e);
+    }
+}
 
 // Flight UI state (UI-only, simulated)
 let flightStarted = false;    // user clicked START FLIGHT
@@ -285,7 +321,6 @@ function resumeDemo(){
 const DASH_SPARK_LEN = 40;
 const dashSpark = { v: [], a: [], wh: [], t: [] };
 const dashHistPoints = [];
-let dashZonesChart = null;
 let dashHistChart = null;
 let dashHistMetric = 'alt';
 let dashHistRangeMs = 60 * 1000;
@@ -393,7 +428,7 @@ function updateDashMissionProgressUI() {
     const bar = document.getElementById('dash-mission-progress-bar');
     const pctEl = document.getElementById('dash-mission-pct');
     const meta = document.getElementById('dash-mission-progress-meta');
-    if (!bar || !pctEl) return;
+    if (!pctEl && !meta && !bar) return;
     const total = calculateRouteTotalDistance();
     let pct = 0;
     if (missionStartTime && total > 0) {
@@ -401,28 +436,10 @@ function updateDashMissionProgressUI() {
     } else if (missionStartTime) {
         pct = Math.min(99, ((Date.now() - missionStartTime) / 180000) * 100);
     }
-    bar.style.width = pct.toFixed(1) + '%';
-    pctEl.textContent = Math.round(pct) + '%';
+    if (bar) bar.style.width = pct.toFixed(1) + '%';
+    if (pctEl) pctEl.textContent = Math.round(pct) + '%';
     if (meta) {
         meta.textContent = missionStartTime ? 'Mission en cours' : 'En attente de démarrage';
-    }
-}
-
-function updateDashZonesFromArea(areaM2) {
-    const scanned = typeof areaM2 === 'number' ? areaM2 : 0;
-    const target = 50000;
-    const remaining = Math.max(0, target - scanned);
-    const total = Math.max(target, scanned + remaining);
-    const tel = document.getElementById('dash-zone-scanned');
-    const tr = document.getElementById('dash-zone-remaining');
-    const tt = document.getElementById('dash-zone-total');
-    if (tel) tel.textContent = Math.round(scanned).toString();
-    if (tr) tr.textContent = Math.round(remaining).toString();
-    if (tt) tt.textContent = Math.round(total).toString();
-    if (dashZonesChart) {
-        const s = total > 0 ? Math.min(1, scanned / total) : 0;
-        dashZonesChart.data.datasets[0].data = [Math.max(0.001, s), Math.max(0.001, 1 - s)];
-        dashZonesChart.update('none');
     }
 }
 
@@ -431,36 +448,9 @@ function initAquawingDashboard() {
         updateDashGaugeArc(0);
         const sc = document.getElementById('speed-control');
         const dcmd = document.getElementById('dash-cmd-speed');
-        const side = document.getElementById('speed-control-sidebar');
         if (sc && dcmd) dcmd.textContent = parseFloat(sc.value).toFixed(1);
-        if (sc && side) {
-            side.value = sc.value;
-            const svd = document.getElementById('speed-value-display');
-            if (svd) svd.textContent = parseFloat(sc.value).toFixed(1);
-        }
         if (typeof Chart === 'undefined') {
-            updateDashZonesFromArea(0);
             return;
-        }
-        const donutEl = document.getElementById('chart-dash-zones');
-        if (donutEl) {
-            dashZonesChart = new Chart(donutEl, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Scanné', 'Restant'],
-                    datasets: [{
-                        data: [0, 1],
-                        backgroundColor: ['#00e676', '#252d3a'],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    cutout: '66%',
-                    plugins: { legend: { display: false } }
-                }
-            });
         }
         const histEl = document.getElementById('chart-dash-history');
         if (histEl) {
@@ -505,7 +495,6 @@ function initAquawingDashboard() {
                 refreshDashHistoryChart();
             });
         });
-        updateDashZonesFromArea(0);
     } catch (e) {
         console.warn('initAquawingDashboard', e);
     }
@@ -675,15 +664,6 @@ function updateTelemetry(data) {
     const distTraveled = distanceTraveled / 1000;
     setOverviewText('overview-distance', `${distTraveled.toFixed(2)} km`);
     
-    // Update speed control panel telemetry
-    setOverviewText('speed-panel-battery', `${battery.toFixed(0)}%`);
-    setOverviewText('speed-panel-battery-volt', `${(battery * 0.168).toFixed(1)}V`);
-    setOverviewText('speed-panel-gps', `${data.gps_sats || 0} SATS`);
-    setOverviewText('speed-panel-alt', `${alt.toFixed(1)}m`);
-    setOverviewText('speed-panel-speed', `${speed.toFixed(1)} m/s`);
-    setOverviewText('speed-panel-heading', `${Math.round(heading)}°`);
-    setOverviewText('speed-panel-distance', `${distTraveled.toFixed(2)} km`);
-    
     // Update Systems panel
     const setSysText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
     setSysText('sys-batt-voltage', `${(battery * 0.168).toFixed(1)} V`);
@@ -769,6 +749,8 @@ function updateTelemetry(data) {
 
     // Follow
     if (followMode) map.panTo(latlng);
+
+    syncDashboardDroneToMissionFrame(lat, lon, heading);
 
     // Map telemetry fields to system panel when available (non-destructive)
     try {
@@ -860,7 +842,7 @@ function updateRouteControls() {
 
 /** Add a waypoint at given lat/lon */
 function addWaypoint(lat, lon) {
-    if (!waypointsEnabled) return;
+    if (!waypointsEnabled && !suppressMissionIframeWaypointSync) return;
     
     // Round to 7 decimals
     lat = Math.round(lat * 1e7) / 1e7;
@@ -887,6 +869,7 @@ function addWaypoint(lat, lon) {
         waypoints[seq - 1].lon = Math.round(newPos.lng * 1e7) / 1e7;
         updateRouteLine();
         updateDistanceDisplay();
+        pushDashboardWaypointsToMissionFrame();
     });
     
     // Context menu (right-click) to delete
@@ -899,6 +882,7 @@ function addWaypoint(lat, lon) {
     updateRouteLine();
     updateDistanceDisplay();
     updateRouteControls();
+    pushDashboardWaypointsToMissionFrame();
 }
 
 /** Remove waypoint at index */
@@ -922,6 +906,7 @@ function deleteWaypoint(index, marker) {
     updateRouteLine();
     updateDistanceDisplay();
     updateRouteControls();
+    pushDashboardWaypointsToMissionFrame();
 }
 
 /** Redraw route polyline connecting waypoints */
@@ -953,7 +938,34 @@ function clearAllWaypoints() {
     if (routeLine) routeLine.setLatLngs([]);
     updateDistanceDisplay();
     updateRouteControls();
+    pushDashboardWaypointsToMissionFrame();
 }
+
+/**
+ * Remplace tous les WP du tableau de bord (appel depuis l'iframe Mission).
+ * @param {Array<{lat:number,lon:number,lng?:number}>} rawPoints
+ */
+window.setMissionWaypoints = function (rawPoints) {
+    suppressMissionIframeWaypointSync = true;
+    try {
+        if (!map) initMap();
+        clearAllWaypoints();
+        const pts = (Array.isArray(rawPoints) ? rawPoints : [])
+            .map((p) => ({
+                lat: Math.round(Number(p.lat) * 1e7) / 1e7,
+                lon: Math.round(Number(p.lon !== undefined ? p.lon : p.lng) * 1e7) / 1e7,
+            }))
+            .filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lon));
+        const hadEnabled = waypointsEnabled;
+        waypointsEnabled = true;
+        pts.forEach((p) => {
+            addWaypoint(p.lat, p.lon);
+        });
+        waypointsEnabled = hadEnabled;
+    } finally {
+        suppressMissionIframeWaypointSync = false;
+    }
+};
 
 /** Send route to backend via WebSocket */
 /** Ensure WebSocket is connected (lazy connect) */
@@ -2343,8 +2355,9 @@ window.addEventListener('load', () => {
     initAquawingDashboard();
     // WebSocket connects lazily when user sends a command (to avoid backend circular demo telemetry)
     // Demo does NOT auto-start — user must define a trajectory then click START FLIGHT
-    setVideo(false);
-    setThermal(false);
+    // Aqua : pas de boutons RGB/Thermal sur les tuiles principales → démarrer les flux automatiquement
+    setVideo(true);
+    setThermal(true);
     // Ensure route controls initial state
     updateRouteControls();
 
@@ -2377,21 +2390,14 @@ window.addEventListener('load', () => {
         
         // Show/hide content based on navigation
         if (activeEl === navDashboard) {
-            // Dashboard: show system overview, map, cameras, and speed control panel
+            // Dashboard: carte + contenu principal
             const dashboardCams = document.querySelector('.dashboard-cams');
-            const speedControlPanel = document.getElementById('speed-control-panel');
             const missionsPanel = document.getElementById('missions-panel');
             const systemsPanel = document.getElementById('systems-panel');
             const opticalPanel = document.getElementById('optical-panel');
             const opticalCamerasView = document.getElementById('optical-cameras-view');
             const mainContent = document.querySelector('.main-content');
             const mapContainer = document.querySelector('.map-container');
-            
-            // Show speed control panel
-            if (speedControlPanel) {
-                speedControlPanel.style.display = 'flex';
-                console.log('Speed control panel shown');
-            }
             
             // Hide other panels
             if (missionsPanel) missionsPanel.style.display = 'none';
@@ -2419,14 +2425,12 @@ window.addEventListener('load', () => {
             if (rightColumn) rightColumn.style.display = 'flex';
         } else if (activeEl === navMissions) {
             // Missions: iframe pleine zone (Mission Control), dashboard map masqué
-            const speedControlPanel = document.getElementById('speed-control-panel');
             const missionsPanel = document.getElementById('missions-panel');
             const systemsPanel = document.getElementById('systems-panel');
             const opticalPanel = document.getElementById('optical-panel');
             const mainContent = document.querySelector('.main-content');
             
             // Hide other panels
-            if (speedControlPanel) speedControlPanel.style.display = 'none';
             if (systemsPanel) systemsPanel.style.display = 'none';
             if (opticalPanel) opticalPanel.style.display = 'none';
             const pidPanel = document.getElementById('pid-panel');
@@ -2442,6 +2446,11 @@ window.addEventListener('load', () => {
             if (missionsPanel) {
                 missionsPanel.style.display = 'flex';
                 console.log('Missions panel shown');
+                /* L’iframe charge en lazy ; repousser les WP pour retrouver les pastilles numérotées */
+                pushDashboardWaypointsToMissionFrame();
+                requestAnimationFrame(() => pushDashboardWaypointsToMissionFrame());
+                setTimeout(() => pushDashboardWaypointsToMissionFrame(), 280);
+                setTimeout(() => pushDashboardWaypointsToMissionFrame(), 900);
             }
             
             if (mainContent) {
@@ -2470,18 +2479,23 @@ window.addEventListener('load', () => {
             }
         } else if (activeEl === navSystems) {
             // Systems: show systems panel
-            const speedControlPanel = document.getElementById('speed-control-panel');
             const missionsPanel = document.getElementById('missions-panel');
             const systemsPanel = document.getElementById('systems-panel');
             const opticalPanel = document.getElementById('optical-panel');
             const mainContent = document.querySelector('.main-content');
             const dashboardCams = document.querySelector('.dashboard-cams');
             
-            if (speedControlPanel) speedControlPanel.style.display = 'none';
             if (missionsPanel) missionsPanel.style.display = 'none';
             if (systemsPanel) {
                 systemsPanel.style.display = 'flex';
                 console.log('Systems panel shown');
+                const sf = document.getElementById('systems-frame');
+                if (sf) {
+                    try {
+                        const base = sf.getAttribute('data-systems-src') || '/systems-page';
+                        sf.src = `${base}?ui=sysdash-v4&t=${Date.now()}`;
+                    } catch (_) { /* noop */ }
+                }
             }
             if (opticalPanel) opticalPanel.style.display = 'none';
             const pidPanelSystems = document.getElementById('pid-panel');
@@ -2497,7 +2511,6 @@ window.addEventListener('load', () => {
             if (dashboardCams) dashboardCams.style.display = 'none';
         } else if (activeEl === navOptical) {
             // Optical: show standalone optical page panel
-            const speedControlPanel = document.getElementById('speed-control-panel');
             const missionsPanel = document.getElementById('missions-panel');
             const systemsPanel = document.getElementById('systems-panel');
             const opticalPanel = document.getElementById('optical-panel');
@@ -2507,7 +2520,6 @@ window.addEventListener('load', () => {
             const mainContent = document.querySelector('.main-content');
             const dashboardCams = document.querySelector('.dashboard-cams');
             
-            if (speedControlPanel) speedControlPanel.style.display = 'none';
             if (missionsPanel) missionsPanel.style.display = 'none';
             if (systemsPanel) systemsPanel.style.display = 'none';
             // Hide PID panel in Optical view
@@ -2530,7 +2542,6 @@ window.addEventListener('load', () => {
             if (dashboardCams) dashboardCams.style.display = 'none';
         } else if (activeEl === navPid) {
             // PID Settings: show PID settings panel
-            const speedControlPanel = document.getElementById('speed-control-panel');
             const missionsPanel = document.getElementById('missions-panel');
             const systemsPanel = document.getElementById('systems-panel');
             const opticalPanel = document.getElementById('optical-panel');
@@ -2541,7 +2552,6 @@ window.addEventListener('load', () => {
             const dashboardCams = document.querySelector('.dashboard-cams');
             const mainLayout = document.querySelector('.main-layout');
             
-            if (speedControlPanel) speedControlPanel.style.display = 'none';
             if (missionsPanel) missionsPanel.style.display = 'none';
             if (systemsPanel) systemsPanel.style.display = 'none';
             if (opticalPanel) opticalPanel.style.display = 'none';
@@ -2563,7 +2573,6 @@ window.addEventListener('load', () => {
             }
         } else if (activeEl === navElectricalWiring) {
             // Electrical Wiring: show electrical wiring panel
-            const speedControlPanel = document.getElementById('speed-control-panel');
             const missionsPanel = document.getElementById('missions-panel');
             const systemsPanel = document.getElementById('systems-panel');
             const opticalPanel = document.getElementById('optical-panel');
@@ -2575,7 +2584,6 @@ window.addEventListener('load', () => {
             const mainContent = document.querySelector('.main-content');
             const dashboardCams = document.querySelector('.dashboard-cams');
             
-            if (speedControlPanel) speedControlPanel.style.display = 'none';
             if (missionsPanel) missionsPanel.style.display = 'none';
             if (systemsPanel) systemsPanel.style.display = 'none';
             if (opticalPanel) opticalPanel.style.display = 'none';
@@ -2592,7 +2600,6 @@ window.addEventListener('load', () => {
             }
         } else if (activeEl === navHeatmap) {
             // Heatmap: show heatmap panel with map
-            const speedControlPanel = document.getElementById('speed-control-panel');
             const missionsPanel = document.getElementById('missions-panel');
             const systemsPanel = document.getElementById('systems-panel');
             const opticalPanel = document.getElementById('optical-panel');
@@ -2604,7 +2611,6 @@ window.addEventListener('load', () => {
             const mainContent = document.querySelector('.main-content');
             const dashboardCams = document.querySelector('.dashboard-cams');
             
-            if (speedControlPanel) speedControlPanel.style.display = 'none';
             if (missionsPanel) missionsPanel.style.display = 'none';
             if (systemsPanel) systemsPanel.style.display = 'none';
             if (opticalPanel) opticalPanel.style.display = 'none';
@@ -2628,7 +2634,6 @@ window.addEventListener('load', () => {
             }
         } else if (activeEl === navSettings) {
             // Settings: show settings panel
-            const speedControlPanel = document.getElementById('speed-control-panel');
             const missionsPanel = document.getElementById('missions-panel');
             const systemsPanel = document.getElementById('systems-panel');
             const opticalPanel = document.getElementById('optical-panel');
@@ -2638,7 +2643,6 @@ window.addEventListener('load', () => {
             const mainContent = document.querySelector('.main-content');
             const dashboardCams = document.querySelector('.dashboard-cams');
             
-            if (speedControlPanel) speedControlPanel.style.display = 'none';
             if (missionsPanel) missionsPanel.style.display = 'none';
             if (systemsPanel) systemsPanel.style.display = 'none';
             if (opticalPanel) opticalPanel.style.display = 'none';
@@ -2706,6 +2710,16 @@ window.addEventListener('load', () => {
             setActiveNav(navSettings);
         });
     }
+
+    const missionsIframe = document.getElementById('missions-frame');
+    if (missionsIframe && !missionsIframe.dataset.awWaypointSyncAttached) {
+        missionsIframe.dataset.awWaypointSyncAttached = '1';
+        missionsIframe.addEventListener('load', () => {
+            pushDashboardWaypointsToMissionFrame();
+            requestAnimationFrame(() => pushDashboardWaypointsToMissionFrame());
+            setTimeout(() => pushDashboardWaypointsToMissionFrame(), 160);
+        });
+    }
     
     // Optical panel close (X) button: only hide settings panel; stay on Optical page; no route/nav change
     const opticalPanelClose = document.getElementById('optical-panel-close');
@@ -2716,45 +2730,6 @@ window.addEventListener('load', () => {
             isOpticalSettingsVisible = false;
             const opticalPanel = document.getElementById('optical-panel');
             if (opticalPanel) opticalPanel.classList.add('collapsed');
-        });
-    }
-
-    // Speed Control panel close (X) button: hide panel only; other UI unchanged
-    const speedControlPanelClose = document.getElementById('speed-control-panel-close');
-    if (speedControlPanelClose) {
-        speedControlPanelClose.addEventListener('click', () => {
-            const speedControlPanel = document.getElementById('speed-control-panel');
-            if (speedControlPanel) speedControlPanel.style.display = 'none';
-        });
-    }
-    
-    // Wire up speed control in sidebar
-    const speedControlSidebar = document.getElementById('speed-control-sidebar');
-    const speedValueDisplay = document.getElementById('speed-value-display');
-    if (speedControlSidebar && speedValueDisplay) {
-        speedControlSidebar.addEventListener('input', (e) => {
-            const val = parseFloat(e.target.value);
-            speedValueDisplay.textContent = val.toFixed(1);
-            // Also update the main speed control if it exists
-            const mainSpeedControl = document.getElementById('speed-control');
-            if (mainSpeedControl) {
-                mainSpeedControl.value = val;
-                const setSpeedValue = document.getElementById('set-speed-value');
-                if (setSpeedValue) setSpeedValue.textContent = val.toFixed(1);
-            }
-            // Send via WebSocket
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                try { ws.send(JSON.stringify({cmd:'set_speed', value: val})); } catch(e) { console.warn('WS send failed', e); }
-            }
-        });
-    }
-    
-    // Sync main speed control with sidebar
-    const mainSpeedControl = document.getElementById('speed-control');
-    if (mainSpeedControl && speedControlSidebar) {
-        mainSpeedControl.addEventListener('input', (e) => {
-            speedControlSidebar.value = e.target.value;
-            if (speedValueDisplay) speedValueDisplay.textContent = parseFloat(e.target.value).toFixed(1);
         });
     }
 
@@ -3484,7 +3459,14 @@ function updateSystemHealth() {
     // GPS status
     const gpsDot = document.getElementById('health-gps-dot');
     if (gpsDot) {
-        const gpsSats = parseInt(document.getElementById('speed-panel-gps')?.textContent || '0');
+        let gpsSats = 0;
+        const gnEl = document.getElementById('dash-tile-gps-n');
+        if (gnEl && gnEl.textContent.trim() !== '') {
+            gpsSats = parseInt(gnEl.textContent.trim(), 10) || 0;
+        }
+        if (!gpsSats && lastTelemetryData && lastTelemetryData.gps_sats != null) {
+            gpsSats = Number(lastTelemetryData.gps_sats);
+        }
         if (gpsSats >= 6) {
             gpsDot.className = 'health-dot healthy';
             systemHealth.gps = 'healthy';
@@ -3501,8 +3483,16 @@ function updateSystemHealth() {
     const battDot = document.getElementById('health-battery-dot');
     const battLabel = document.getElementById('health-battery-label');
     if (battDot && battLabel) {
-        const battText = document.getElementById('speed-panel-battery')?.textContent || '100%';
-        const battPercent = parseInt(battText) || 100;
+        let battPercent = 100;
+        const batPctEl = document.getElementById('dash-tile-bat-pct');
+        if (batPctEl && batPctEl.textContent.trim() !== '') {
+            battPercent = parseInt(batPctEl.textContent.trim(), 10);
+        }
+        if (Number.isNaN(battPercent) && lastTelemetryData && lastTelemetryData.battery != null) {
+            battPercent = Math.round(Number(lastTelemetryData.battery));
+        }
+        if (Number.isNaN(battPercent)) battPercent = 100;
+        battPercent = Math.max(0, Math.min(100, battPercent));
         if (battPercent > 50) {
             battDot.className = 'health-dot healthy';
             systemHealth.battery = 'healthy';
@@ -3706,9 +3696,6 @@ function updateMissionStatsCard() {
         } else {
             areaEl.textContent = `${Math.round(areaM2)} m²`;
         }
-        try {
-            updateDashZonesFromArea(areaM2);
-        } catch (e) { /* noop */ }
     }
     
     // Update detection count

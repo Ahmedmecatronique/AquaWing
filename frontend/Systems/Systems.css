@@ -1,7 +1,13 @@
+/* AquaWing Systems — aligné maquette dark / orange / cyan / vert */
 :root {
-    --text: #eaf2ff;
-    --muted: rgba(234, 242, 255, 0.55);
-    --accent: #ff7a18;
+    --sys-bg: #0a0e14;
+    --sys-panel: #0d1219;
+    --sys-edge: rgba(40, 54, 72, 0.55);
+    --sys-header-orange: #ff8c00;
+    --sys-muted: rgba(180, 195, 215, 0.55);
+    --sys-cyan: #22d3ee;
+    --sys-green: #00e676;
+    --sys-text: #e8f0ff;
 }
 
 * { box-sizing: border-box; }
@@ -9,70 +15,493 @@
 html, body {
     margin: 0;
     width: 100%;
-    height: 100%;
+    min-height: 100%;
     background: transparent;
-    color: var(--text);
-    font-family: "Outfit", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-}
-
-.systems-content {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 16px;
-    padding: 8px;
-}
-
-.systems-section {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
-    padding: 16px;
-}
-
-.systems-section-title {
+    color: var(--sys-text);
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
     font-size: 13px;
+}
+
+.sys-shell {
+    min-height: 100%;
+    padding: 10px 12px 14px;
+    background: var(--sys-bg);
+}
+
+.sys-dash {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: auto auto auto;
+    gap: 12px;
+    max-width: 1800px;
+    margin: 0 auto;
+}
+
+/* Grille : log 2 cols, esc 1 col */
+.sys-panel--log {
+    grid-column: 1 / 3;
+}
+
+.sys-panel--esc {
+    grid-column: 3 / 4;
+}
+
+.sys-panel {
+    background: var(--sys-panel);
+    border: 1px solid var(--sys-edge);
+    border-radius: 6px;
+    padding: 14px 14px 16px;
+    min-width: 0;
+}
+
+.sys-panel__title {
+    margin: 0 0 14px;
+    font-size: 12px;
     font-weight: 800;
-    color: var(--accent);
+    letter-spacing: 0.12em;
     text-transform: uppercase;
-    letter-spacing: 0.6px;
-    margin-bottom: 10px;
+    color: var(--sys-header-orange);
 }
 
-.systems-metrics {
+.sys-ok { color: var(--sys-green); font-weight: 700; }
+.sys-cyan { color: var(--sys-cyan); font-weight: 700; }
+
+/* ----- POWER ----- */
+.sys-power__body {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    align-items: flex-start;
+    justify-content: space-between;
+}
+
+.sys-power__metrics {
     display: grid;
-    grid-template-columns: repeat(2, minmax(100px, 1fr));
-    gap: 10px 16px;
+    grid-template-columns: repeat(2, minmax(120px, 1fr));
+    gap: 14px 28px;
+    flex: 1 1 220px;
 }
 
-.systems-label {
+.sys-kv__k {
+    display: block;
     font-size: 10px;
-    color: var(--muted);
+    font-weight: 600;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
-    margin-bottom: 2px;
+    color: var(--sys-muted);
+    margin-bottom: 4px;
 }
 
-.systems-value {
-    font-size: 22px;
-    font-weight: 900;
-    color: var(--text);
-    line-height: 1.1;
+.sys-kv__v {
+    font-size: 21px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--sys-text);
 }
 
-.status-normal { color: #00ff88; }
+.sys-power__gauge {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
 
-.systems-motors-grid {
+.sys-ring {
+    position: relative;
+    width: 130px;
+    height: 130px;
+}
+
+.sys-ring__svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.sys-ring__track {
+    stroke: rgba(45, 56, 72, 0.9);
+}
+
+.sys-ring__arc {
+    stroke: var(--sys-green);
+    stroke-dasharray: 301.59;
+    stroke-dashoffset: 39.2;
+    transition: stroke-dashoffset 0.4s ease;
+}
+
+.sys-ring__label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    pointer-events: none;
+}
+
+.sys-ring__label strong {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--sys-text);
+    line-height: 1;
+}
+
+.sys-ring__label span {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--sys-green);
+    letter-spacing: 0.06em;
+}
+
+.sys-ring__hdr {
+    display: block;
+    margin-top: 4px;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--sys-muted);
+}
+
+.sys-mah-row {
+    font-size: 11px;
+    color: var(--sys-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.sys-mah-icon { font-size: 14px; opacity: 0.85; }
+
+/* ----- MOTORS ----- */
+.sys-motors {
     display: grid;
-    grid-template-columns: repeat(2, minmax(110px, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
 }
 
-.systems-motor-card {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
-    padding: 12px;
+.sys-motor {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--sys-edge);
+    border-radius: 6px;
+    padding: 10px 12px;
 }
 
-.motor-label { font-size: 10px; color: var(--muted); text-transform: uppercase; }
-.motor-status { font-size: 22px; font-weight: 900; color: #00ff88; margin-top: 4px; }
-.motor-temp { font-size: 11px; color: rgba(255, 255, 255, 0.6); margin-top: 2px; }
+.sys-motor__hd {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--sys-muted);
+}
+
+.sys-motor__ok {
+    font-size: 22px;
+    font-weight: 900;
+    color: var(--sys-green);
+    margin: 6px 0 8px;
+}
+
+.sys-motor__row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--sys-muted);
+    margin-bottom: 4px;
+}
+
+.sys-motor__row strong {
+    color: var(--sys-cyan);
+    font-weight: 800;
+}
+
+.sys-chip {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+}
+
+.sys-chip--green {
+    background: rgba(0, 230, 118, 0.12);
+    color: var(--sys-green);
+    border: 1px solid rgba(0, 230, 118, 0.35);
+}
+
+/* ----- SENSORS ----- */
+.sys-sensors-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.sys-sensor-cell {
+    display: grid;
+    grid-template-columns: 28px 1fr;
+    grid-template-rows: auto auto;
+    align-items: center;
+    column-gap: 10px;
+    padding: 10px 10px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--sys-edge);
+    border-radius: 6px;
+}
+
+.sys-sensor-cell .sys-ic {
+    grid-row: 1 / 3;
+    width: 24px;
+    height: 24px;
+    color: var(--sys-muted);
+}
+
+.sys-sensor-cell__lbl {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--sys-muted);
+}
+
+.sys-sensor-cell__v {
+    grid-column: 2;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+/* ----- TABLES ----- */
+.sys-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+}
+
+.sys-table th {
+    text-align: left;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--sys-muted);
+    padding: 8px 10px 10px 0;
+    border-bottom: 1px solid var(--sys-edge);
+}
+
+.sys-table td {
+    padding: 10px 10px 10px 0;
+    vertical-align: middle;
+    border-bottom: 1px solid rgba(40, 54, 72, 0.35);
+}
+
+.sys-table__name {
+    font-weight: 700;
+    color: rgba(220, 228, 242, 0.9);
+    white-space: nowrap;
+}
+
+.sys-table--comms td:nth-child(3),
+.sys-table--esc td:nth-child(2) {
+    min-width: 120px;
+}
+
+/* Signal bars */
+.sys-sig {
+    display: inline-flex;
+    gap: 2px;
+    align-items: flex-end;
+    height: 14px;
+    vertical-align: middle;
+    margin-right: 8px;
+}
+
+.sys-sig__bar {
+    width: 5px;
+    border-radius: 1px;
+    background: rgba(60, 74, 94, 0.8);
+}
+
+.sys-sig__bar--on {
+    background: linear-gradient(180deg, var(--sys-cyan), #0e7490);
+}
+
+.sys-sig__pct {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--sys-cyan);
+}
+
+/* ----- THERMAL ----- */
+.sys-chart-wrap {
+    height: 140px;
+    margin-bottom: 14px;
+}
+
+.sys-chart-wrap canvas {
+    max-height: 140px;
+}
+
+.sys-thermal-readouts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 16px;
+}
+
+.sys-tr {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 10px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    border: 1px solid rgba(40, 54, 72, 0.4);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--sys-muted);
+    text-transform: uppercase;
+}
+
+/* ----- HEALTH ----- */
+.sys-checklist {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.sys-checklist li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 8px;
+    border-bottom: 1px solid rgba(40, 54, 72, 0.35);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.sys-checklist li:last-child { border-bottom: 0; }
+
+.sys-check {
+    color: var(--sys-green);
+    font-weight: 900;
+    font-size: 14px;
+}
+
+.sys-r {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--sys-green);
+}
+
+/* ----- LOG ----- */
+.sys-log-wrap {
+    max-height: 220px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(80, 100, 120, 0.6) transparent;
+}
+
+.sys-log {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.sys-log li {
+    display: grid;
+    grid-template-columns: 72px 22px 1fr auto;
+    gap: 8px;
+    align-items: center;
+    padding: 8px 6px;
+    font-size: 11px;
+    border-bottom: 1px solid rgba(40, 54, 72, 0.3);
+}
+
+.sys-log li time {
+    font-variant-numeric: tabular-nums;
+    color: var(--sys-muted);
+    font-weight: 600;
+}
+
+.sys-log__ic {
+    color: var(--sys-green);
+    font-weight: 800;
+}
+
+.sys-log__msg { color: rgba(226, 234, 250, 0.92); }
+
+.sys-log__tag {
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.sys-log__tag--ok {
+    background: rgba(0, 230, 118, 0.12);
+    color: var(--sys-green);
+}
+
+.sys-log__tag--info {
+    background: rgba(34, 211, 238, 0.1);
+    color: var(--sys-cyan);
+}
+
+/* ----- ESC bars ----- */
+.sys-bar-wrap {
+    display: inline-block;
+    width: 100%;
+    max-width: 110px;
+    height: 8px;
+    background: rgba(30, 40, 55, 0.9);
+    border-radius: 4px;
+    overflow: hidden;
+    vertical-align: middle;
+    margin-right: 8px;
+}
+
+.sys-bar {
+    display: block;
+    height: 100%;
+    width: var(--p);
+    border-radius: 4px;
+    background: linear-gradient(90deg, #0284c7, var(--sys-cyan));
+}
+
+.sys-load-p {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--sys-cyan);
+}
+
+.sys-eff {
+    color: var(--sys-green);
+    font-weight: 800;
+}
+
+@media (max-width: 1200px) {
+    .sys-dash {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .sys-panel--log { grid-column: 1 / -1; }
+    .sys-panel--esc { grid-column: 1 / -1; }
+}
+
+@media (max-width: 780px) {
+    .sys-dash {
+        grid-template-columns: 1fr;
+    }
+    .sys-panel--log,
+    .sys-panel--esc {
+        grid-column: 1;
+    }
+    .sys-motors { grid-template-columns: 1fr; }
+    .sys-sensors-grid { grid-template-columns: 1fr; }
+    .sys-thermal-readouts { grid-template-columns: 1fr; }
+}

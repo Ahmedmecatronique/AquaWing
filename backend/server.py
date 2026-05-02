@@ -324,6 +324,8 @@ def create_app() -> FastAPI:
             return FileResponse(str(js_path), media_type="application/javascript")
         return {"error": "Missions.js not found"}
 
+    _systems_nocache = {"Cache-Control": "no-store, max-age=0, must-revalidate"}
+
     @app.get("/systems-page")
     async def systems_page(session_id: str = Cookie(None)):
         """
@@ -334,7 +336,7 @@ def create_app() -> FastAPI:
 
         page_path = systems_dir / "Systems.html"
         if page_path.exists():
-            return FileResponse(str(page_path))
+            return FileResponse(str(page_path), headers=_systems_nocache)
         return {"error": "Systems.html not found"}
 
     @app.get("/systems-page.css")
@@ -344,7 +346,7 @@ def create_app() -> FastAPI:
         """
         css_path = systems_dir / "Systems.css"
         if css_path.exists():
-            return FileResponse(str(css_path), media_type="text/css")
+            return FileResponse(str(css_path), media_type="text/css", headers=_systems_nocache)
         return {"error": "Systems.css not found"}
 
     @app.get("/systems-page.js")
@@ -354,7 +356,7 @@ def create_app() -> FastAPI:
         """
         js_path = systems_dir / "Systems.js"
         if js_path.exists():
-            return FileResponse(str(js_path), media_type="application/javascript")
+            return FileResponse(str(js_path), media_type="application/javascript", headers=_systems_nocache)
         return {"error": "Systems.js not found"}
 
     @app.get("/optical-page")

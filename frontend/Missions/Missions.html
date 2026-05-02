@@ -5,20 +5,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>AquaWing - Mission Control</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-    <link rel="stylesheet" href="/missions-page.css?v=4">
+    <link rel="stylesheet" href="/missions-page.css?v=12">
 </head>
 <body>
     <main class="missions-root">
         <div class="missions-layout">
             <section class="mission-side">
                 <div class="mission-control-buttons">
-                    <button id="start-flight-btn" class="mission-btn btn-success">START FLIGHT</button>
-                    <button id="pause-mission-btn" class="mission-btn btn-warning">PAUSE</button>
-                    <button id="resume-mission-btn" class="mission-btn btn-success">RESUME</button>
-                    <button id="preflight-btn" class="mission-btn btn-preflight">PRE-FLIGHT CHECK</button>
-                    <button id="emergency-rtl-btn" class="mission-btn btn-warning">EMERGENCY RTL</button>
-                    <button id="wait-btn" class="mission-btn btn-danger">END MISSION</button>
-                    <button id="clear-waypoints-btn" class="mission-btn btn-clear">CLEAR WAYPOINTS</button>
+                    <button type="button" id="start-flight-btn" class="mission-btn mission-btn--start">
+                        <span class="mission-btn__icon" aria-hidden="true">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7L8 5z"/></svg>
+                        </span>
+                        <span class="mission-btn__label">START FLIGHT</span>
+                    </button>
+                    <button type="button" id="pause-mission-btn" class="mission-btn mission-btn--pause">
+                        <span class="mission-btn__icon" aria-hidden="true">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6V5zm8 0h4v14h-4V5z"/></svg>
+                        </span>
+                        <span class="mission-btn__label">PAUSE</span>
+                    </button>
+                    <button type="button" id="resume-mission-btn" class="mission-btn mission-btn--resume">
+                        <span class="mission-btn__icon" aria-hidden="true">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7L8 5z"/></svg>
+                        </span>
+                        <span class="mission-btn__label">RESUME</span>
+                    </button>
+                    <button type="button" id="preflight-btn" class="mission-btn mission-btn--preflight">
+                        <span class="mission-btn__icon" aria-hidden="true">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 2.8l8.2 3.9v6.1c0 4.6-3.8 9.8-8.2 11.4-4.4-1.6-8.2-6.8-8.2-11.4V6.7L12 2.8z"/>
+                                <path d="M12 12v5M9.5 14.5h5"/>
+                            </svg>
+                        </span>
+                        <span class="mission-btn__label">PRE-FLIGHT CHECK</span>
+                    </button>
+                    <button type="button" id="emergency-rtl-btn" class="mission-btn mission-btn--rtl">
+                        <span class="mission-btn__icon" aria-hidden="true">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M9 17H6a3 3 0 01-3-3V9"/>
+                                <path d="M3 11l3 3 3-3"/>
+                                <rect x="13" y="7" width="8" height="8" rx="1.6" stroke="currentColor"/>
+                            </svg>
+                        </span>
+                        <span class="mission-btn__label">EMERGENCY RTL</span>
+                    </button>
+                    <button type="button" id="wait-btn" class="mission-btn mission-btn--end">
+                        <span class="mission-btn__icon" aria-hidden="true">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
+                        </span>
+                        <span class="mission-btn__label">END MISSION</span>
+                    </button>
                 </div>
 
                 <div id="preflight-status" class="preflight-status" aria-live="polite" aria-atomic="true" style="display:none;">
@@ -41,6 +77,6 @@
     </main>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="/missions-page.js?v=6"></script>
+    <script src="/missions-page.js?v=12"></script>
 </body>
 </html>

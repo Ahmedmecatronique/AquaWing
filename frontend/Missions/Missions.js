@@ -15,8 +15,25 @@ function toast(message, kind = "info") {
 }
 
 const MISSION_MAP_CENTER = [36.8065, 10.1815];
+
+/** Identique au marqueur `createDroneMarker` du dashboard (`Dashboard.js`) — même SVG papier-plane orange. */
+const MISSION_DRONE_PLANE_ICON = (function missionDronePlaneIconIIFE() {
+    const svg =
+        `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='%23ff7a18' d='M2 21l21-9L2 3l3 7 12 2-12 2z'/></svg>`;
+    const iconUrl = "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+    return L.icon({
+        iconUrl,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+        className: "drone-marker-img mission-drone-marker-img",
+    });
+})();
+
 let missionMap = null;
-let missionPolyline = null;
+let missionRouteSolid = null;
+let missionRouteDash = null;
+/** Flèche(s) au milieu du segment actif — même logique que la maquette dashboard. */
+let missionRouteArrowMarkers = [];
 let missionWaypoints = [];
 let missionWaypointMarkers = [];
 let missionDroneMarker = null;
@@ -27,6 +44,21 @@ let missionSegmentProgress = 0;
 let missionRunning = false;
 let missionFollowMode = true;
 let missionWaypointsEnabled = true;
+/** Pendant un remplacement des WP depuis le dashboard — ne pas rappeler parent.setMissionWaypoints. */
+let missionApplyingFromDashboard = false;
+
+function pullWaypointsFromDashboardParent() {
+    try {
+        const fn = window.parent && window.parent.getDashboardWaypointsForMission;
+        if (typeof fn !== "function") return;
+        const pts = fn.call(window.parent);
+        if (Array.isArray(pts) && pts.length > 0) {
+            window.applyDashboardWaypoints(pts);
+        }
+    } catch (_e) {
+        /* page mission autonome ou parent sans API */
+    }
+}
 
 function updateWaypointCount() {
     const count = document.getElementById("waypoint-count");
@@ -34,12 +66,82 @@ function updateWaypointCount() {
 }
 
 function syncWaypointsToParent() {
+    if (missionApplyingFromDashboard) return;
     callParent("setMissionWaypoints", missionWaypoints);
 }
 
+function bearingDegreesNorthClockwise(fromLat, fromLng, toLat, toLng) {
+    const φ1 = (fromLat * Math.PI) / 180;
+    const φ2 = (toLat * Math.PI) / 180;
+    const Δλ = ((toLng - fromLng) * Math.PI) / 180;
+    const y = Math.sin(Δλ) * Math.cos(φ2);
+    const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+    return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+}
+
+function clearMissionRouteArrows() {
+    missionRouteArrowMarkers.forEach((m) => {
+        try {
+            missionMap && missionMap.removeLayer(m);
+        } catch (_e) {
+            /* noop */
+        }
+    });
+    missionRouteArrowMarkers = [];
+}
+
+function addMissionSegmentArrow(lat1, lon1, lat2, lon2) {
+    if (!missionMap) return;
+    const midLat = (lat1 + lat2) / 2;
+    const midLon = (lon1 + lon2) / 2;
+    const brg = bearingDegreesNorthClockwise(lat1, lon1, lat2, lon2);
+    const marker = L.marker([midLat, midLon], {
+        icon: L.divIcon({
+            className: "mission-path-arrow-wrap",
+            html: `<span class="mission-path-arrow" style="transform:rotate(${brg}deg)">▲</span>`,
+            iconSize: [22, 22],
+            iconAnchor: [11, 11],
+        }),
+        interactive: false,
+        zIndexOffset: 550,
+        keyboard: false,
+    }).addTo(missionMap);
+    missionRouteArrowMarkers.push(marker);
+}
+
+/** Tracé : segment WP1→WP2 plein + flèche ; suite en pointillés (aligné carte dashboard). */
 function redrawMissionPath() {
-    if (!missionMap || !missionPolyline) return;
-    missionPolyline.setLatLngs(missionWaypoints.map((wp) => [wp.lat, wp.lon]));
+    if (!missionMap || !missionRouteSolid || !missionRouteDash) return;
+    clearMissionRouteArrows();
+    const ll = missionWaypoints.map((wp) => [wp.lat, wp.lon]);
+    if (ll.length >= 2) {
+        missionRouteSolid.setLatLngs([ll[0], ll[1]]);
+        missionRouteSolid.setStyle({
+            color: "#ff9f1a",
+            weight: 4,
+            opacity: 0.96,
+            dashArray: null,
+            lineCap: "round",
+            lineJoin: "round",
+        });
+        addMissionSegmentArrow(ll[0][0], ll[0][1], ll[1][0], ll[1][1]);
+        if (ll.length > 2) {
+            missionRouteDash.setLatLngs(ll.slice(1));
+            missionRouteDash.setStyle({
+                color: "#ff9f1a",
+                weight: 4,
+                opacity: 0.92,
+                dashArray: "10 11",
+                lineCap: "round",
+                lineJoin: "round",
+            });
+        } else {
+            missionRouteDash.setLatLngs([]);
+        }
+    } else {
+        missionRouteSolid.setLatLngs([]);
+        missionRouteDash.setLatLngs([]);
+    }
 }
 
 function updateWaypointVisibility() {
@@ -51,6 +153,15 @@ function updateWaypointVisibility() {
     });
 }
 
+function missionWaypointDivIcon(seq) {
+    return L.divIcon({
+        className: "mission-waypoint-icon-root aw-mission-wp-marker",
+        html: `<div class="mission-waypoint-marker">${seq}</div>`,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+    });
+}
+
 function addMissionWaypoint(lat, lon) {
     if (!missionMap) return;
     const wp = { lat, lon };
@@ -58,12 +169,11 @@ function addMissionWaypoint(lat, lon) {
     const idx = missionWaypoints.length;
     const marker = L.marker([lat, lon], {
         title: `WP ${idx}`,
-        icon: L.divIcon({
-            className: "mission-waypoint-icon",
-            html: `<span>${idx}</span>`,
-            iconSize: [30, 30],
-            iconAnchor: [15, 15],
-        }),
+        icon: missionWaypointDivIcon(idx),
+        keyboard: false,
+        zIndexOffset: 820,
+        riseOnHover: true,
+        riseOffset: 1200,
     });
     if (missionWaypointsEnabled) marker.addTo(missionMap);
     missionWaypointMarkers.push(marker);
@@ -85,17 +195,63 @@ function clearMissionTrack() {
     if (missionTrackLine) missionTrackLine.setLatLngs([]);
 }
 
+/**
+ * Remplace les waypoints affichés sur la carte Mission depuis le dashboard (même origine).
+ * @param {{ lat: number, lon?: number, lng?: number }[]} points
+ */
+window.applyDashboardWaypoints = function (points) {
+    if (!missionMap || !Array.isArray(points)) return;
+    const norm = points
+        .map((p) => ({
+            lat: Math.round(Number(p.lat) * 1e7) / 1e7,
+            lon: Math.round(Number(p.lon !== undefined ? p.lon : p.lng) * 1e7) / 1e7,
+        }))
+        .filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lon));
+    const same =
+        norm.length === missionWaypoints.length &&
+        norm.every((p, i) => {
+            const q = missionWaypoints[i];
+            return q && q.lat === p.lat && q.lon === p.lon;
+        });
+    if (same) return;
+
+    missionApplyingFromDashboard = true;
+    try {
+        missionWaypointMarkers.forEach((m) => missionMap.removeLayer(m));
+        missionWaypointMarkers = [];
+        missionWaypoints = norm.map((p) => ({ lat: p.lat, lon: p.lon }));
+        missionWaypoints.forEach((wp, index) => {
+            const n = index + 1;
+            const marker = L.marker([wp.lat, wp.lon], {
+                title: `WP ${n}`,
+                icon: missionWaypointDivIcon(n),
+                keyboard: false,
+                zIndexOffset: 820,
+                riseOnHover: true,
+                riseOffset: 1200,
+            });
+            if (missionWaypointsEnabled) marker.addTo(missionMap);
+            missionWaypointMarkers.push(marker);
+        });
+        redrawMissionPath();
+        updateWaypointCount();
+    } finally {
+        missionApplyingFromDashboard = false;
+    }
+};
+
+/** Synchronise drone + trace sur la carte Mission avec la télémétrie / démo du dashboard. */
+window.applyDashboardDrone = function (lat, lon, headingDeg) {
+    const la = Number(lat);
+    const lo = Number(lon);
+    if (!Number.isFinite(la) || !Number.isFinite(lo) || !la || !lo) return;
+    updateMissionDrone(la, lo, Number(headingDeg) || 0);
+};
+
 function refreshWaypointMarkerLabels() {
     missionWaypointMarkers.forEach((marker, index) => {
         const n = index + 1;
-        marker.setIcon(
-            L.divIcon({
-                className: "mission-waypoint-icon",
-                html: `<span>${n}</span>`,
-                iconSize: [30, 30],
-                iconAnchor: [15, 15],
-            }),
-        );
+        marker.setIcon(missionWaypointDivIcon(n));
         marker.options.title = `WP ${n}`;
     });
 }
@@ -109,35 +265,47 @@ function initMissionMap() {
         maxZoom: 19,
     }).addTo(missionMap);
 
-    missionPolyline = L.polyline([], { color: "#ff9f1a", weight: 4, opacity: 0.9 }).addTo(missionMap);
-    missionPolyline.setStyle({
+    missionRouteSolid = L.polyline([], {
         color: "#ff9f1a",
         weight: 4,
-        opacity: 0.95,
-        dashArray: "10 8",
+        opacity: 0.96,
         lineCap: "round",
         lineJoin: "round",
-    });
+    }).addTo(missionMap);
+    missionRouteDash = L.polyline([], {
+        color: "#ff9f1a",
+        weight: 4,
+        opacity: 0.92,
+        dashArray: "10 11",
+        lineCap: "round",
+        lineJoin: "round",
+    }).addTo(missionMap);
     missionMap.on("click", (e) => {
         if (!missionWaypointsEnabled) return;
         addMissionWaypoint(e.latlng.lat, e.latlng.lng);
     });
 
     missionTrackLine = L.polyline([], {
-        color: "#00d4ff",
-        weight: 3,
-        opacity: 0.85,
+        color: "#ff9f1a",
+        weight: 4,
+        opacity: 0.9,
+        smoothFactor: 1,
+        lineCap: "round",
+        lineJoin: "round",
     }).addTo(missionMap);
 
     missionDroneMarker = L.marker(MISSION_MAP_CENTER, {
-        icon: L.divIcon({
-            className: "mission-drone-icon",
-            html: '<span class="mission-drone-glyph">✈</span>',
-            iconSize: [24, 24],
-            iconAnchor: [12, 12],
-        }),
+        icon: MISSION_DRONE_PLANE_ICON,
+        zIndexOffset: 1000,
+        interactive: false,
+        keyboard: false,
         title: "Drone",
     }).addTo(missionMap);
+    try {
+        missionDroneMarker.bringToFront();
+    } catch (_e) {
+        /* noop */
+    }
 
     const controls = document.querySelector(".mission-map-controls");
     if (controls && typeof L !== "undefined" && L.DomEvent) {
@@ -147,14 +315,31 @@ function initMissionMap() {
 
     setTimeout(() => missionMap && missionMap.invalidateSize(), 120);
     updateWaypointCount();
+    pullWaypointsFromDashboardParent();
+    requestAnimationFrame(() => pullWaypointsFromDashboardParent());
+    setTimeout(() => pullWaypointsFromDashboardParent(), 320);
 }
+
+window.pullWaypointsFromDashboardParent = pullWaypointsFromDashboardParent;
 
 function updateMissionDrone(lat, lon, headingDeg) {
     if (!missionMap || !missionDroneMarker || !missionTrackLine) return;
     missionDroneMarker.setLatLng([lat, lon]);
+    try {
+        missionDroneMarker.setZIndexOffset(1000);
+        missionDroneMarker.bringToFront();
+    } catch (_e) {
+        /* noop */
+    }
     const el = missionDroneMarker.getElement();
-    const glyph = el ? el.querySelector(".mission-drone-glyph") : null;
-    if (glyph) glyph.style.transform = `rotate(${headingDeg}deg)`;
+    if (el) {
+        const img = el.querySelector("img");
+        if (img) {
+            img.style.transformOrigin = "center center";
+            img.style.transition = "transform 160ms linear";
+            img.style.transform = `rotate(${headingDeg}deg)`;
+        }
+    }
     const pts = missionTrackLine.getLatLngs();
     pts.push([lat, lon]);
     if (pts.length > 1200) pts.shift();
@@ -234,11 +419,23 @@ function startEmergencyRtl() {
     const endLon = home.lon;
     let progress = 0;
 
-    // Highlight RTL path (direct segment from current point to home).
-    missionPolyline?.setLatLngs([
-        [startLat, startLon],
-        [endLat, endLon],
-    ]);
+    clearMissionRouteArrows();
+    if (missionRouteDash) missionRouteDash.setLatLngs([]);
+    if (missionRouteSolid) {
+        missionRouteSolid.setLatLngs([
+            [startLat, startLon],
+            [endLat, endLon],
+        ]);
+        missionRouteSolid.setStyle({
+            color: "#ff9f1a",
+            weight: 4,
+            opacity: 0.98,
+            dashArray: null,
+            lineCap: "round",
+            lineJoin: "round",
+        });
+        addMissionSegmentArrow(startLat, startLon, endLat, endLon);
+    }
 
     if (missionTimer) clearInterval(missionTimer);
     missionTimer = setInterval(() => {
@@ -253,6 +450,7 @@ function startEmergencyRtl() {
         if (progress >= 1) {
             if (missionTimer) clearInterval(missionTimer);
             missionTimer = null;
+            redrawMissionPath();
             toast("RTL terminé - retour au point de départ", "success");
         }
     }, 180);
@@ -294,7 +492,6 @@ window.addEventListener("DOMContentLoaded", () => {
     const preflightBtn = document.getElementById("preflight-btn");
     const rtlBtn = document.getElementById("emergency-rtl-btn");
     const endBtn = document.getElementById("wait-btn");
-    const clearWaypointsBtn = document.getElementById("clear-waypoints-btn");
     const followBtn = document.getElementById("mission-follow-toggle");
     const centerBtn = document.getElementById("mission-center-btn");
     const clearTrackBtn = document.getElementById("mission-clear-track-btn");
@@ -308,7 +505,7 @@ window.addEventListener("DOMContentLoaded", () => {
             }
             syncWaypointsToParent();
             callParent("startDemo", true);
-            startMissionAnimation(true);
+            /* Trajectoire / drone : une seule source (télémétrie du dashboard → applyDashboardDrone). */
             toast("Mission started", "success");
         });
     }
@@ -347,13 +544,6 @@ window.addEventListener("DOMContentLoaded", () => {
             callParent("stopDemo");
             stopMissionAnimation();
             toast("Mission ended", "success");
-        });
-    }
-
-    if (clearWaypointsBtn) {
-        clearWaypointsBtn.addEventListener("click", () => {
-            clearMissionWaypoints();
-            toast("Waypoints cleared", "info");
         });
     }
 

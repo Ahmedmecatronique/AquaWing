@@ -24,7 +24,7 @@ html, body {
     width: 100%;
     height: 100%;
     display: grid;
-    grid-template-columns: 260px minmax(0, 1fr);
+    grid-template-columns: minmax(276px, 300px) minmax(0, 1fr);
     gap: 12px;
 }
 
@@ -37,32 +37,103 @@ html, body {
 .mission-control-buttons {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
 }
 
+/* Boutons mission — style maquette : icône gauche + texte, fond sombre teinté, bordure accent */
 .mission-btn {
     width: 100%;
-    border: none;
-    border-radius: 8px;
-    color: #fff;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.4px;
-    padding: 11px 10px;
+    margin: 0;
+    appearance: none;
+    border-style: solid;
+    border-width: 2px;
+    border-radius: 10px;
+    font-family: "Inter", "Outfit", system-ui, -apple-system, sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 12px 14px;
     cursor: pointer;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+    color: var(--btn-accent);
+    border-color: var(--btn-accent);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.04),
+        0 2px 10px rgba(0, 0, 0, 0.32);
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.12s ease, box-shadow 0.15s ease;
+}
+
+.mission-btn__icon {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.98;
+    filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.5));
+}
+
+.mission-btn__icon svg {
+    display: block;
+}
+
+.mission-btn__label {
+    flex: 1;
+    text-align: left;
+    line-height: 1.2;
+}
+
+.mission-btn:hover:not(:disabled) {
+    filter: brightness(1.06);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 4px 18px rgba(0, 0, 0, 0.4);
+    transform: translateY(-1px);
+}
+
+.mission-btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.mission-btn:focus-visible {
+    outline: 2px solid var(--btn-accent);
+    outline-offset: 2px;
 }
 
 .mission-btn:disabled {
-    opacity: 0.45;
+    opacity: 0.42;
     cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
 }
 
-.mission-btn.btn-success { background: #00cc66; }
-.mission-btn.btn-warning { background: #b07d12; }
-.mission-btn.btn-preflight { background: #2f6cff; }
-.mission-btn.btn-danger { background: #c73642; }
-.mission-btn.btn-clear { background: #374257; }
+.mission-btn--start,
+.mission-btn--resume {
+    --btn-accent: #34f099;
+    background: linear-gradient(155deg, rgba(52, 240, 153, 0.22) 0%, #0f151c 52%, #0a0e14 100%);
+}
 
+.mission-btn--pause,
+.mission-btn--rtl {
+    --btn-accent: #ffb836;
+    background: linear-gradient(155deg, rgba(255, 184, 54, 0.24) 0%, #141210 52%, #0a0e14 100%);
+}
+
+.mission-btn--preflight {
+    --btn-accent: #52a8ff;
+    background: linear-gradient(155deg, rgba(82, 168, 255, 0.22) 0%, #0f141d 52%, #0a0e14 100%);
+}
+
+.mission-btn--end {
+    --btn-accent: #ff6b7a;
+    background: linear-gradient(155deg, rgba(255, 107, 122, 0.22) 0%, #141014 52%, #0a0e14 100%);
+}
 .waypoint-hint {
     border: 1px solid rgba(255, 255, 255, 0.09);
     border-radius: 8px;
@@ -85,9 +156,46 @@ html, body {
     width: 100%;
     height: 100%;
     min-height: 420px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.12);
     border-radius: 10px;
     overflow: hidden;
+    background: #e9ecef;
+}
+
+/* Carte claire type OSM (comme dashboard) */
+.mission-map .leaflet-container {
+    background: #dfe4ea;
+    font-family: "Inter", "Outfit", system-ui, -apple-system, sans-serif;
+}
+
+.mission-map .leaflet-bar,
+.mission-map .leaflet-control-zoom {
+    border: 1px solid rgba(0, 0, 0, 0.14) !important;
+    border-radius: 8px !important;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.mission-map .leaflet-bar a {
+    background: #fff !important;
+    color: #333 !important;
+    border-bottom-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+.mission-map .leaflet-bar a:hover {
+    background: #fff5eb !important;
+    color: #ff7a18 !important;
+}
+
+.mission-map .leaflet-control-attribution {
+    background: rgba(255, 255, 255, 0.82) !important;
+    color: rgba(30, 30, 30, 0.75) !important;
+    font-size: 10px;
+    backdrop-filter: blur(4px);
+}
+
+.mission-map .leaflet-control-attribution a {
+    color: #c45a08;
 }
 
 .mission-map-controls {
@@ -130,42 +238,90 @@ html, body {
     color: rgba(234, 242, 255, 0.9);
 }
 
-.mission-waypoint-icon {
-    width: 30px;
-    height: 30px;
+/* Waypoints orange — même style que .waypoint-marker du dashboard (#ff9f1a / #021) */
+.mission-map .leaflet-marker-icon.mission-waypoint-icon-root,
+.mission-map .leaflet-marker-icon.aw-mission-wp-marker {
+    z-index: 820 !important;
+    width: auto !important;
+    height: auto !important;
+    overflow: visible !important;
+}
+
+.mission-waypoint-icon-root.mission-waypoint-icon-root {
+    background: transparent !important;
+    border: none !important;
+}
+
+.mission-map .mission-waypoint-icon-root .mission-waypoint-marker:hover,
+.leaflet-div-icon.mission-waypoint-icon-root .mission-waypoint-marker:hover {
+    background: linear-gradient(135deg, #ff8533, #d47930);
+    box-shadow:
+        0 0 20px rgba(255, 159, 26, 0.4),
+        inset 0 0 8px rgba(255, 255, 255, 0.08);
+}
+
+.mission-map .mission-waypoint-icon-root .mission-waypoint-marker,
+.leaflet-div-icon.mission-waypoint-icon-root .mission-waypoint-marker {
     border-radius: 50%;
-    border: 2px solid #ffffff;
-    background: #1f6fbe;
-    box-shadow: 0 0 0 3px rgba(31, 111, 190, 0.25);
+    width: 32px;
+    height: 32px;
+    border: 2px solid rgba(255, 122, 24, 0.95);
+    box-sizing: border-box;
+    background: linear-gradient(135deg, #ff7a18, #cc6a2a);
     display: flex;
     align-items: center;
     justify-content: center;
-}
-
-.mission-waypoint-icon span {
-    color: #ffffff;
-    font-size: 12px;
     font-weight: 800;
+    font-size: 14px;
+    color: #111;
     line-height: 1;
+    box-shadow:
+        0 0 12px rgba(255, 159, 26, 0.45),
+        inset 0 0 6px rgba(255, 255, 255, 0.08);
+    cursor: grab;
+    user-select: none;
 }
 
-.mission-drone-icon {
-    width: 24px;
-    height: 24px;
-    display: flex;
+.mission-path-arrow-wrap.mission-path-arrow-wrap {
+    background: transparent !important;
+    border: none !important;
+}
+
+.leaflet-div-icon.mission-path-arrow-wrap .mission-path-arrow {
+    font-size: 15px;
+    font-weight: 900;
+    color: #121212;
+    line-height: 1;
+    text-shadow:
+        0 0 2px #fff,
+        0 0 6px rgba(255, 255, 255, 0.9);
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    z-index: 600 !important;
+    transform-origin: 50% 50%;
 }
 
-.mission-drone-glyph {
-    display: inline-flex;
-    color: #00d4ff;
-    font-size: 22px;
-    font-weight: 800;
-    text-shadow: 0 0 8px rgba(0, 212, 255, 0.7);
-    transform-origin: 50% 50%;
+/* Segment(s) trajet suivis dashboard */
+.mission-map .leaflet-overlay-pane svg path.leaflet-interactive {
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* Avion drone — même principe que le dashboard (.drone-marker-img, SVG Leaflet) */
+.mission-map .mission-drone-marker-img,
+.mission-map .drone-marker-img {
+    pointer-events: none;
+    z-index: 1000 !important;
+}
+
+.mission-map .mission-drone-marker-img img,
+.mission-map .drone-marker-img img {
+    width: 32px;
+    height: 32px;
+    display: block;
+    transform-origin: center center;
     transition: transform 160ms linear;
+    filter: drop-shadow(0 10px 24px rgba(255, 122, 24, 0.24));
 }
 
 .preflight-status {
