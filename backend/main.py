@@ -689,6 +689,14 @@ async def websocket_endpoint(websocket: WebSocket):
 async def startup_event():
     """Load users on startup. Telemetry loop is NOT auto-started."""
     load_users()
+    try:
+        from backend.src.ia_detection import get_rgb_detection_worker
+        det = get_rgb_detection_worker()
+        if det.enabled:
+            det.start()
+            print(f"🤖 RF-DETR: worker started (interval {det.interval_s:.1f}s)")
+    except Exception as exc:
+        print(f"🤖 RF-DETR: not started ({exc})")
     # Log UART assignment (RPi 5: GPS = miniUART, FC = PL011)
     if GPS:
         print(f"GPS configured on {GPS['port']} (miniUART)")

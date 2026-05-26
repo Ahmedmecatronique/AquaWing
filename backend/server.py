@@ -142,6 +142,17 @@ def create_app() -> FastAPI:
             f"📷 RGB camera: rpicam {rgb_cfg.width}×{rgb_cfg.height} "
             f"@ {rgb_cfg.fps}fps (on first /video request)"
         )
+        try:
+            from backend.src.ia_detection import get_rgb_detection_worker
+
+            det = get_rgb_detection_worker()
+            if det.enabled:
+                det.start()
+                print(f"🤖 RF-DETR detection: enabled (every {det.interval_s:.1f}s, class=person)")
+            else:
+                print("🤖 RF-DETR detection: disabled in config")
+        except Exception as exc:
+            print(f"🤖 RF-DETR detection: not started ({exc})")
         print("="*70 + "\n")
         
         # Demo telemetry loop is NOT started automatically.
@@ -149,7 +160,13 @@ def create_app() -> FastAPI:
 
     @app.on_event("shutdown")
     async def shutdown_event():
-        """Arrêter le flux caméra RGB."""
+        """Arrêter le flux caméra RGB et l'analyse IA."""
+        try:
+            from backend.src.ia_detection import get_rgb_detection_worker
+
+            get_rgb_detection_worker().stop()
+        except Exception:
+            pass
         try:
             get_rgb_streamer().stop()
         except Exception:
@@ -514,6 +531,11 @@ def create_app() -> FastAPI:
     async def video_endpoint(res: str = "2304x1296"):
         """Dernière image JPEG de la caméra RGB (module Pi / rpicam)."""
         try:
+            from backend.src.ia_detection import get_rgb_detection_worker
+
+            worker = get_rgb_detection_worker()
+            if worker.enabled and not worker._running:
+                worker.start()
             width, height = _parse_resolution(res)
             jpeg = get_rgb_streamer().get_jpeg(width=width, height=height)
             return Response(

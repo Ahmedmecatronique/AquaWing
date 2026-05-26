@@ -12,6 +12,14 @@ cameras:
     enabled: false
     fps: 30
     resolution: 640x512
+detection:
+  enabled: true
+  threshold: 0.45
+  inference_size: 560
+  interval_ms: 2000
+  weights: backend/src/ia detection/rf-detr-develop/rf-detr-nano.pth
+  classes:
+    - person
 control:
   pid_gains:
     altitude:

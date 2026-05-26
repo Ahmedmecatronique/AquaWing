@@ -297,3 +297,52 @@ async def get_mission(mission_name: str):
         raise HTTPException(status_code=404, detail=f"Mission '{mission_name}' not found")
     
     return _missions[mission_name]
+
+
+# ---------------------------------------------------------------------------
+# RGB AI detection (RF-DETR — personnes en mer)
+# ---------------------------------------------------------------------------
+
+@router.get("/detect/rgb")
+async def get_rgb_detections():
+    """
+    Dernières détections IA sur le flux RGB (personnes / nageurs).
+    Coordonnées normalisées 0–1 pour l'overlay canvas du dashboard.
+    """
+    try:
+        from backend.src.ia_detection import get_rgb_detection_worker, get_person_detector
+
+        worker = get_rgb_detection_worker()
+        if worker.enabled and not worker._running:
+            worker.start()
+
+        result = worker.get_result()
+        result["detector"] = get_person_detector().get_stats()
+        return result
+    except Exception as exc:
+        return {
+            "detections": [],
+            "count": 0,
+            "error": str(exc),
+            "enabled": False,
+        }
+
+
+@router.post("/detect/rgb/start")
+async def start_rgb_detection():
+    """Démarrer le worker d'analyse IA sur la caméra RGB."""
+    from backend.src.ia_detection import get_rgb_detection_worker
+
+    worker = get_rgb_detection_worker()
+    worker.start()
+    return {"success": True, "running": worker._running}
+
+
+@router.post("/detect/rgb/stop")
+async def stop_rgb_detection():
+    """Arrêter le worker d'analyse IA."""
+    from backend.src.ia_detection import get_rgb_detection_worker
+
+    worker = get_rgb_detection_worker()
+    worker.stop()
+    return {"success": True, "running": worker._running}

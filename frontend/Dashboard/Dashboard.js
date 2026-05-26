@@ -1858,42 +1858,50 @@ const DETECTION_TYPES = {
     ]
 };
 
-function simulateRGBDetections(){
-    // only simulate small detections when RGB is on
+async function fetchRGBDetections(){
     if (!videoOn) return;
-    const detections = [];
-    const rand = Math.random();
-    let cumulativeProb = 0;
-    
-    for (const type of DETECTION_TYPES.rgb) {
-        cumulativeProb += type.prob;
-        if (rand < cumulativeProb) {
-            const conf = 70 + Math.round(Math.random() * 25);
-            detections.push({
-                x: 0.15 + Math.random() * 0.5,
-                y: 0.15 + Math.random() * 0.5,
-                w: 0.2 + Math.random() * 0.15,
-                h: 0.2 + Math.random() * 0.2,
-                label: type.label,
-                conf: conf,
-                color: type.color
-            });
-            
+    try {
+        const res = await fetch(API_BASE + '/api/detect/rgb', { credentials: 'include' });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.error && !data.detections?.length) {
             const aiEl = document.getElementById('rgb-ai');
-            if (aiEl) {
-                aiEl.textContent = `${type.label} detected – ${conf}% confidence`;
-                aiEl.style.color = type.color;
-            }
-            break;
+            if (aiEl) aiEl.textContent = 'IA: ' + String(data.error).slice(0, 60);
+            clearOverlay('rgb-overlay');
+            return;
         }
-    }
-    
-    if (detections.length === 0) {
+        const detections = data.detections || [];
         const aiEl = document.getElementById('rgb-ai');
-        if (aiEl) aiEl.textContent = '';
+        if (detections.length > 0) {
+            const best = detections.reduce((a, b) => (a.conf > b.conf ? a : b));
+            if (aiEl) {
+                aiEl.textContent = `${best.label} – ${best.conf}% (${detections.length} pers.)`;
+                aiEl.style.color = best.color || '#ff9f1a';
+            }
+            if (best.conf >= 85 && typeof showAlert === 'function') {
+                showAlert(
+                    'Personne détectée en mer',
+                    `Confiance ${best.conf}% — ${detections.length} personne(s)`,
+                    'error',
+                    6000,
+                    'victim-detected'
+                );
+            }
+        } else if (aiEl) {
+            aiEl.textContent = 'Aucune personne détectée';
+            aiEl.style.color = '';
+        }
+        drawDetectionsOnCanvas('rgb-overlay', detections);
+        const opticalOverlay = document.getElementById('optical-rgb-overlay');
+        if (opticalOverlay) drawDetectionsOnCanvas('optical-rgb-overlay', detections);
+    } catch (e) {
+        console.warn('RGB detection fetch failed:', e);
     }
-    
-    drawDetectionsOnCanvas('rgb-overlay', detections);
+}
+
+/** @deprecated simulation — conservé pour tests hors-ligne */
+function simulateRGBDetections(){
+    fetchRGBDetections();
 }
 
 function simulateThermalDetections(){
@@ -2054,8 +2062,8 @@ function startRGBLoop(res){
     rgbTimer = setInterval(()=> fetchAndDisplayRGB(res), RGB_INTERVAL);
     // start AI overlay simulation
     if (rgbAiTimer) clearInterval(rgbAiTimer);
-    rgbAiTimer = setInterval(simulateRGBDetections, 1200);
-    simulateRGBDetections();
+    rgbAiTimer = setInterval(fetchRGBDetections, 2000);
+    fetchRGBDetections();
 }
 function stopRGBLoop(){ if (rgbTimer) { clearInterval(rgbTimer); rgbTimer = null; } try{ if (lastRGBObjectURL) { URL.revokeObjectURL(lastRGBObjectURL); lastRGBObjectURL = null; } }catch(e){} if (videoImg) videoImg.src = ''; const elB = document.getElementById('rgb-bitrate'); if (elB) elB.textContent = '0 kb/s'; const elR = document.getElementById('rgb-res'); if (elR) elR.textContent = '--'; if (videoStatus) videoStatus.className = 'status-dot off'; if (rgbAiTimer) { clearInterval(rgbAiTimer); rgbAiTimer = null; } clearOverlay('rgb-overlay'); document.getElementById('rgb-ai') && (document.getElementById('rgb-ai').textContent = ''); }
 

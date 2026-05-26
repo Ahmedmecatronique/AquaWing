@@ -1,0 +1,12 @@
+# Dépendances IA — RF-DETR (détection personnes sur caméra RGB)
+# Installer après requirements.txt :
+#   pip install -r requirements.txt -r requirements-ai.txt
+#
+# Sur Raspberry Pi, préférer les wheels torch officiels si disponibles :
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+
+torch>=2.2.0,<3.0.0
+torchvision>=0.17.0
+supervision>=0.20.0
+transformers>=5.1.0,<6.0.0
+pyDeprecate>=0.6,<0.8
