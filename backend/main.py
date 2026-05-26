@@ -501,24 +501,25 @@ def settings_page_js():
 
 
 @app.get("/video")
-def video_endpoint():
-        """Return a placeholder video image (JPEG) if present, otherwise return an SVG placeholder."""
-        placeholder = STATIC_DIR / "video_placeholder.jpg"
-        if placeholder.exists():
-                return FileResponse(str(placeholder), media_type="image/jpeg")
-
-        # Return a simple SVG placeholder when no camera is available
-        svg = """<?xml version='1.0' encoding='UTF-8'?>
+def video_endpoint(res: str = "2304x1296"):
+        """Dernière image JPEG de la caméra RGB (rpicam-vid / rpicam-still)."""
+        from backend.src.streaming.rgb_camera_stream import get_rgb_streamer, _parse_resolution
+        try:
+            width, height = _parse_resolution(res)
+            jpeg = get_rgb_streamer().get_jpeg(width=width, height=height)
+            return Response(
+                content=jpeg,
+                media_type="image/jpeg",
+                headers={"Cache-Control": "no-store, max-age=0"},
+            )
+        except Exception as e:
+            svg = f"""<?xml version='1.0' encoding='UTF-8'?>
 <svg xmlns='http://www.w3.org/2000/svg' width='640' height='360' viewBox='0 0 640 360'>
     <rect width='100%' height='100%' fill='#111' />
-    <g fill='none' stroke='#0ff' stroke-opacity='0.25' stroke-width='2'>
-        <rect x='10' y='10' width='620' height='340' />
-    </g>
-    <text x='50%' y='45%' fill='#0ff' font-family='monospace' font-size='20' text-anchor='middle'>Video stream not available</text>
-    <text x='50%' y='60%' fill='#0ff' font-family='monospace' font-size='14' text-anchor='middle'>Use /video to serve MJPEG or an image refresh stream</text>
+    <text x='50%' y='45%' fill='#f55' font-family='monospace' font-size='16' text-anchor='middle'>RGB camera error</text>
+    <text x='50%' y='60%' fill='#888' font-family='monospace' font-size='11' text-anchor='middle'>{str(e)[:80]}</text>
 </svg>"""
-
-        return Response(content=svg, media_type="image/svg+xml")
+            return Response(content=svg, media_type="image/svg+xml")
 
 # ============================================================================
 # THERMAL HEATMAP STREAM (AMG8833)

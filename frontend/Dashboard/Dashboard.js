@@ -2111,7 +2111,7 @@ function setVideo(on){
             opticalVideoPlaceholder.style.display = 'none';
             clearPlaceholderTimer(opticalVideoPlaceholder);
         }
-        const res = (rgbResolutionSelect && rgbResolutionSelect.value) ? rgbResolutionSelect.value : '1280x720';
+        const res = (rgbResolutionSelect && rgbResolutionSelect.value) ? rgbResolutionSelect.value : '2304x1296';
         startRGBLoop(res);
     } else {
         if (videoPlaceholder) {

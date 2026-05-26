@@ -19,10 +19,11 @@ from datetime import datetime
 
 from fastapi import FastAPI, HTTPException, Cookie, Response, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.responses import FileResponse, RedirectResponse, Response
 from pydantic import BaseModel
 
 from backend import api, websocket, auth
+from backend.src.streaming.rgb_camera_stream import _parse_resolution, get_rgb_streamer
 
 
 # ============================================================================
@@ -136,10 +137,23 @@ def create_app() -> FastAPI:
         print(f"🔐 Auth enabled: Yes")
         print(f"📡 WebSocket protected: Yes")
         print(f"✈️  Telemetry: waiting for START FLIGHT command")
+        rgb_cfg = get_rgb_streamer()
+        print(
+            f"📷 RGB camera: rpicam {rgb_cfg.width}×{rgb_cfg.height} "
+            f"@ {rgb_cfg.fps}fps (on first /video request)"
+        )
         print("="*70 + "\n")
         
         # Demo telemetry loop is NOT started automatically.
         # It will be triggered by the frontend via WS command.
+
+    @app.on_event("shutdown")
+    async def shutdown_event():
+        """Arrêter le flux caméra RGB."""
+        try:
+            get_rgb_streamer().stop()
+        except Exception:
+            pass
 
     # ========================================================================
     # Authentication Routes
@@ -491,6 +505,35 @@ def create_app() -> FastAPI:
         if js_path.exists():
             return FileResponse(str(js_path), media_type="application/javascript", headers=_systems_nocache)
         return {"error": "Settings.js not found"}
+
+    # ========================================================================
+    # RGB Camera (rpicam-vid → JPEG)
+    # ========================================================================
+
+    @app.get("/video")
+    async def video_endpoint(res: str = "2304x1296"):
+        """Dernière image JPEG de la caméra RGB (module Pi / rpicam)."""
+        try:
+            width, height = _parse_resolution(res)
+            jpeg = get_rgb_streamer().get_jpeg(width=width, height=height)
+            return Response(
+                content=jpeg,
+                media_type="image/jpeg",
+                headers={"Cache-Control": "no-store, max-age=0"},
+            )
+        except Exception as exc:
+            svg = f"""<?xml version='1.0' encoding='UTF-8'?>
+<svg xmlns='http://www.w3.org/2000/svg' width='640' height='360' viewBox='0 0 640 360'>
+    <rect width='100%' height='100%' fill='#111' />
+    <text x='50%' y='45%' fill='#f55' font-family='monospace' font-size='16' text-anchor='middle'>RGB camera error</text>
+    <text x='50%' y='60%' fill='#888' font-family='monospace' font-size='11' text-anchor='middle'>{str(exc)[:80]}</text>
+</svg>"""
+            return Response(content=svg, media_type="image/svg+xml")
+
+    @app.get("/video/stats")
+    async def video_stats_endpoint():
+        """Stats du flux RGB (résolution, FPS, taille dernière frame)."""
+        return get_rgb_streamer().get_stats()
 
     # ========================================================================
     # Health & Info Endpoints
