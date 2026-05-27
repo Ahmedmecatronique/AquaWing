@@ -464,6 +464,26 @@ html, body {
     box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4) inset;
 }
 
+.ov-box--safe {
+    border-color: #22c55e;
+    color: #bbf7d0;
+    background: rgba(34, 197, 94, 0.12);
+    box-shadow: 0 0 12px rgba(34, 197, 94, 0.35);
+}
+
+.ov-box--danger {
+    border-color: #ef4444;
+    color: #fecaca;
+    background: rgba(239, 68, 68, 0.18);
+    box-shadow: 0 0 14px rgba(239, 68, 68, 0.55);
+    animation: ov-pulse-danger 1.2s ease-in-out infinite;
+}
+
+@keyframes ov-pulse-danger {
+    0%, 100% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.45); }
+    50% { box-shadow: 0 0 18px rgba(239, 68, 68, 0.85); }
+}
+
 .ov-box--orange {
     border-color: var(--orange);
     color: var(--orange);

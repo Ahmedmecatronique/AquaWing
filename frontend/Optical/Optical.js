@@ -2,32 +2,18 @@
     "use strict";
 
     const RGB_CAMERA_MODES_FALLBACK = [
-        { resolution: "1536x864", max_fps: 120, label: "Très fluide, faible latence", fps_options: [15, 30, 60, 90, 120] },
-        { resolution: "2304x1296", max_fps: 56, label: "Équilibre qualité + fluidité", fps_options: [15, 24, 30, 40, 50, 56] },
-        { resolution: "1920x1080", max_fps: 50, label: "Live Full HD", fps_options: [15, 24, 30, 40, 50] },
-        { resolution: "4608x2592", max_fps: 14, label: "Qualité max (photo)", fps_options: [5, 10, 14] },
+        { resolution: "1536x864", fps: 120, label: "Très fluide, faible latence" },
+        { resolution: "2304x1296", fps: 56, label: "Équilibre qualité + fluidité" },
+        { resolution: "1920x1080", fps: 50, label: "Live Full HD" },
+        { resolution: "4608x2592", fps: 14, label: "Qualité max (photo)" },
     ];
     const RGB_POLL_BY_RES = {
-        "1536x864": 1800,
-        "2304x1296": 2800,
-        "1920x1080": 2500,
-        "4608x2592": 5500,
+        "1536x864": 1400,
+        "2304x1296": 1900,
+        "1920x1080": 1700,
+        "4608x2592": 3500,
     };
-    const RGB_POLL_BY_FPS = {
-        5: 4500,
-        10: 4000,
-        14: 3800,
-        15: 3200,
-        24: 2800,
-        30: 2500,
-        40: 2200,
-        50: 2000,
-        56: 1900,
-        60: 1800,
-        90: 1600,
-        120: 1400,
-    };
-    const RGB_AI_POLL_MS = 4000;
+    const RGB_AI_POLL_MS = 5000;
     const ENABLE_AI_POLL = true;
     const USE_ANNOTATED_STREAM = false;
 
@@ -40,9 +26,13 @@
     let recOn = true;
     let rgbCameraModes = RGB_CAMERA_MODES_FALLBACK;
     let rgbRes = localStorage.getItem("aquawing_rgb_res") || "2304x1296";
-    let rgbFps = parseInt(localStorage.getItem("aquawing_rgb_fps") || "30", 10) || 30;
-    let rgbPollMs = 3200;
+    let rgbPollMs = 1900;
     let camChangeTimer = null;
+
+    function fpsForRes(res) {
+        const mode = rgbCameraModes.find((m) => m.resolution === res);
+        return mode ? Number(mode.fps) : 30;
+    }
 
     function setButtonText(id, on, label) {
         const el = document.getElementById(id);
@@ -102,16 +92,58 @@
             const h = Number(d.h ?? d.height ?? 0);
             const rawConf = d.conf ?? d.confidence ?? d.score ?? 0;
             const conf = rawConf <= 1 ? Math.round(Number(rawConf) * 100) : Math.round(Number(rawConf));
-            const label = String(d.label ?? d.class ?? "person").toUpperCase();
+            const isDrowning =
+                d.status === "drowning" ||
+                d.alert === true ||
+                d.behavior === "drowning_risk";
             const box = document.createElement("div");
-            box.className = "ov-box ov-box--cyan";
+            box.className = isDrowning ? "ov-box ov-box--danger" : "ov-box ov-box--safe";
             box.style.left = `${x * 100}%`;
             box.style.top = `${y * 100}%`;
             box.style.width = `${w * 100}%`;
             box.style.height = `${h * 100}%`;
+            const label = isDrowning ? "NOYADE" : "PERSONNE";
             box.textContent = `${label} (${conf}%)`;
             layer.appendChild(box);
         });
+    }
+
+    let aiBackendRequested = localStorage.getItem("aquawing_ai_backend") || "auto";
+
+    function backendDisplayName(id) {
+        const map = {
+            auto: "Auto",
+            yolo: "YOLOv8n",
+            rfdetr: "RF-DETR",
+        };
+        return map[id] || String(id);
+    }
+
+    function updateAiHint(data) {
+        const hint = document.getElementById("rgb-ai-hint");
+        if (!hint) return;
+        if (!videoOn || !ENABLE_AI_POLL) {
+            hint.textContent = "IA arrêtée.";
+            return;
+        }
+        const active = data?.active_backend || data?.detector?.backend || "—";
+        const req = data?.requested_backend || aiBackendRequested;
+        const ms = data?.last_inference_ms ?? data?.detector?.last_inference_ms;
+        const fb = data?.fallback_used;
+        const fbReason = data?.fallback_reason;
+        const err = data?.error;
+        let lines = [`Backend actif : ${backendDisplayName(active)}`];
+        if (req !== active) lines.push(`Demandé : ${backendDisplayName(req)}`);
+        if (ms != null) lines.push(`Inférence : ${Math.round(ms)} ms`);
+        if (fb) {
+            lines.push(
+                fbReason && fbReason.includes("RF-DETR")
+                    ? "RF-DETR unavailable on this Raspberry Pi. Fallback to YOLOv8n."
+                    : `Fallback : ${fbReason || "oui"}`
+            );
+        }
+        if (err) lines.push(`Erreur : ${String(err).slice(0, 80)}`);
+        hint.textContent = lines.join(" · ");
     }
 
     function updateAiStatus(data) {
@@ -120,23 +152,164 @@
         if (!videoOn || !ENABLE_AI_POLL) {
             el.textContent = "OFF";
             el.classList.remove("status-ok");
+            updateAiHint(null);
             return;
         }
         const n = data?.count ?? (data?.detections?.length || 0);
-        const running = data?.running || data?.detector?.ready;
-        if (data?.error && !n) {
-            el.textContent = `ERROR / ${String(data.error).slice(0, 24)}`;
+        const alerts = data?.alert_count ?? (data?.detections || []).filter(
+            (d) => d.status === "drowning" || d.alert
+        ).length;
+        const persons = data?.person_count ?? Math.max(0, n - alerts);
+        const running = data?.running;
+        const ready = data?.ready || data?.detector?.ready;
+        const active = data?.active_backend || data?.detector?.backend || "";
+        const ms = data?.last_inference_ms ?? data?.detector?.last_inference_ms;
+        updateAiHint(data);
+        if (data?.error && !n && !ready) {
+            el.textContent = `ERROR / ${String(data.error).slice(0, 20)}`;
             el.classList.remove("status-ok");
             return;
         }
-        el.textContent = running ? `LIVE / ${n} object(s)` : `LOADING… / ${n} object(s)`;
-        el.classList.add("status-ok");
+        const backendTag = active ? ` ${backendDisplayName(active)}` : "";
+        const msTag = ms != null ? ` · ${Math.round(ms)}ms` : "";
+        if (running && ready) {
+            const alertTag = alerts > 0 ? ` · ${alerts} noyade` : "";
+            el.textContent = `LIVE / ${persons} pers.${alertTag}${backendTag}${msTag}`;
+            el.classList.add("status-ok");
+            if (alerts > 0) el.classList.remove("status-ok");
+        } else if (running) {
+            el.textContent = `LOADING…${backendTag}`;
+            el.classList.add("status-ok");
+        } else {
+            el.textContent = "OFF";
+            el.classList.remove("status-ok");
+        }
+    }
+
+    async function fetchAiBackends() {
+        try {
+            const r = await fetch("/api/detect/rgb/backends", { cache: "no-store", credentials: "include" });
+            if (!r.ok) return null;
+            return await r.json();
+        } catch (_e) {
+            return null;
+        }
+    }
+
+    function populateAiBackendSelect(info) {
+        const sel = document.getElementById("rgb-ai-backend");
+        if (!sel) return;
+        const active = info?.requested || info?.active || aiBackendRequested;
+        aiBackendRequested = active;
+        if ([...sel.options].some((o) => o.value === active)) sel.value = active;
+        const rfdetrOpt = [...sel.options].find((o) => o.value === "rfdetr");
+        if (rfdetrOpt && info?.available && !info.available.includes("rfdetr")) {
+            rfdetrOpt.disabled = true;
+            rfdetrOpt.textContent = "RF-DETR — unavailable on this Pi";
+        } else if (rfdetrOpt) {
+            rfdetrOpt.disabled = false;
+            rfdetrOpt.textContent = "RF-DETR — High accuracy / PC only";
+        }
+    }
+
+    async function applyAiBackend(backend) {
+        const sel = document.getElementById("rgb-ai-backend");
+        const hint = document.getElementById("rgb-ai-hint");
+        aiBackendRequested = backend;
+        localStorage.setItem("aquawing_ai_backend", backend);
+
+        async function tryPostBackend() {
+            const r = await fetch("/api/detect/rgb/backend", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ backend }),
+            });
+            const data = await r.json().catch(() => ({}));
+            return { ok: r.ok, status: r.status, data };
+        }
+
+        async function tryStartWithBackend() {
+            const r = await fetch("/api/detect/rgb/start", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ backend }),
+            });
+            const data = await r.json().catch(() => ({}));
+            return { ok: r.ok, status: r.status, data };
+        }
+
+        try {
+            let result = await tryPostBackend();
+            if (!result.ok && result.status === 404) {
+                await fetch("/api/detect/rgb/stop", { method: "POST", credentials: "include" }).catch(() => {});
+                result = await tryStartWithBackend();
+            }
+            if (!result.ok) {
+                const msg = result.data.detail || `Erreur HTTP ${result.status}`;
+                console.warn("AI backend:", msg);
+                if (hint) hint.textContent = `Modèle IA : échec (${msg}). Redémarrez ./start_server.sh`;
+                if (sel) sel.value = aiBackendRequested;
+                return;
+            }
+            const data = result.data;
+            aiBackendRequested = data.requested_backend || backend;
+            if (sel) sel.value = aiBackendRequested;
+            updateAiStatus(data);
+            if (hint) {
+                hint.textContent = `Modèle IA : ${backendDisplayName(data.active_backend || aiBackendRequested)} actif.`;
+            }
+            if (videoOn && ENABLE_AI_POLL && !data.running) {
+                await ensureAiWorker();
+            }
+        } catch (e) {
+            console.warn("AI backend:", e);
+            if (hint) hint.textContent = "Modèle IA : erreur réseau — vérifiez que le serveur tourne.";
+            if (sel) sel.value = aiBackendRequested;
+        }
+    }
+
+    function onAiBackendChange() {
+        const sel = document.getElementById("rgb-ai-backend");
+        if (!sel) return;
+        applyAiBackend(sel.value);
+    }
+
+    async function syncAiFromServer() {
+        const sel = document.getElementById("rgb-ai-backend");
+        if (sel && [...sel.options].some((o) => o.value === aiBackendRequested)) {
+            sel.value = aiBackendRequested;
+        }
+        const [backends, status] = await Promise.all([
+            fetchAiBackends(),
+            fetch("/api/detect/rgb/status", { cache: "no-store", credentials: "include" })
+                .then((r) => (r.ok ? r.json() : null))
+                .catch(() => null),
+        ]);
+        const hint = document.getElementById("rgb-ai-hint");
+        if (backends) {
+            populateAiBackendSelect(backends);
+        } else if (hint) {
+            hint.textContent =
+                "API IA ancienne — redémarrez ./start_server.sh puis Ctrl+F5. Sélection locale enregistrée.";
+        }
+        if (status) {
+            aiBackendRequested = status.requested_backend || aiBackendRequested;
+            populateAiBackendSelect({ requested: aiBackendRequested, available: backends?.available });
+            updateAiStatus(status);
+        }
     }
 
     async function ensureAiWorker() {
         if (!ENABLE_AI_POLL) return;
         try {
-            await fetch("/api/detect/rgb/start", { method: "POST" });
+            await fetch("/api/detect/rgb/start", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ backend: aiBackendRequested }),
+            });
         } catch (_e) {
             /* server may still return detections */
         }
@@ -153,7 +326,7 @@
     async function pollRgbDetections() {
         if (!videoOn || !ENABLE_AI_POLL) return;
         try {
-            const res = await fetch(`/api/detect/rgb?t=${Date.now()}`, { cache: "no-store" });
+            const res = await fetch(`/api/detect/rgb/status?t=${Date.now()}`, { cache: "no-store" });
             if (!res.ok) return;
             const data = await res.json();
             renderRgbDetections(data);
@@ -190,15 +363,10 @@
         return rgbCameraModes.find((m) => m.resolution === res);
     }
 
-    function fpsOptionsForRes(res) {
-        const mode = modeForRes(res);
-        return mode && mode.fps_options ? mode.fps_options : [15, 30];
-    }
-
     function formatResOptionLabel(mode) {
         const [w, h] = mode.resolution.split("x");
         const suffix = mode.label ? ` — ${mode.label}` : "";
-        return `${w}×${h}${suffix} (≤${mode.max_fps} FPS)`;
+        return `${w}×${h}${suffix} (${mode.fps} FPS)`;
     }
 
     function populateResolutionSelect() {
@@ -214,51 +382,24 @@
         if ([...sel.options].some((o) => o.value === rgbRes)) sel.value = rgbRes;
     }
 
-    function pickValidFps(res, preferred) {
-        const opts = fpsOptionsForRes(res);
-        const want = Number(preferred);
-        if (opts.includes(want)) return want;
-        const lower = opts.filter((f) => f <= want);
-        return lower.length ? Math.max(...lower) : opts[opts.length - 1];
-    }
-
-    function populateFpsSelect(res, preferredFps) {
-        const sel = document.getElementById("rgb-fps");
-        if (!sel) return;
-        const opts = fpsOptionsForRes(res);
-        sel.innerHTML = "";
-        opts.forEach((f) => {
-            const opt = document.createElement("option");
-            opt.value = String(f);
-            opt.textContent = `${f} FPS`;
-            sel.appendChild(opt);
-        });
-        rgbFps = pickValidFps(res, preferredFps != null ? preferredFps : rgbFps);
-        sel.value = String(rgbFps);
-    }
-
     function pollMsForMode() {
-        const byRes = RGB_POLL_BY_RES[rgbRes] || 3200;
-        const byFps = RGB_POLL_BY_FPS[rgbFps] || 3200;
-        return Math.max(byRes, byFps);
+        return RGB_POLL_BY_RES[rgbRes] || 2500;
     }
 
     function updateResolutionUi() {
+        const fps = fpsForRes(rgbRes);
         const meta = document.getElementById("rgb-meta-res");
-        if (meta) meta.textContent = `${formatResLabel(rgbRes)} @ ${rgbFps} FPS`;
+        if (meta) meta.textContent = formatResLabel(rgbRes);
+        const metaFps = document.getElementById("rgb-meta-fps");
+        if (metaFps) metaFps.textContent = `${fps} FPS`;
         const sel = document.getElementById("rgb-resolution");
         if (sel && [...sel.options].some((o) => o.value === rgbRes)) sel.value = rgbRes;
-        const fpsSel = document.getElementById("rgb-fps");
-        if (fpsSel && [...fpsSel.options].some((o) => o.value === String(rgbFps))) {
-            fpsSel.value = String(rgbFps);
-        }
         const hint = document.getElementById("rgb-resolution-hint");
         if (hint) {
             const mode = modeForRes(rgbRes);
-            const max = mode ? mode.max_fps : "?";
             hint.textContent = mode
-                ? `${mode.label} — FPS max ~${max} à ${formatResLabel(rgbRes)} (source rpicam sur le Pi).`
-                : "Modes natifs caméra Pi — FPS limités selon la résolution.";
+                ? `${mode.label} — ${formatResLabel(rgbRes)} @ ${fps} FPS sur rpicam-vid.`
+                : "4 modes natifs — résolution + FPS appliqués sur rpicam-vid.";
         }
     }
 
@@ -286,6 +427,12 @@
         return r.json();
     }
 
+    function ensureValidStoredMode() {
+        if (!rgbCameraModes.some((m) => m.resolution === rgbRes)) {
+            rgbRes = "2304x1296";
+        }
+    }
+
     async function syncRgbCameraFromServer() {
         const cfg = await fetchRgbCameraConfig();
         if (!cfg) return;
@@ -293,12 +440,9 @@
             rgbCameraModes = cfg.options.modes;
             populateResolutionSelect();
         }
+        ensureValidStoredMode();
         if (cfg.resolution) rgbRes = cfg.resolution;
-        if (cfg.fps != null) rgbFps = Number(cfg.fps);
-        populateFpsSelect(rgbRes, rgbFps);
-        rgbFps = pickValidFps(rgbRes, rgbFps);
         localStorage.setItem("aquawing_rgb_res", rgbRes);
-        localStorage.setItem("aquawing_rgb_fps", String(rgbFps));
         rgbPollMs = pollMsForMode();
         updateResolutionUi();
     }
@@ -310,8 +454,7 @@
             const s = await r.json();
             const fpsLine = document.getElementById("status-fps-line");
             if (fpsLine && videoOn) {
-                const measured = s.measured_fps != null ? ` (~${s.measured_fps} mesuré)` : "";
-                fpsLine.textContent = `${s.fps || rgbFps} FPS / rpicam${measured}`;
+                fpsLine.textContent = `${s.fps || fpsForRes(rgbRes)} FPS / rpicam`;
                 fpsLine.classList.add("status-ok");
             }
         } catch (_e) {
@@ -335,31 +478,27 @@
         rgbTimer = setInterval(refresh, rgbPollMs);
     }
 
-    async function applyRgbCaptureMode({ resolution, fps } = {}) {
-        const nextRes = resolution != null ? resolution : rgbRes;
-        const nextFps = fps != null ? Number(fps) : rgbFps;
-        if (nextRes === rgbRes && nextFps === rgbFps) return;
+    async function applyRgbCaptureMode(resolution) {
+        if (!resolution || resolution === rgbRes) return;
+        const nextFps = fpsForRes(resolution);
 
         const statusRgb = document.querySelector(".optical-status-cards .status-card:nth-child(2) .status-val");
         if (statusRgb && videoOn) {
-            statusRgb.textContent = `SWITCH / ${formatResLabel(nextRes)} @ ${nextFps}…`;
+            statusRgb.textContent = `SWITCH / ${formatResLabel(resolution)} @ ${nextFps}…`;
         }
 
         try {
-            const body = {};
-            if (resolution != null) body.resolution = resolution;
-            if (fps != null) body.fps = nextFps;
-            const cfg = await postRgbCameraConfig(body);
-            rgbRes = cfg.resolution || nextRes;
-            rgbFps = Number(cfg.fps != null ? cfg.fps : nextFps);
+            const cfg = await postRgbCameraConfig({ resolution });
+            rgbRes = cfg.resolution || resolution;
         } catch (e) {
             console.warn("RGB capture mode:", e);
+            const sel = document.getElementById("rgb-resolution");
+            if (sel) sel.value = rgbRes;
             return;
         }
 
         rgbPollMs = pollMsForMode();
         localStorage.setItem("aquawing_rgb_res", rgbRes);
-        localStorage.setItem("aquawing_rgb_fps", String(rgbFps));
         updateResolutionUi();
         await refreshRgbStatsMeta();
 
@@ -367,7 +506,7 @@
         restartRgbPolling();
         if (statusRgb) {
             const aiTag = useAnnotated ? " + IA" : "";
-            statusRgb.textContent = `LIVE / ${formatResLabel(rgbRes)} @ ${rgbFps}${aiTag}`;
+            statusRgb.textContent = `LIVE / ${formatResLabel(rgbRes)} @ ${fpsForRes(rgbRes)}${aiTag}`;
             statusRgb.classList.add("status-ok");
         }
     }
@@ -376,21 +515,8 @@
         const sel = document.getElementById("rgb-resolution");
         if (!sel) return;
         const next = sel.value;
-        populateFpsSelect(next, rgbFps);
-        const nextFps = parseInt(document.getElementById("rgb-fps")?.value || String(rgbFps), 10);
         if (camChangeTimer) clearTimeout(camChangeTimer);
-        camChangeTimer = setTimeout(
-            () => applyRgbCaptureMode({ resolution: next, fps: nextFps }),
-            350
-        );
-    }
-
-    function onRgbFpsChange() {
-        const sel = document.getElementById("rgb-fps");
-        if (!sel) return;
-        const next = parseInt(sel.value, 10);
-        if (camChangeTimer) clearTimeout(camChangeTimer);
-        camChangeTimer = setTimeout(() => applyRgbCaptureMode({ fps: next }), 350);
+        camChangeTimer = setTimeout(() => applyRgbCaptureMode(next), 350);
     }
 
     function setVideo(on) {
@@ -431,7 +557,7 @@
             applyRgbFilters();
             if (statusRgb) {
                 const aiTag = useAnnotated ? " + IA" : "";
-                statusRgb.textContent = `LIVE / ${formatResLabel(rgbRes)} @ ${rgbFps}${aiTag}`;
+                statusRgb.textContent = `LIVE / ${formatResLabel(rgbRes)} @ ${fpsForRes(rgbRes)}${aiTag}`;
                 statusRgb.classList.add("status-ok");
             }
         };
@@ -636,22 +762,14 @@
         });
         document.getElementById("thermal-palette")?.addEventListener("change", () => updateThermalMeta());
 
-        const rgbResSel = document.getElementById("rgb-resolution");
-        if (rgbResSel) {
-            if ([...rgbResSel.options].some((o) => o.value === rgbRes)) {
-                rgbResSel.value = rgbRes;
-            }
-            rgbResSel.addEventListener("change", onRgbResolutionChange);
-        }
-        const rgbFpsSel = document.getElementById("rgb-fps");
-        if (rgbFpsSel) {
-            if ([...rgbFpsSel.options].some((o) => o.value === String(rgbFps))) {
-                rgbFpsSel.value = String(rgbFps);
-            }
-            rgbFpsSel.addEventListener("change", onRgbFpsChange);
-        }
+        ensureValidStoredMode();
+        populateResolutionSelect();
+        document.getElementById("rgb-resolution")?.addEventListener("change", onRgbResolutionChange);
+        document.getElementById("rgb-ai-backend")?.addEventListener("change", onAiBackendChange);
         rgbPollMs = pollMsForMode();
         updateResolutionUi();
+
+        syncAiFromServer();
 
         wirePresets();
         wireToolbar();

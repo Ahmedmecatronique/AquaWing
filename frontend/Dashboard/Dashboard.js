@@ -35,7 +35,7 @@ const getWebSocketURL = () => {
 // Use current host automatically (IP or localhost)
 const WS_URL = getWebSocketURL();
 const VIDEO_URL = "/video";
-const DEFAULT_RGB_RES = "1280x720";
+const DEFAULT_RGB_RES = "2304x1296";
 const ENABLE_RGB_AI = true;
 const THERMAL_URL = "/thermal";
 const API_BASE = ""; // Relative URLs work with any host

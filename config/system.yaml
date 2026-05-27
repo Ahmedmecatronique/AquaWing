@@ -5,37 +5,37 @@ auth:
 cameras:
   rgb:
     enabled: true
-    fps: 30
+    fps: 56
     quality: 80
-    # Mode par défaut : bon équilibre qualité / fluidité (voir modes ci-dessous)
     resolution: 2304x1296
-    # Modes natifs caméra Pi — FPS max par résolution (rpicam-vid)
+    # 4 modes natifs caméra Pi — FPS fixe par mode (rpicam-vid)
     modes:
       - resolution: 1536x864
-        max_fps: 120
+        fps: 120
         label: Très fluide, faible latence
-        fps_options: [15, 30, 60, 90, 120]
       - resolution: 2304x1296
-        max_fps: 56
+        fps: 56
         label: Équilibre qualité + fluidité
-        fps_options: [15, 24, 30, 40, 50, 56]
       - resolution: 1920x1080
-        max_fps: 50
+        fps: 50
         label: Live Full HD
-        fps_options: [15, 24, 30, 40, 50]
       - resolution: 4608x2592
-        max_fps: 14
+        fps: 14
         label: Qualité max (photo / inspection)
-        fps_options: [5, 10, 14]
   thermal:
     enabled: false
     fps: 30
     resolution: 640x512
 detection:
   enabled: true
-  threshold: 0.45
-  inference_size: 416
-  interval_ms: 3500
+  backend: auto
+  preferred_backend: yolo
+  fallback_backend: yolo
+  model: yolov8n.pt
+  imgsz: 320
+  confidence: 0.4
+  interval_ms: 5000
+  allow_rfdetr_on_pi: false
   weights: backend/src/ia detection/rf-detr-develop/rf-detr-nano.pth
   classes:
     - person

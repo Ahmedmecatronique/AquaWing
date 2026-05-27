@@ -51,27 +51,23 @@ def _kill_stale_rpicam() -> None:
 _DEFAULT_CAMERA_MODES: list[dict[str, Any]] = [
     {
         "resolution": "1536x864",
-        "max_fps": 120,
+        "fps": 120,
         "label": "Très fluide, faible latence",
-        "fps_options": [15, 30, 60, 90, 120],
     },
     {
         "resolution": "2304x1296",
-        "max_fps": 56,
+        "fps": 56,
         "label": "Équilibre qualité + fluidité",
-        "fps_options": [15, 24, 30, 40, 50, 56],
     },
     {
         "resolution": "1920x1080",
-        "max_fps": 50,
+        "fps": 50,
         "label": "Live Full HD",
-        "fps_options": [15, 24, 30, 40, 50],
     },
     {
         "resolution": "4608x2592",
-        "max_fps": 14,
+        "fps": 14,
         "label": "Qualité max (photo / inspection)",
-        "fps_options": [5, 10, 14],
     },
 ]
 
@@ -81,48 +77,30 @@ def _norm_resolution(value: str) -> str:
 
 
 def get_rgb_camera_modes() -> list[dict[str, Any]]:
-    """Modes caméra Pi (résolution + FPS max + liste FPS autorisés)."""
+    """4 modes caméra Pi (résolution + FPS fixe rpicam-vid)."""
     cfg = _load_rgb_config()
     raw_modes = cfg.get("modes")
     if raw_modes:
         modes: list[dict[str, Any]] = []
         for m in raw_modes:
             res = _norm_resolution(m["resolution"])
-            fps_opts = [int(f) for f in m.get("fps_options") or []]
-            max_fps = int(m.get("max_fps", max(fps_opts) if fps_opts else 30))
+            fps = int(m.get("fps", m.get("max_fps", 30)))
             modes.append(
                 {
                     "resolution": res,
-                    "max_fps": max_fps,
+                    "fps": fps,
                     "label": str(m.get("label", "")),
-                    "fps_options": fps_opts or [max_fps],
                 }
             )
         return modes
-    # Ancien format resolutions / fps_options
-    resolutions = cfg.get("resolutions")
-    if resolutions:
-        global_fps = [int(f) for f in cfg.get("fps_options") or [15, 30]]
-        return [
-            {
-                "resolution": _norm_resolution(r),
-                "max_fps": max(global_fps),
-                "label": "",
-                "fps_options": global_fps,
-            }
-            for r in resolutions
-        ]
     return [dict(m) for m in _DEFAULT_CAMERA_MODES]
 
 
 def get_rgb_camera_options() -> dict[str, Any]:
-    """Listes résolution / FPS (tous modes + union des FPS)."""
     modes = get_rgb_camera_modes()
-    all_fps = sorted({f for m in modes for f in m["fps_options"]})
     return {
         "modes": modes,
         "resolutions": [m["resolution"] for m in modes],
-        "fps_options": all_fps,
     }
 
 
@@ -134,30 +112,11 @@ def get_mode_for_resolution(resolution: str) -> Optional[dict[str, Any]]:
     return None
 
 
-def get_fps_options_for_resolution(resolution: str) -> list[int]:
+def get_fps_for_resolution(resolution: str) -> int:
     mode = get_mode_for_resolution(resolution)
     if mode:
-        return list(mode["fps_options"])
-    return [15, 30]
-
-
-def get_max_fps_for_resolution(resolution: str) -> int:
-    mode = get_mode_for_resolution(resolution)
-    if mode:
-        return int(mode["max_fps"])
-    opts = get_fps_options_for_resolution(resolution)
-    return max(opts) if opts else 30
-
-
-def normalize_fps_for_resolution(resolution: str, fps: int) -> int:
-    """Choisit un FPS valide pour la résolution (≤ max caméra)."""
-    opts = get_fps_options_for_resolution(resolution)
-    if not opts:
-        return max(1, int(fps))
-    if int(fps) in opts:
-        return int(fps)
-    valid = [f for f in opts if f <= int(fps)]
-    return max(valid) if valid else min(opts)
+        return int(mode["fps"])
+    return _DEFAULT_FPS
 
 
 def _parse_resolution(value: str) -> Tuple[int, int]:
@@ -197,12 +156,16 @@ class RgbCameraStreamer:
     @classmethod
     def from_config(cls) -> "RgbCameraStreamer":
         cfg = _load_rgb_config()
-        res = cfg.get("resolution", f"{_DEFAULT_WIDTH}x{_DEFAULT_HEIGHT}")
-        width, height = _parse_resolution(str(res))
+        res = cfg.get("resolution", "2304x1296")
+        res_key = _norm_resolution(str(res))
+        width, height = _parse_resolution(res_key)
+        fps = get_fps_for_resolution(res_key)
+        if cfg.get("fps") is not None:
+            fps = int(cfg["fps"])
         return cls(
             width=width,
             height=height,
-            fps=int(cfg.get("fps", _DEFAULT_FPS)),
+            fps=fps,
             quality=int(cfg.get("quality", _DEFAULT_QUALITY)),
         )
 

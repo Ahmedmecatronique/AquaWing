@@ -1,11 +1,10 @@
 """
 Service de détection RGB — analyse périodique du flux caméra (personnes en mer).
-
-Module IA : ``backend/src/ia detection/``
 """
 
 from __future__ import annotations
 
+import sys
 import threading
 import time
 from pathlib import Path
@@ -14,20 +13,23 @@ from typing import Any, Optional
 import yaml
 
 try:
-    from rfdetr_engine import get_person_detector
-except ImportError:
-    from backend.src.ia_detection.rfdetr_engine import get_person_detector
-
-try:
     from backend.src.streaming.rgb_camera_stream import get_rgb_streamer
 except ImportError:
-    # Fallback import
-    import sys
-    from pathlib import Path
     _streaming_path = Path(__file__).resolve().parent.parent / "streaming"
     if str(_streaming_path) not in sys.path:
         sys.path.insert(0, str(_streaming_path))
     from rgb_camera_stream import get_rgb_streamer
+
+_perception = Path(__file__).resolve().parent.parent / "perception"
+if str(_perception) not in sys.path:
+    sys.path.insert(0, str(_perception))
+
+from detection_manager import get_detection_manager  # noqa: E402
+
+try:
+    from drowning_overlay import analyze_frame_with_drowning
+except ImportError:
+    from backend.src.ia_detection.drowning_overlay import analyze_frame_with_drowning  # type: ignore
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parents[2]
 _worker: Optional["RgbDetectionWorker"] = None
@@ -47,9 +49,9 @@ def _load_detection_config() -> dict:
 
 
 class RgbDetectionWorker:
-    """Thread d'analyse IA sur la dernière frame RGB."""
+    """Thread d'analyse IA sur la dernière frame RGB (interval_ms, pas chaque frame)."""
 
-    def __init__(self, interval_s: float = 1.5):
+    def __init__(self, interval_s: float = 5.0):
         cfg = _load_detection_config()
         self.enabled = bool(cfg.get("enabled", True))
         self.interval_s = float(cfg.get("interval_ms", interval_s * 1000)) / 1000.0
@@ -61,6 +63,7 @@ class RgbDetectionWorker:
         self._running = False
         self._error: Optional[str] = None
         self._frame_size = (0, 0)
+        self._alert_count = 0
 
     def start(self) -> None:
         if not self.enabled or self._running:
@@ -75,23 +78,29 @@ class RgbDetectionWorker:
         self._running = False
 
     def _loop(self) -> None:
+        manager = get_detection_manager()
         try:
-            detector = get_person_detector()
             streamer = get_rgb_streamer()
         except Exception as e:
             with self._lock:
-                self._error = f"Failed to initialize detector/streamer: {e}"
+                self._error = f"Failed to initialize streamer: {e}"
             return
-        
+
         while not self._stop.is_set():
             try:
                 jpeg = streamer.get_jpeg(wait_s=2.0)
                 if jpeg:
-                    dets = detector.detect_jpeg(jpeg)
+                    fw, fh = streamer.width, streamer.height
+                    dets = analyze_frame_with_drowning(jpeg, fw, fh)
+                    if dets is None:
+                        detector = manager.get_detector()
+                        dets = detector.detect_jpeg(jpeg)
+                    alert_n = sum(1 for d in dets if d.get("status") == "drowning" or d.get("alert"))
                     with self._lock:
                         self._detections = dets
+                        self._alert_count = alert_n
                         self._updated_at = time.time()
-                        self._frame_size = (streamer.width, streamer.height)
+                        self._frame_size = (fw, fh)
                         self._error = None
             except Exception as exc:
                 with self._lock:
@@ -101,9 +110,11 @@ class RgbDetectionWorker:
 
     def get_result(self) -> dict[str, Any]:
         with self._lock:
-            return {
+            worker_part = {
                 "detections": list(self._detections),
                 "count": len(self._detections),
+                "alert_count": self._alert_count,
+                "person_count": max(0, len(self._detections) - self._alert_count),
                 "updated_at": self._updated_at,
                 "frame_width": self._frame_size[0],
                 "frame_height": self._frame_size[1],
@@ -111,6 +122,22 @@ class RgbDetectionWorker:
                 "enabled": self.enabled,
                 "running": self._running,
             }
+        status = get_detection_manager().get_status(
+            detections=worker_part["detections"],
+            count=worker_part["count"],
+            running=worker_part["running"],
+            worker_error=worker_part["error"],
+        )
+        status.update(
+            {
+                "updated_at": worker_part["updated_at"],
+                "frame_width": worker_part["frame_width"],
+                "frame_height": worker_part["frame_height"],
+                "alert_count": worker_part["alert_count"],
+                "person_count": worker_part["person_count"],
+            }
+        )
+        return status
 
 
 def get_rgb_detection_worker() -> RgbDetectionWorker:

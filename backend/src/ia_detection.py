@@ -15,11 +15,14 @@ _IA_DIR = Path(__file__).resolve().parent / "ia detection"
 if str(_IA_DIR) not in sys.path:
     sys.path.insert(0, str(_IA_DIR))
 
-from rfdetr_engine import RfDetrPersonDetector, get_person_detector  # noqa: E402
+from person_detector import get_person_detector  # noqa: E402
 from rgb_detection_service import RgbDetectionWorker, get_rgb_detection_worker  # noqa: E402
+from rfdetr_engine import RfDetrPersonDetector  # noqa: E402
+from yolo_engine import YoloPersonDetector  # noqa: E402
 
 __all__ = [
     "RfDetrPersonDetector",
+    "YoloPersonDetector",
     "RgbDetectionWorker",
     "get_person_detector",
     "get_rgb_detection_worker",

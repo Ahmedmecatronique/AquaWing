@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>AquaWing — Optical</title>
-    <link rel="stylesheet" href="/optical-page.css?v=6">
+    <link rel="stylesheet" href="/optical-page.css?v=7">
 </head>
 <body class="optical-body">
 <div class="optical-shell">
@@ -61,14 +61,19 @@
                     </select>
                 </div>
                 <div class="oc-select-row">
-                    <label class="oc-select-label" for="rgb-resolution">Résolution source (rpicam)</label>
-                    <select id="rgb-resolution" class="oc-select" aria-label="Résolution caméra RGB sur le Pi"></select>
+                    <label class="oc-select-label" for="rgb-resolution">Mode source (rpicam)</label>
+                    <select id="rgb-resolution" class="oc-select" aria-label="Mode caméra RGB sur le Pi"></select>
                 </div>
+                <p class="oc-hint" id="rgb-resolution-hint">4 modes natifs — résolution + FPS appliqués sur rpicam-vid.</p>
                 <div class="oc-select-row">
-                    <label class="oc-select-label" for="rgb-fps">FPS source (rpicam)</label>
-                    <select id="rgb-fps" class="oc-select" aria-label="Images par seconde caméra RGB sur le Pi"></select>
+                    <label class="oc-select-label" for="rgb-ai-backend">AI Model</label>
+                    <select id="rgb-ai-backend" class="oc-select" aria-label="Backend IA pour détection personnes">
+                        <option value="auto">Auto</option>
+                        <option value="yolo">YOLOv8n — Raspberry Pi optimized</option>
+                        <option value="rfdetr">RF-DETR — High accuracy / PC only</option>
+                    </select>
                 </div>
-                <p class="oc-hint" id="rgb-resolution-hint">Modes natifs caméra Pi — FPS limités selon la résolution (voir tableau fabricant).</p>
+                <p class="oc-hint" id="rgb-ai-hint">Backend IA : chargement…</p>
                 <p class="oc-presets-caption">PRÉRÉGLAGES</p>
                 <div class="oc-presets" role="group" aria-label="RGB presets">
                     <button type="button" class="oc-preset is-active" data-preset="auto">Auto</button>
@@ -138,7 +143,7 @@
         <section class="optical-pane optical-pane--rgb" aria-label="RGB live feed">
             <header class="feed-meta feed-meta--rgb">
                 <span class="feed-meta-chip" id="rgb-meta-res">2304×1296</span>
-                <span class="feed-meta-chip feed-meta-accent">30 FPS</span>
+                <span class="feed-meta-chip feed-meta-accent" id="rgb-meta-fps">56 FPS</span>
                 <span class="feed-rec" id="feed-rec-indicator"><span class="feed-rec-dot"></span> REC</span>
                 <span class="feed-meta-chip">ZOOM 1.0×</span>
                 <span class="feed-battery" title="Battery">
@@ -235,6 +240,6 @@
         </div>
     </section>
 </div>
-<script src="/optical-page.js?v=11"></script>
+<script src="/optical-page.js?v=15"></script>
 </body>
 </html>

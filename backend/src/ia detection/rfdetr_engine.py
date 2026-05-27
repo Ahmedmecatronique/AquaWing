@@ -160,6 +160,7 @@ class RfDetrPersonDetector:
         return {
             "ready": self._ready,
             "error": self._error,
+            "backend": "rfdetr",
             "weights": str(self.weights_path),
             "threshold": self.threshold,
             "inference_size": self.inference_size,
@@ -172,8 +173,7 @@ _detector_lock = threading.Lock()
 
 
 def get_person_detector() -> RfDetrPersonDetector:
-    global _detector
-    with _detector_lock:
-        if _detector is None:
-            _detector = RfDetrPersonDetector()
-        return _detector
+    """Legacy — préférer ``person_detector.get_person_detector()``."""
+    from person_detector import get_person_detector as _get
+
+    return _get()  # type: ignore[return-value]

@@ -96,27 +96,109 @@ def _safe_import_cv2() -> Any:
 
 
 # ---------------------------------------------------------------------------
-# RGB AI detection (RF-DETR — personnes en mer) + Swimmer pipeline (ia_prediction)
+# RGB AI detection — YOLO / RF-DETR via DetectionManager
 # ---------------------------------------------------------------------------
+
+class DetectRgbBackendBody(BaseModel):
+    backend: str  # auto | yolo | rfdetr
+
+
+class DetectRgbStartBody(BaseModel):
+    backend: Optional[str] = None  # auto | yolo | rfdetr (optionnel au démarrage)
+
+
+@router.get("/detect/rgb/backends")
+async def get_rgb_detection_backends() -> dict[str, Any]:
+    from backend.src.perception.detection_manager import get_detection_manager
+
+    return get_detection_manager().get_backends_info()
+
+
+@router.get("/detect/rgb/status")
+async def get_rgb_detection_status() -> dict[str, Any]:
+    from backend.src.ia_detection import get_rgb_detection_worker
+    from backend.src.perception.detection_manager import get_detection_manager
+
+    worker = get_rgb_detection_worker()
+    result = worker.get_result()
+    if not worker._running:
+        mgr = get_detection_manager()
+        result = mgr.get_status(
+            detections=result.get("detections", []),
+            count=result.get("count", 0),
+            running=False,
+            worker_error=result.get("error"),
+        )
+    return result
+
 
 @router.get("/detect/rgb")
 async def get_rgb_detections() -> dict[str, Any]:
-    """Dernières détections IA sur le flux RGB (personnes / nageurs).
-
-    Coordonnées normalisées 0–1 (pour overlay canvas côté dashboard).
-    """
+    """Dernières détections + status IA (compat dashboard / Optical)."""
     try:
-        from backend.src.ia_detection import get_rgb_detection_worker, get_person_detector
+        from backend.src.ia_detection import get_rgb_detection_worker
 
-        worker = get_rgb_detection_worker()
-        result = worker.get_result()
-        if worker._running:
-            result["detector"] = get_person_detector().get_stats()
-        else:
-            result["detector"] = {"ready": False, "enabled": worker.enabled}
-        return result
+        return get_rgb_detection_worker().get_result()
     except Exception as exc:
-        return {"detections": [], "count": 0, "error": str(exc), "enabled": False}
+        return {
+            "detections": [],
+            "count": 0,
+            "error": str(exc),
+            "enabled": False,
+            "running": False,
+            "ready": False,
+        }
+
+
+@router.post("/detect/rgb/start")
+async def start_rgb_detection(body: Optional[DetectRgbStartBody] = None) -> dict[str, Any]:
+    from backend.src.ia_detection import get_rgb_detection_worker
+    from backend.src.perception.detection_manager import get_detection_manager
+
+    if body and body.backend:
+        try:
+            get_detection_manager().set_requested_backend(body.backend)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    worker = get_rgb_detection_worker()
+    if not worker.enabled:
+        return {"success": False, "error": "detection disabled in config", "running": False}
+    worker.start()
+    return {"success": True, "running": worker._running, **worker.get_result()}
+
+
+@router.post("/detect/rgb/stop")
+async def stop_rgb_detection() -> dict[str, Any]:
+    from backend.src.ia_detection import get_rgb_detection_worker
+
+    worker = get_rgb_detection_worker()
+    worker.stop()
+    return {"success": True, "running": worker._running}
+
+
+@router.post("/detect/rgb/backend")
+async def set_rgb_detection_backend(body: DetectRgbBackendBody) -> dict[str, Any]:
+    """Change le backend IA (auto / yolo / rfdetr) avec fallback si RF-DETR échoue."""
+    from backend.src.ia_detection import get_rgb_detection_worker
+    from backend.src.perception.detection_manager import get_detection_manager
+
+    manager = get_detection_manager()
+    was_running = get_rgb_detection_worker()._running
+
+    try:
+        status = manager.set_requested_backend(body.backend)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    worker = get_rgb_detection_worker()
+    if was_running:
+        worker.stop()
+        worker.start()
+
+    status["success"] = True
+    status["running"] = worker._running
+    return status
 
 
 @router.get("/detect/swimmers")
@@ -150,17 +232,14 @@ async def get_swimmer_risk() -> dict[str, Any]:
 
 
 class RgbCameraConfigBody(BaseModel):
-    """Applique résolution et/ou FPS sur rpicam-vid (source caméra Pi)."""
-    resolution: Optional[str] = None
-    fps: Optional[int] = None
+    """Applique un mode caméra Pi (résolution + FPS fixe du mode)."""
+    resolution: str
 
 
 @router.get("/camera/rgb/config")
 async def get_rgb_camera_config() -> dict[str, Any]:
-    """Mode capture actuel + modes caméra Pi (résolution / FPS max par mode)."""
+    """Mode capture actuel + 4 modes natifs caméra Pi."""
     from backend.src.streaming.rgb_camera_stream import (
-        get_fps_options_for_resolution,
-        get_max_fps_for_resolution,
         get_mode_for_resolution,
         get_rgb_camera_options,
         get_rgb_streamer,
@@ -177,8 +256,6 @@ async def get_rgb_camera_config() -> dict[str, Any]:
         "fps": streamer.fps,
         "quality": streamer.quality,
         "running": streamer._running,
-        "max_fps": get_max_fps_for_resolution(res_key),
-        "fps_options": get_fps_options_for_resolution(res_key),
         "mode": mode,
         "options": opts,
         "stats": streamer.get_stats(),
@@ -187,53 +264,39 @@ async def get_rgb_camera_config() -> dict[str, Any]:
 
 @router.post("/camera/rgb/config")
 async def set_rgb_camera_config(body: RgbCameraConfigBody) -> dict[str, Any]:
-    """Change résolution et/ou FPS sur le Pi (redémarre rpicam-vid)."""
+    """Active un mode sur le Pi (redémarre rpicam-vid avec résolution + FPS du mode)."""
     from backend.src.streaming.rgb_camera_stream import (
         _parse_resolution,
-        get_fps_options_for_resolution,
-        get_max_fps_for_resolution,
+        get_fps_for_resolution,
+        get_mode_for_resolution,
         get_rgb_camera_options,
         get_rgb_streamer,
-        normalize_fps_for_resolution,
     )
 
     streamer = get_rgb_streamer()
     opts = get_rgb_camera_options()
     allowed_res = {str(r) for r in opts["resolutions"]}
 
-    new_w, new_h = streamer.width, streamer.height
-    new_fps = streamer.fps
-
-    if body.resolution is not None:
-        res_key = str(body.resolution).strip().lower().replace("×", "x")
-        if res_key not in allowed_res:
-            raise HTTPException(
-                status_code=400,
-                detail=f"resolution must be one of {sorted(allowed_res)}",
-            )
-        new_w, new_h = _parse_resolution(res_key)
-
-    if body.fps is not None:
-        new_fps = int(body.fps)
-
-    res_key = f"{new_w}x{new_h}"
-    allowed_fps = get_fps_options_for_resolution(res_key)
-    max_fps = get_max_fps_for_resolution(res_key)
-    if body.fps is not None and new_fps not in allowed_fps:
+    res_key = str(body.resolution).strip().lower().replace("×", "x")
+    if res_key not in allowed_res:
         raise HTTPException(
             status_code=400,
-            detail=f"fps must be one of {allowed_fps} (max {max_fps} for {res_key})",
+            detail=f"resolution must be one of {sorted(allowed_res)}",
         )
-    new_fps = normalize_fps_for_resolution(res_key, new_fps)
+
+    new_w, new_h = _parse_resolution(res_key)
+    new_fps = get_fps_for_resolution(res_key)
 
     changed = streamer.set_capture_mode(width=new_w, height=new_h, fps=new_fps)
+    out_res = f"{streamer.width}x{streamer.height}"
     return {
         "ok": True,
         "changed": changed,
-        "resolution": f"{streamer.width}x{streamer.height}",
+        "resolution": out_res,
         "width": streamer.width,
         "height": streamer.height,
         "fps": streamer.fps,
+        "mode": get_mode_for_resolution(out_res),
         "stats": streamer.get_stats(),
     }
 
@@ -466,54 +529,3 @@ async def get_mission(mission_name: str):
         raise HTTPException(status_code=404, detail=f"Mission '{mission_name}' not found")
     
     return _missions[mission_name]
-
-
-# ---------------------------------------------------------------------------
-# RGB AI detection (RF-DETR — personnes en mer)
-# ---------------------------------------------------------------------------
-
-@router.get("/detect/rgb")
-async def get_rgb_detections():
-    """
-    Dernières détections IA sur le flux RGB (personnes / nageurs).
-    Coordonnées normalisées 0–1 pour l'overlay canvas du dashboard.
-    """
-    try:
-        from backend.src.ia_detection import get_rgb_detection_worker, get_person_detector
-
-        worker = get_rgb_detection_worker()
-        result = worker.get_result()
-        if worker._running:
-            result["detector"] = get_person_detector().get_stats()
-        else:
-            result["detector"] = {"ready": False, "enabled": worker.enabled}
-        return result
-    except Exception as exc:
-        return {
-            "detections": [],
-            "count": 0,
-            "error": str(exc),
-            "enabled": False,
-        }
-
-
-@router.post("/detect/rgb/start")
-async def start_rgb_detection():
-    """Démarrer le worker d'analyse IA sur la caméra RGB."""
-    from backend.src.ia_detection import get_rgb_detection_worker
-
-    worker = get_rgb_detection_worker()
-    if not worker.enabled:
-        return {"success": False, "error": "detection disabled in config (system.yaml)", "running": False}
-    worker.start()
-    return {"success": True, "running": worker._running}
-
-
-@router.post("/detect/rgb/stop")
-async def stop_rgb_detection():
-    """Arrêter le worker d'analyse IA."""
-    from backend.src.ia_detection import get_rgb_detection_worker
-
-    worker = get_rgb_detection_worker()
-    worker.stop()
-    return {"success": True, "running": worker._running}
