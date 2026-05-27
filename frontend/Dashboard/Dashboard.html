@@ -235,8 +235,7 @@
                 <iframe
                     id="missions-frame"
                     class="missions-frame"
-                    data-missions-src="/missions-page"
-                    src="/missions-page?ui=mis-sat-v2"
+                    data-lazy-src="/missions-page?ui=mis-sat-v2"
                     title="Mission Control"
                     referrerpolicy="same-origin">
                 </iframe>
@@ -252,8 +251,7 @@
                 <iframe
                     id="systems-frame"
                     class="systems-frame"
-                    data-systems-src="/systems-page"
-                    src="/systems-page?ui=sysdash-v4"
+                    data-lazy-src="/systems-page?ui=sysdash-v4"
                     title="Systems"
                     referrerpolicy="same-origin">
                 </iframe>
@@ -269,8 +267,7 @@
                 <iframe
                     id="optical-frame"
                     class="optical-frame"
-                    data-optical-src="/optical-page"
-                    src="/optical-page?ui=optdash-v1"
+                    data-lazy-src="/optical-page?ui=optdash-v1"
                     title="Optical"
                     referrerpolicy="same-origin">
                 </iframe>
@@ -286,8 +283,7 @@
                 <iframe
                     id="pid-frame"
                     class="pid-frame"
-                    data-pid-src="/pid-page"
-                    src="/pid-page?ui=piddash-v1"
+                    data-lazy-src="/pid-page?ui=piddash-v1"
                     title="PID Settings"
                     referrerpolicy="same-origin">
                 </iframe>
@@ -303,8 +299,7 @@
                 <iframe
                     id="electrical-wiring-frame"
                     class="electrical-wiring-frame"
-                    data-ew-src="/electrical-wiring"
-                    src="/electrical-wiring?ui=ewdash-v2"
+                    data-lazy-src="/electrical-wiring?ui=ewdash-v2"
                     title="Electrical Wiring"
                     referrerpolicy="same-origin">
                 </iframe>
@@ -320,8 +315,7 @@
                 <iframe
                     id="heatmap-frame"
                     class="heatmap-frame"
-                    data-heatmap-src="/heatmap-page"
-                    src="/heatmap-page?ui=hmap-v7"
+                    data-lazy-src="/heatmap-page?ui=hmap-v7"
                     title="Heatmap"
                     referrerpolicy="same-origin">
                 </iframe>
@@ -337,8 +331,7 @@
                 <iframe
                     id="settings-frame"
                     class="settings-frame"
-                    data-settings-src="/settings-page"
-                    src="/settings-page?ui=setdash-v2"
+                    data-lazy-src="/settings-page?ui=setdash-v2"
                     title="Settings"
                     referrerpolicy="same-origin">
                 </iframe>
@@ -834,8 +827,8 @@
                             <select id="rgb-resolution" aria-label="RGB resolution">
                                 <option value="640x480">640×480</option>
                                 <option value="800x600">800×600</option>
-                                <option value="1280x720">1280×720</option>
-                                <option value="2304x1296" selected>2304×1296</option>
+                                <option value="1280x720" selected>1280×720</option>
+                                <option value="2304x1296">2304×1296</option>
                             </select>
                             <button id="video-toggle" class="btn-primary">RGB: OFF</button>
                             <div id="video-status" class="status-dot off">OFF</div>
@@ -890,6 +883,6 @@
     <div id="toast" aria-live="polite" aria-atomic="true" class="toast-container" style="display:none;"></div>
 
     <script>/* dev: stamped version */ window.__MAP_CSS_VERSION='v2'; window.__MAP_JS_VERSION='v1';</script>
-    <script defer src="/dashboard.js?v=aqua-nav-layout-v1"></script>
+    <script defer src="/dashboard.js?v=aqua-perf-v2"></script>
 </body>
 </html>

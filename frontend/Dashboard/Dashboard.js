@@ -35,6 +35,8 @@ const getWebSocketURL = () => {
 // Use current host automatically (IP or localhost)
 const WS_URL = getWebSocketURL();
 const VIDEO_URL = "/video";
+const DEFAULT_RGB_RES = "1280x720";
+const ENABLE_RGB_AI = false; // RF-DETR lourd sur Pi — POST /api/detect/rgb/start pour activer
 const THERMAL_URL = "/thermal";
 const API_BASE = ""; // Relative URLs work with any host
 
@@ -69,8 +71,9 @@ let rgbSamples = [];
 let thermalSamples = [];
 let lastRGBObjectURL = null;
 let lastThermalObjectURL = null;
-const RGB_INTERVAL = 900; // ms
-const THERMAL_INTERVAL = 1200; // ms
+// NOTE: Keep these conservative on Raspberry Pi to avoid saturating CPU/network.
+const RGB_INTERVAL = 1500; // ms
+const THERMAL_INTERVAL = 2000; // ms
 const SAMPLE_WINDOW_MS = 5000; // sliding window for averages (ms)
 
 // Distance tracking (declared once at top level)
@@ -111,21 +114,49 @@ let suppressMissionIframeWaypointSync = false;
 
 function getMissionsFrameWindowSafe() {
     try {
-        return document.getElementById('missions-frame')?.contentWindow || null;
+        const frame = document.getElementById('missions-frame');
+        if (!frame || frame.dataset.loaded !== '1') return null;
+        return frame.contentWindow || null;
     } catch (_e) {
         return null;
     }
 }
 
+/** Charge un iframe au premier affichage de l’onglet (évite 7 pages en parallèle au démarrage). */
+function ensureLazyIframe(frameId) {
+    const frame = document.getElementById(frameId);
+    if (!frame) return null;
+    const base = frame.getAttribute('data-lazy-src');
+    if (!base) return frame;
+    if (frame.dataset.loaded !== '1') {
+        frame.src = `${base}${base.includes('?') ? '&' : '?'}t=${Date.now()}`;
+        frame.dataset.loaded = '1';
+        frame.addEventListener('load', () => {
+            if (frameId === 'missions-frame') pushDashboardWaypointsToMissionFrame();
+        }, { once: true });
+    }
+    return frame;
+}
+
+function callMissionsFrame(methodName, ...args) {
+    try {
+        const w = getMissionsFrameWindowSafe();
+        if (!w) return false;
+        const fn = w[methodName];
+        if (typeof fn !== 'function') return false;
+        fn.apply(w, args);
+        return true;
+    } catch (_e) {
+        return false;
+    }
+}
+
 function pushDashboardWaypointsToMissionFrame() {
     if (suppressMissionIframeWaypointSync) return;
-    const w = getMissionsFrameWindowSafe();
-    if (!w || typeof w.applyDashboardWaypoints !== 'function') return;
-    try {
-        w.applyDashboardWaypoints(waypoints.map((wp) => ({ lat: wp.lat, lon: wp.lon })));
-    } catch (e) {
-        console.warn('sync waypoints → Missions iframe', e);
-    }
+    callMissionsFrame(
+        'applyDashboardWaypoints',
+        waypoints.map((wp) => ({ lat: wp.lat, lon: wp.lon }))
+    );
 }
 
 /** Exposé à l’iframe Mission : liste courante pour afficher les WP numérotés au chargement. */
@@ -134,13 +165,7 @@ window.getDashboardWaypointsForMission = function () {
 };
 
 function syncDashboardDroneToMissionFrame(lat, lon, heading) {
-    const w = getMissionsFrameWindowSafe();
-    if (!w || typeof w.applyDashboardDrone !== 'function') return;
-    try {
-        w.applyDashboardDrone(lat, lon, heading);
-    } catch (e) {
-        console.warn('sync drone → Missions iframe', e);
-    }
+    callMissionsFrame('applyDashboardDrone', lat, lon, heading);
 }
 
 // Flight UI state (UI-only, simulated)
@@ -528,10 +553,21 @@ function initMap() {
     map = L.map('map').setView(MAP_CENTER, 15);
     
     /* Même fond satellite + rendu foncé que la page Heatmap (Esri World Imagery) */
-    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
-        attribution: "Tiles © Esri",
+    const satellite = L.tileLayer(
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        { attribution: "Tiles © Esri", maxZoom: 19 }
+    );
+    const osmFallback = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "© OpenStreetMap",
         maxZoom: 19,
-    }).addTo(map);
+    });
+    satellite.addTo(map);
+    satellite.on("tileerror", () => {
+        if (map.hasLayer(satellite)) {
+            map.removeLayer(satellite);
+            osmFallback.addTo(map);
+        }
+    });
     
     // Initialize polyline (flight path)
     polyline = L.polyline([], {
@@ -1581,6 +1617,7 @@ document.addEventListener("click", (e) => {
         }
         const errBox = document.createElement('div'); errBox.id = 'dev-errors'; document.body.appendChild(errBox);
         window.addEventListener('error', (ev)=>{
+            if (ev.message && /cross-origin|SecurityError|Blocked a frame/i.test(ev.message)) return;
             if (banner) banner.classList.add('error');
             errBox.style.display = 'block';
             const line = document.createElement('div'); line.textContent = `[ERROR] ${ev.message} @ ${ev.filename}:${ev.lineno}`; errBox.appendChild(line);
@@ -1709,24 +1746,13 @@ if (opticalRgbResolutionSelectMain) {
     });
 }
 
+// Avoid heavy blob/objectURL churn for live previews: prefer <img src=...> updates.
 async function fetchBlob(url){
     try {
-        // Use relative URLs - they work with any host (IP or localhost)
-        const r = await fetch(url, {
-            cache: 'no-store',
-            credentials: 'include',
-            mode: 'cors'
-        });
-        if (!r.ok) {
-            console.warn('Fetch failed:', r.status, r.statusText, 'for URL:', url);
-            return null;
-        }
-        const b = await r.blob();
-        return b;
-    } catch(e){
-        console.error('Fetch blob error:', e, 'for URL:', url);
-        return null;
-    }
+        const r = await fetch(url, { cache: 'no-store', credentials: 'include', mode: 'cors' });
+        if (!r.ok) return null;
+        return await r.blob();
+    } catch(_) { return null; }
 }
 
 function updateSamples(samples, size){
@@ -1742,21 +1768,10 @@ function updateSamples(samples, size){
 async function fetchAndDisplayRGB(res){
     if (!videoImg) return;
     const url = VIDEO_URL + '?res=' + encodeURIComponent(res) + '&_=' + Date.now();
-    const blob = await fetchBlob(url);
-    if (!blob) {
-        if (videoStatus) videoStatus.className = 'status-dot off';
-        return;
-    }
-    // set image
-    try { if (lastRGBObjectURL) URL.revokeObjectURL(lastRGBObjectURL); } catch(e){}
-    const obj = URL.createObjectURL(blob); lastRGBObjectURL = obj; videoImg.src = obj;
-
-    // update stats
-    const bps = updateSamples(rgbSamples, blob.size);
-    const kb = (bps/1024).toFixed(1);
-    const elB = document.getElementById('rgb-bitrate'); if (elB) elB.textContent = `${kb} kb/s`;
+    // Light mode: update src directly (no blob/objectURL)
+    videoImg.src = url;
     const elR = document.getElementById('rgb-res'); if (elR) elR.textContent = res;
-    if (videoStatus) videoStatus.className = 'status-dot on';
+    const elB = document.getElementById('rgb-bitrate'); if (elB) elB.textContent = '--';
 }
 
 let rgbAiTimer = null;
@@ -2060,10 +2075,11 @@ function startRGBLoop(res){
     // initial fetch immediately
     fetchAndDisplayRGB(res);
     rgbTimer = setInterval(()=> fetchAndDisplayRGB(res), RGB_INTERVAL);
-    // start AI overlay simulation
-    if (rgbAiTimer) clearInterval(rgbAiTimer);
-    rgbAiTimer = setInterval(fetchRGBDetections, 2000);
-    fetchRGBDetections();
+    if (ENABLE_RGB_AI) {
+        if (rgbAiTimer) clearInterval(rgbAiTimer);
+        rgbAiTimer = setInterval(fetchRGBDetections, 5000);
+        fetchRGBDetections();
+    }
 }
 function stopRGBLoop(){ if (rgbTimer) { clearInterval(rgbTimer); rgbTimer = null; } try{ if (lastRGBObjectURL) { URL.revokeObjectURL(lastRGBObjectURL); lastRGBObjectURL = null; } }catch(e){} if (videoImg) videoImg.src = ''; const elB = document.getElementById('rgb-bitrate'); if (elB) elB.textContent = '0 kb/s'; const elR = document.getElementById('rgb-res'); if (elR) elR.textContent = '--'; if (videoStatus) videoStatus.className = 'status-dot off'; if (rgbAiTimer) { clearInterval(rgbAiTimer); rgbAiTimer = null; } clearOverlay('rgb-overlay'); document.getElementById('rgb-ai') && (document.getElementById('rgb-ai').textContent = ''); }
 
@@ -2076,19 +2092,9 @@ async function fetchAndDisplayThermal(){
     const panel = document.querySelector('.camera-panel.thermal');
     const base = panel && panel.dataset && panel.dataset.url ? panel.dataset.url : '/thermal';
     const url = base + '?_=' + Date.now();
-    const blob = await fetchBlob(url);
-    if (!blob) { if (thermalStatus) thermalStatus.className = 'status-dot off'; return; }
-    try { if (lastThermalObjectURL) URL.revokeObjectURL(lastThermalObjectURL); } catch(e){}
-    const obj = URL.createObjectURL(blob); lastThermalObjectURL = obj; if (thermalImg) thermalImg.src = obj;
-
-    // stats
-    const now = Date.now(); thermalSamples.push({ts:now});
-    const cutoff = now - SAMPLE_WINDOW_MS; while(thermalSamples.length && thermalSamples[0].ts < cutoff) thermalSamples.shift();
-    const windowSec = Math.max(0.001, (now - (thermalSamples.length? thermalSamples[0].ts : now))/1000);
-    const fps = (thermalSamples.length / windowSec).toFixed(1);
-    const elF = document.getElementById('thermal-fps'); if (elF) elF.textContent = `${fps} fps`;
-    const elR = document.getElementById('thermal-res'); if (elR && blob) elR.textContent = `${blob.size} bytes`;
-    if (thermalStatus) thermalStatus.className = 'status-dot on';
+    if (thermalImg) thermalImg.src = url;
+    const elF = document.getElementById('thermal-fps'); if (elF) elF.textContent = '--';
+    const elR = document.getElementById('thermal-res'); if (elR) elR.textContent = '--';
 }
 
 let thermalAiTimer = null;
@@ -2119,7 +2125,7 @@ function setVideo(on){
             opticalVideoPlaceholder.style.display = 'none';
             clearPlaceholderTimer(opticalVideoPlaceholder);
         }
-        const res = (rgbResolutionSelect && rgbResolutionSelect.value) ? rgbResolutionSelect.value : '2304x1296';
+        const res = (rgbResolutionSelect && rgbResolutionSelect.value) ? rgbResolutionSelect.value : DEFAULT_RGB_RES;
         startRGBLoop(res);
     } else {
         if (videoPlaceholder) {
@@ -2279,8 +2285,15 @@ function syncOpticalStreams() {
     }
 }
 
-// Update optical streams periodically
-setInterval(syncOpticalStreams, 100);
+// Sync optical DOM only when dashboard cams visible (not when Optical is in iframe)
+let opticalSyncTimer = null;
+function startOpticalSyncIfNeeded() {
+    if (opticalSyncTimer) return;
+    opticalSyncTimer = setInterval(syncOpticalStreams, 2000);
+}
+function stopOpticalSync() {
+    if (opticalSyncTimer) { clearInterval(opticalSyncTimer); opticalSyncTimer = null; }
+}
 
 // Optical Settings Panel - Parameter Controls
 const rgbBrightness = document.getElementById('rgb-brightness');
@@ -2373,9 +2386,10 @@ window.addEventListener('load', () => {
     initAquawingDashboard();
     // WebSocket connects lazily when user sends a command (to avoid backend circular demo telemetry)
     // Demo does NOT auto-start — user must define a trajectory then click START FLIGHT
-    // Aqua : pas de boutons RGB/Thermal sur les tuiles principales → démarrer les flux automatiquement
-    setVideo(true);
-    setThermal(true);
+    // IMPORTANT: Don't auto-start camera polling on load (too heavy on Pi).
+    // Keep OFF by default; user can enable RGB/Thermal with toggles.
+    setVideo(false);
+    setThermal(false);
     // Ensure route controls initial state
     updateRouteControls();
 
@@ -2447,6 +2461,12 @@ window.addEventListener('load', () => {
                 mapContainer.style.flex = '';
             }
             if (rightColumn) rightColumn.style.display = 'flex';
+            stopOpticalSync();
+            setTimeout(() => {
+                try {
+                    if (map && typeof map.invalidateSize === 'function') map.invalidateSize();
+                } catch (_e) { /* noop */ }
+            }, 200);
         } else if (activeEl === navMissions) {
             // Missions: iframe pleine zone (Mission Control), dashboard map masqué
             const missionsPanel = document.getElementById('missions-panel');
@@ -2470,18 +2490,7 @@ window.addEventListener('load', () => {
             if (missionsPanel) {
                 missionsPanel.style.display = 'flex';
                 console.log('Missions panel shown');
-                const mf = document.getElementById('missions-frame');
-                if (mf) {
-                    try {
-                        const base = mf.getAttribute('data-missions-src') || '/missions-page';
-                        mf.src = `${base}?ui=mis-sat-v2&t=${Date.now()}`;
-                    } catch (_) { /* noop */ }
-                }
-                /* Repousser les WP après chargement iframe (listener load + délais) */
-                pushDashboardWaypointsToMissionFrame();
-                requestAnimationFrame(() => pushDashboardWaypointsToMissionFrame());
-                setTimeout(() => pushDashboardWaypointsToMissionFrame(), 280);
-                setTimeout(() => pushDashboardWaypointsToMissionFrame(), 900);
+                ensureLazyIframe('missions-frame');
             }
             
             if (mainContent) {
@@ -2512,13 +2521,7 @@ window.addEventListener('load', () => {
             if (systemsPanel) {
                 systemsPanel.style.display = 'flex';
                 console.log('Systems panel shown');
-                const sf = document.getElementById('systems-frame');
-                if (sf) {
-                    try {
-                        const base = sf.getAttribute('data-systems-src') || '/systems-page';
-                        sf.src = `${base}?ui=sysdash-v4&t=${Date.now()}`;
-                    } catch (_) { /* noop */ }
-                }
+                ensureLazyIframe('systems-frame');
             }
             if (opticalPanel) opticalPanel.style.display = 'none';
             const pidPanelSystems = document.getElementById('pid-panel');
@@ -2558,18 +2561,13 @@ window.addEventListener('load', () => {
                 opticalPanel.style.display = 'flex';
                 opticalPanel.classList.remove('collapsed');
                 console.log('Optical panel shown');
-                const of = document.getElementById('optical-frame');
-                if (of) {
-                    try {
-                        const base = of.getAttribute('data-optical-src') || '/optical-page';
-                        of.src = `${base}?ui=optdash-v1&t=${Date.now()}`;
-                    } catch (_) { /* noop */ }
-                }
+                ensureLazyIframe('optical-frame');
             }
             if (opticalCamerasView) opticalCamerasView.style.display = 'none';
             // Hide main content
             if (mainContent) mainContent.style.display = 'none';
             if (dashboardCams) dashboardCams.style.display = 'none';
+            stopOpticalSync();
         } else if (activeEl === navPid) {
             // PID Settings: show PID settings panel
             const missionsPanel = document.getElementById('missions-panel');
@@ -2600,13 +2598,7 @@ window.addEventListener('load', () => {
             if (pidPanel) {
                 pidPanel.style.display = 'flex';
                 console.log('PID settings panel shown');
-                const pf = document.getElementById('pid-frame');
-                if (pf) {
-                    try {
-                        const base = pf.getAttribute('data-pid-src') || '/pid-page';
-                        pf.src = `${base}?ui=piddash-v1&t=${Date.now()}`;
-                    } catch (_) { /* noop */ }
-                }
+                ensureLazyIframe('pid-frame');
             }
         } else if (activeEl === navElectricalWiring) {
             // Electrical Wiring: show electrical wiring panel
@@ -2634,13 +2626,7 @@ window.addEventListener('load', () => {
             if (electricalWiringPanel) {
                 electricalWiringPanel.style.display = 'flex';
                 console.log('Electrical Wiring panel shown');
-                const ef = document.getElementById('electrical-wiring-frame');
-                if (ef) {
-                    try {
-                        const base = ef.getAttribute('data-ew-src') || '/electrical-wiring';
-                        ef.src = `${base}?ui=ewdash-v2&t=${Date.now()}`;
-                    } catch (_) { /* noop */ }
-                }
+                ensureLazyIframe('electrical-wiring-frame');
             }
         } else if (activeEl === navHeatmap) {
             // Heatmap: show heatmap panel with map
@@ -2670,13 +2656,7 @@ window.addEventListener('load', () => {
             if (heatmapPanel) {
                 heatmapPanel.style.display = 'flex';
                 console.log('Heatmap panel shown');
-                const hf = document.getElementById('heatmap-frame');
-                if (hf) {
-                    try {
-                        const base = hf.getAttribute('data-heatmap-src') || '/heatmap-page';
-                        hf.src = `${base}?ui=hmap-v7&t=${Date.now()}`;
-                    } catch (_) { /* noop */ }
-                }
+                ensureLazyIframe('heatmap-frame');
                 // Ensure it's in the main layout
                 const mainLayout = document.querySelector('.main-layout');
                 if (mainLayout && !mainLayout.contains(heatmapPanel)) {
@@ -2706,13 +2686,7 @@ window.addEventListener('load', () => {
             if (settingsPanel) {
                 settingsPanel.style.display = 'flex';
                 console.log('Settings panel shown');
-                const sf = document.getElementById('settings-frame');
-                if (sf) {
-                    try {
-                        const base = sf.getAttribute('data-settings-src') || '/settings-page';
-                        sf.src = `${base}?ui=setdash-v2&t=${Date.now()}`;
-                    } catch (_) { /* noop */ }
-                }
+                ensureLazyIframe('settings-frame');
             }
             // Hide main content
             if (mainContent) mainContent.style.display = 'none';
@@ -2778,12 +2752,9 @@ window.addEventListener('load', () => {
                 if (w && typeof w.awInvalidateMissionMapSize === 'function') {
                     requestAnimationFrame(() => w.awInvalidateMissionMapSize());
                     setTimeout(() => w.awInvalidateMissionMapSize(), 200);
-                    setTimeout(() => w.awInvalidateMissionMapSize(), 600);
                 }
-            } catch (_e) { /* cross-origin / not ready */ }
+            } catch (_e) { /* iframe not ready */ }
             pushDashboardWaypointsToMissionFrame();
-            requestAnimationFrame(() => pushDashboardWaypointsToMissionFrame());
-            setTimeout(() => pushDashboardWaypointsToMissionFrame(), 160);
         });
     }
     
@@ -3483,8 +3454,8 @@ function initAIDetectionPanel() {
     // Initial update
     updateAIDetectionPanelDashboard();
     
-    // Start simulation loop (update every 500ms)
-    setInterval(simulateAIDetection, 500);
+    // Light simulation (Pi-friendly)
+    setInterval(simulateAIDetection, 4000);
 }
 
 // Initialize when DOM is ready

@@ -7,3 +7,16 @@ pydantic
 pyserial
 numpy
 Pillow
+python-dotenv
+requests
+tqdm
+gdown
+gitpython
+roboflow
+scikit-learn
+opencv-python-headless
+torch
+torchvision
+ultralytics
+boxmot
+pytest

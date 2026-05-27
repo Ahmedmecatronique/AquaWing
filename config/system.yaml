@@ -7,13 +7,14 @@ cameras:
     enabled: true
     fps: 15
     quality: 80
-    resolution: 2304x1296
+    resolution: 1280x720
   thermal:
     enabled: false
     fps: 30
     resolution: 640x512
 detection:
-  enabled: true
+  # false = stable sur Raspberry Pi (évite crash mémoire / torch). Activer via POST /api/detect/rgb/start
+  enabled: false
   threshold: 0.45
   inference_size: 560
   interval_ms: 2000

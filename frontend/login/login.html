@@ -77,13 +77,26 @@
         try {
           const response = await fetch('/login', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
             body: JSON.stringify({ username, password }),
-            credentials: 'include'
+            credentials: 'include',
+            redirect: 'manual'
           });
 
-          if (response.ok || response.redirected) {
+          if (response.type === 'opaqueredirect' || response.status === 302) {
             window.location.href = '/dashboard';
+            return;
+          }
+
+          let data = null;
+          try {
+            data = await response.json();
+          } catch (_e) {
+            /* non-JSON body */
+          }
+
+          if (response.ok && data && data.ok) {
+            window.location.href = data.redirect || '/dashboard';
           } else if (response.status === 401) {
             errorMsg.textContent = 'Invalid username or password';
             errorMsg.classList.add('show');
@@ -92,7 +105,8 @@
             errorMsg.classList.add('show');
           }
         } catch (error) {
-          errorMsg.textContent = 'Network error. Please try again.';
+          errorMsg.textContent =
+            'Cannot reach AquaWing server. Start it with: python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000';
           errorMsg.classList.add('show');
         } finally {
           loginBtn.disabled = false;

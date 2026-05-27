@@ -13,9 +13,21 @@ from typing import Any, Optional
 
 import yaml
 
-from rfdetr_engine import get_person_detector
+try:
+    from rfdetr_engine import get_person_detector
+except ImportError:
+    from backend.src.ia_detection.rfdetr_engine import get_person_detector
 
-from backend.src.streaming.rgb_camera_stream import get_rgb_streamer
+try:
+    from backend.src.streaming.rgb_camera_stream import get_rgb_streamer
+except ImportError:
+    # Fallback import
+    import sys
+    from pathlib import Path
+    _streaming_path = Path(__file__).resolve().parent.parent / "streaming"
+    if str(_streaming_path) not in sys.path:
+        sys.path.insert(0, str(_streaming_path))
+    from rgb_camera_stream import get_rgb_streamer
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parents[2]
 _worker: Optional["RgbDetectionWorker"] = None
@@ -63,20 +75,28 @@ class RgbDetectionWorker:
         self._running = False
 
     def _loop(self) -> None:
-        detector = get_person_detector()
-        streamer = get_rgb_streamer()
+        try:
+            detector = get_person_detector()
+            streamer = get_rgb_streamer()
+        except Exception as e:
+            with self._lock:
+                self._error = f"Failed to initialize detector/streamer: {e}"
+            return
+        
         while not self._stop.is_set():
             try:
-                jpeg = streamer.get_jpeg(width=streamer.width, height=streamer.height, wait_s=2.0)
-                dets = detector.detect_jpeg(jpeg)
-                with self._lock:
-                    self._detections = dets
-                    self._updated_at = time.time()
-                    self._frame_size = (streamer.width, streamer.height)
-                    self._error = None
+                jpeg = streamer.get_jpeg(width=640, height=360, wait_s=2.0)
+                if jpeg:
+                    dets = detector.detect_jpeg(jpeg)
+                    with self._lock:
+                        self._detections = dets
+                        self._updated_at = time.time()
+                        self._frame_size = (streamer.width, streamer.height)
+                        self._error = None
             except Exception as exc:
                 with self._lock:
                     self._error = str(exc)
+                print(f"RGB detection worker error: {exc}")
             self._stop.wait(self.interval_s)
 
     def get_result(self) -> dict[str, Any]:

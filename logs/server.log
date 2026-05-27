@@ -1,0 +1,174 @@
+INFO:     Started server process [6385]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+🤖 RF-DETR: worker started (interval 2.0s)
+GPS configured on /dev/ttyS0 (miniUART)
+Flight Controller configured on /dev/ttyAMA0 (PL011)
+INFO:     127.0.0.1:54746 - "GET / HTTP/1.1" 302 Found
+INFO:     127.0.0.1:54746 - "GET /login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54746 - "GET /login/login.css?v=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57882 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54750 - "POST /login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57888 - "GET /missions-page?ui=mis-sat-v2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54750 - "GET /dashboard.js?v=aqua-nav-layout-v1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57928 - "GET /pid-page?ui=piddash-v1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57902 - "GET /systems-page?ui=sysdash-v4 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57918 - "GET /optical-page?ui=optdash-v1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57938 - "GET /electrical-wiring?ui=ewdash-v2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57888 - "GET /heatmap-page?ui=hmap-v7 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57928 - "GET /settings-page?ui=setdash-v2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57918 - "GET /missions-page.css?v=14 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54750 - "GET /missions-page.js?v=14 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57928 - "GET /optical-page.css?v=6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57918 - "GET /pid-page.css?v=2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57902 - "GET /pid-page.js?v=2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57888 - "GET /optical-page.js?v=6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57938 - "GET /electrical-wiring.css?v=2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54750 - "GET /systems-page.css?v=4 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57928 - "GET /heatmap-page.css?v=7 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57902 - "GET /settings-page.css?v=2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57918 - "GET /electrical-wiring.js?v=2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54750 - "GET /settings-page.js?v=2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57938 - "GET /heatmap-page.js?v=7 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57888 - "GET /systems-page.js?v=4 HTTP/1.1" 200 OK
+INFO:     Started server process [7693]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+🤖 RF-DETR: lazy start (on first detect/video request)
+GPS configured on /dev/ttyS0 (miniUART)
+Flight Controller configured on /dev/ttyAMA0 (PL011)
+INFO:     127.0.0.1:41944 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41954 - "GET / HTTP/1.1" 302 Found
+INFO:     127.0.0.1:41954 - "GET /login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41954 - "GET /login/login.css?v=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41968 - "POST /login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41968 - "GET /dashboard.js?v=aqua-nav-layout-v1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34804 - "GET /missions-page?ui=mis-sat-v2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34816 - "GET /optical-page?ui=optdash-v1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34804 - "GET /heatmap-page?ui=hmap-v7 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34808 - "GET /systems-page?ui=sysdash-v4 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34828 - "GET /electrical-wiring?ui=ewdash-v2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41968 - "GET /settings-page?ui=setdash-v2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34822 - "GET /pid-page?ui=piddash-v1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34804 - "GET /missions-page.css?v=14 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34828 - "GET /missions-page.js?v=14 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34828 - "GET /optical-page.css?v=6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34804 - "GET /heatmap-page.css?v=7 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34822 - "GET /optical-page.js?v=6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41968 - "GET /heatmap-page.js?v=7 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34808 - "GET /systems-page.js?v=4 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34816 - "GET /systems-page.css?v=4 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34804 - "GET /electrical-wiring.css?v=2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34828 - "GET /settings-page.css?v=2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34816 - "GET /electrical-wiring.js?v=2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34822 - "GET /pid-page.css?v=2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34804 - "GET /settings-page.js?v=2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41968 - "GET /pid-page.js?v=2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41968 - "GET /api/pid HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41968 - "GET /optical-page?ui=optdash-v1&t=1779865859587 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34804 - "GET /optical-page.js?v=6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41968 - "GET /optical-page.css?v=6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50208 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50208 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50208 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:59830 - "GET /video?res=1280x720 HTTP/1.1" 200 OK
+--- 2026-05-27T09:21:51+01:00 starting ---
+INFO:     Started server process [7963]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+🤖 RF-DETR: lazy start (on first detect/video request)
+GPS configured on /dev/ttyS0 (miniUART)
+Flight Controller configured on /dev/ttyAMA0 (PL011)
+INFO:     127.0.0.1:39862 - "GET / HTTP/1.1" 302 Found
+INFO:     127.0.0.1:39862 - "GET /login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39862 - "GET /login/login.css?v=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39862 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:39876 - "POST /login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /dashboard.js?v=aqua-perf-v2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /optical-page?ui=optdash-v1&t=1779870126409 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /optical-page.css?v=6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58636 - "GET /optical-page.js?v=7 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870126542 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870128343 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870130149 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870131945 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870133746 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870135544 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870137356 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870139147 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870140952 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870142744 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870144549 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870146348 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870148143 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870149944 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870151743 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870153547 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870155346 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870157145 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870158943 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870160748 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870162545 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870164345 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870166143 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870167948 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870169747 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870171545 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870173344 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870175147 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870176944 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870179203 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870181202 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870183208 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870184203 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870186212 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870188209 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870190202 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870192208 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870193213 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870195211 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870197213 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870199207 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870201203 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870202202 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870204208 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870206207 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870208205 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870210204 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870211213 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870213200 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870215204 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870217202 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870219211 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870220204 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870222206 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870223746 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870225544 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870227343 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870229148 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870230946 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870232743 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870234543 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870236348 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870238146 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870239945 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870241743 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870244201 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870246203 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870247209 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870249204 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870251198 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870252545 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870254343 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870256199 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870258208 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870260209 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870262211 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870264208 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870265202 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /video?res=1280x720&t=1779870267206 HTTP/1.1" 200 OK
+--- 2026-05-27T09:24:29+01:00 exited code=120, restart in 5s ---

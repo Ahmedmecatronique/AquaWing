@@ -567,6 +567,38 @@ def create_app() -> FastAPI:
         """Stats du flux RGB (résolution, FPS, taille dernière frame)."""
         return get_rgb_streamer().get_stats()
 
+    @app.get("/video/annotated")
+    async def video_annotated_endpoint(res: str = "640x360"):
+        """Dernière image RGB annotée (overlay IA swimmer/drowning).
+
+        Retourne un JPEG annoté si OpenCV + ia_prediction sont installés.
+        """
+        try:
+            import numpy as np
+            import cv2
+
+            from ia_prediction.pipeline import process_frame
+
+            width, height = _parse_resolution(res)
+            jpeg = get_rgb_streamer().get_jpeg(width=width, height=height)
+            img = cv2.imdecode(np.frombuffer(jpeg, dtype=np.uint8), cv2.IMREAD_COLOR)
+            if img is None:
+                raise RuntimeError("could not decode jpeg")
+            result = process_frame(img, frame_id=0)
+            annotated = result.annotated_frame if result.annotated_frame is not None else img
+            ok, out = cv2.imencode(".jpg", annotated, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
+            if not ok:
+                raise RuntimeError("jpeg encode failed")
+            return Response(content=out.tobytes(), media_type="image/jpeg", headers={"Cache-Control": "no-store"})
+        except Exception as exc:
+            svg = f"""<?xml version='1.0' encoding='UTF-8'?>
+<svg xmlns='http://www.w3.org/2000/svg' width='640' height='360' viewBox='0 0 640 360'>
+    <rect width='100%' height='100%' fill='#111' />
+    <text x='50%' y='45%' fill='#f55' font-family='monospace' font-size='16' text-anchor='middle'>Annotated video error</text>
+    <text x='50%' y='60%' fill='#888' font-family='monospace' font-size='11' text-anchor='middle'>{str(exc)[:80]}</text>
+</svg>"""
+            return Response(content=svg, media_type="image/svg+xml")
+
     # ========================================================================
     # Health & Info Endpoints
     # ========================================================================

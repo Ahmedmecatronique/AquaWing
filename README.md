@@ -125,6 +125,16 @@ python main.py
 
 The server will start on `http://localhost:8000`
 
+### IA Swimmer / Drowning (module `ia_prediction`)
+
+Le module IA est dans `backend/src/ia_prediction/`. Pour l’importer depuis la racine :
+
+```bash
+PYTHONPATH=backend/src python -c "from ia_prediction.pipeline import process_frame, process_video; print('ia_prediction OK')"
+```
+
+Architecture détaillée : `ARCHITECTURE.md`.
+
 ### 🔑 Demo Credentials
 
 ```

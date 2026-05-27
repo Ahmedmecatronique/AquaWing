@@ -431,6 +431,13 @@ html, body {
     opacity: 0.75;
 }
 
+.rgb-ai-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+}
+
 .ov-box {
     position: absolute;
     border: 2px solid;

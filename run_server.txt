@@ -1,1 +1,33 @@
-cd /home/ahmed/drone/AquaWing && source .venv/bin/activate && python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000
+# =============================================================================
+# AquaWing — commandes à copier dans le terminal du Raspberry Pi
+# =============================================================================
+
+# --- 1) PREMIÈRE FOIS UNIQUEMENT (environnement Python + dépendances) ---
+# Durée : plusieurs minutes la 1ère fois (torch, opencv, etc.)
+
+cd /home/ahmed/drone/AquaWing && python3 -m venv .venv && source .venv/bin/activate && pip install --upgrade pip && pip install -r requirements.txt
+
+
+# --- 2) CHAQUE FOIS (démarrer le site : login, dashboard, caméra, IA) ---
+# Laisser ce terminal OUVERT. Puis ouvrir dans le navigateur l’URL affichée.
+
+cd /home/ahmed/drone/AquaWing && source .venv/bin/activate && export PYTHONPATH=/home/ahmed/drone/AquaWing/backend/src && mkdir -p logs && echo "Login → http://$(hostname -I | awk '{print $1}'):8000/login" && python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000
+
+
+# --- 3) TOUT EN UNE FOIS (1ère fois + lancer le serveur — une seule ligne) ---
+# Si .venv existe déjà, pip est rapide ; sinon crée le venv et installe tout.
+
+cd /home/ahmed/drone/AquaWing && (test -d .venv || python3 -m venv .venv) && source .venv/bin/activate && pip install --upgrade pip && pip install -r requirements.txt && mkdir -p logs && export PYTHONPATH=/home/ahmed/drone/AquaWing/backend/src && echo "Login → http://$(hostname -I | awk '{print $1}'):8000/login" && python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000
+
+
+# --- 4) RECOMMANDÉ (redémarre tout seul si le serveur plante) ---
+
+/home/ahmed/drone/AquaWing/start_server.sh
+
+# --- 5) Activer l'IA RF-DETR (optionnel, lourd sur Pi) ---
+# curl -X POST http://localhost:8000/api/detect/rgb/start
+
+
+# --- Comptes de test (users.json) ---
+#   ahmed / ahmed22k22
+#   admin / admin123

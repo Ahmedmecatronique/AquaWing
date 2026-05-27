@@ -1,10 +1,18 @@
 (function () {
     "use strict";
 
+    const RGB_RES = "1280x720";
+    const RGB_POLL_MS = 1800;
+    const RGB_AI_POLL_MS = 5000;
+    const ENABLE_AI_POLL = false; // true = charge RF-DETR (lourd, peut faire planter le Pi)
+    const USE_ANNOTATED_STREAM = false;
+
     let videoOn = false;
     let thermalOn = false;
     let rgbTimer = null;
     let thermalTimer = null;
+    let rgbAiTimer = null;
+    let useAnnotated = USE_ANNOTATED_STREAM;
     let recOn = true;
 
     function setButtonText(id, on, label) {
@@ -47,6 +55,61 @@
         });
     }
 
+    function clearRgbAiOverlay() {
+        const layer = document.getElementById("rgb-ai-overlay");
+        if (layer) layer.innerHTML = "";
+    }
+
+    function renderRgbDetections(data) {
+        const layer = document.getElementById("rgb-ai-overlay");
+        if (!layer || !videoOn) return;
+        layer.innerHTML = "";
+        const dets = data?.detections || [];
+        if (!dets.length) return;
+        dets.forEach((d) => {
+            const x = Number(d.x ?? d.left ?? 0);
+            const y = Number(d.y ?? d.top ?? 0);
+            const w = Number(d.w ?? d.width ?? 0);
+            const h = Number(d.h ?? d.height ?? 0);
+            const conf = Math.round(Number(d.confidence ?? d.score ?? 0) * 100);
+            const label = String(d.label ?? d.class ?? "person").toUpperCase();
+            const box = document.createElement("div");
+            box.className = "ov-box ov-box--cyan";
+            box.style.left = `${x * 100}%`;
+            box.style.top = `${y * 100}%`;
+            box.style.width = `${w * 100}%`;
+            box.style.height = `${h * 100}%`;
+            box.textContent = `${label} (${conf}%)`;
+            layer.appendChild(box);
+        });
+    }
+
+    async function pollRgbDetections() {
+        if (!videoOn) return;
+        try {
+            const res = await fetch(`/api/detect/rgb?t=${Date.now()}`, { cache: "no-store" });
+            if (!res.ok) return;
+            const data = await res.json();
+            renderRgbDetections(data);
+        } catch (_e) {
+            /* overlay optional */
+        }
+    }
+
+    function startRgbAiPolling() {
+        if (rgbAiTimer) clearInterval(rgbAiTimer);
+        pollRgbDetections();
+        rgbAiTimer = setInterval(pollRgbDetections, RGB_AI_POLL_MS);
+    }
+
+    function stopRgbAiPolling() {
+        if (rgbAiTimer) {
+            clearInterval(rgbAiTimer);
+            rgbAiTimer = null;
+        }
+        clearRgbAiOverlay();
+    }
+
     function setVideo(on) {
         videoOn = !!on;
         setButtonText("optical-video-toggle", videoOn, "RGB");
@@ -62,6 +125,7 @@
                 clearInterval(rgbTimer);
                 rgbTimer = null;
             }
+            stopRgbAiPolling();
             img.style.display = "none";
             img.src = "";
             img.style.filter = "";
@@ -73,19 +137,34 @@
             return;
         }
 
+        useAnnotated = USE_ANNOTATED_STREAM;
+        const streamPath = () =>
+            (useAnnotated ? "/video/annotated" : "/video") + `?res=${RGB_RES}&t=${Date.now()}`;
+
         const refresh = () => {
-            img.src = `/video?t=${Date.now()}`;
+            img.src = streamPath();
         };
         img.onload = () => {
             img.style.display = "block";
             ph.style.display = "none";
             applyRgbFilters();
             if (statusRgb) {
-                statusRgb.textContent = "LIVE / 1280×720 @ 30 FPS";
+                const aiTag = useAnnotated ? " + IA" : "";
+                statusRgb.textContent = `LIVE / ${RGB_RES}${aiTag}`;
                 statusRgb.classList.add("status-ok");
             }
         };
-        img.onerror = () => {
+        img.onerror = async () => {
+            if (useAnnotated) {
+                useAnnotated = false;
+                try {
+                    await fetch("/video/restart", { method: "POST" });
+                } catch (_e) {
+                    /* ignore */
+                }
+                refresh();
+                return;
+            }
             img.style.display = "none";
             ph.style.display = "flex";
             if (statusRgb) {
@@ -95,7 +174,8 @@
         };
         refresh();
         if (rgbTimer) clearInterval(rgbTimer);
-        rgbTimer = setInterval(refresh, 900);
+        rgbTimer = setInterval(refresh, RGB_POLL_MS);
+        if (ENABLE_AI_POLL) startRgbAiPolling();
     }
 
     function setThermal(on) {
@@ -285,7 +365,7 @@
         }
 
         setVideo(true);
-        setThermal(true);
+        setThermal(false);
         tickTimestamp();
         setInterval(tickTimestamp, 1000);
         updateThermalMeta();

@@ -1,7 +1,7 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Cookie, HTTPException, Form, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, RedirectResponse, Response
+from fastapi.responses import FileResponse, RedirectResponse, Response, JSONResponse
 from pathlib import Path
 import os
 import sys
@@ -187,20 +187,30 @@ def login_css():
 @app.post("/login")
 async def login_post(request: Request, username: str = Form(None), password: str = Form(None)):
     """Handle login POST from form submission or JSON payload. Redirects and sets cookie on success."""
+    wants_json = "application/json" in (request.headers.get("content-type") or "").lower()
+
     # Accept form OR JSON body to avoid 422 from clients
     if not username or not password:
         try:
             data = await request.json()
-            username = data.get('username')
-            password = data.get('password')
+            username = data.get("username")
+            password = data.get("password")
+            wants_json = True
         except Exception:
+            if wants_json:
+                return JSONResponse({"ok": False, "error": "missing_credentials"}, status_code=400)
             return RedirectResponse(url="/login?err=1", status_code=302)
 
     if not username or not password or not authenticate_user(username, password):
+        if wants_json:
+            return JSONResponse({"ok": False, "error": "invalid_credentials"}, status_code=401)
         return RedirectResponse(url="/login?err=1", status_code=302)
 
     session_id = create_session(username)
-    resp = RedirectResponse(url="/dashboard", status_code=302)
+    if wants_json:
+        resp = JSONResponse({"ok": True, "redirect": "/dashboard"})
+    else:
+        resp = RedirectResponse(url="/dashboard", status_code=302)
     resp.set_cookie(key=SESSION_COOKIE_NAME, value=session_id, httponly=True, max_age=SESSION_TIMEOUT, path="/")
     return resp
 
@@ -511,12 +521,14 @@ def settings_page_js():
 
 
 @app.get("/video")
-def video_endpoint(res: str = "2304x1296"):
+def video_endpoint(res: str = "1280x720"):
         """Dernière image JPEG de la caméra RGB (rpicam-vid / rpicam-still)."""
         from backend.src.streaming.rgb_camera_stream import get_rgb_streamer, _parse_resolution
         try:
             width, height = _parse_resolution(res)
-            jpeg = get_rgb_streamer().get_jpeg(width=width, height=height)
+            jpeg = get_rgb_streamer().get_jpeg(width=width, height=height, wait_s=6.0)
+            if not jpeg or not jpeg.startswith(b"\xff\xd8"):
+                raise RuntimeError("invalid or empty JPEG from camera")
             return Response(
                 content=jpeg,
                 media_type="image/jpeg",
@@ -530,6 +542,55 @@ def video_endpoint(res: str = "2304x1296"):
     <text x='50%' y='60%' fill='#888' font-family='monospace' font-size='11' text-anchor='middle'>{str(e)[:80]}</text>
 </svg>"""
             return Response(content=svg, media_type="image/svg+xml")
+
+
+@app.get("/video/stats")
+def video_stats_endpoint():
+    """Stats du flux RGB (résolution, FPS, taille dernière frame)."""
+    from backend.src.streaming.rgb_camera_stream import get_rgb_streamer
+
+    return get_rgb_streamer().get_stats()
+
+
+@app.post("/video/restart")
+def video_restart_endpoint():
+    """Force restart de la caméra RGB (utile si 'device busy')."""
+    from backend.src.streaming.rgb_camera_stream import get_rgb_streamer
+
+    get_rgb_streamer().restart()
+    return {"ok": True, "stats": get_rgb_streamer().get_stats()}
+
+
+@app.get("/video/annotated")
+def video_annotated_endpoint(res: str = "1280x720"):
+    """Dernière image RGB avec overlay IA (YOLO + risque noyade)."""
+    from backend.src.streaming.rgb_camera_stream import get_rgb_streamer, _parse_resolution
+
+    try:
+        import numpy as np
+        import cv2
+        from ia_prediction.pipeline import process_frame
+
+        width, height = _parse_resolution(res)
+        jpeg = get_rgb_streamer().get_jpeg(width=width, height=height)
+        img = cv2.imdecode(np.frombuffer(jpeg, dtype=np.uint8), cv2.IMREAD_COLOR)
+        if img is None:
+            raise RuntimeError("could not decode jpeg")
+        result = process_frame(img, frame_id=0)
+        annotated = result.annotated_frame if result.annotated_frame is not None else img
+        ok, out = cv2.imencode(".jpg", annotated, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
+        if not ok:
+            raise RuntimeError("jpeg encode failed")
+        return Response(content=out.tobytes(), media_type="image/jpeg", headers={"Cache-Control": "no-store"})
+    except Exception as e:
+        svg = f"""<?xml version='1.0' encoding='UTF-8'?>
+<svg xmlns='http://www.w3.org/2000/svg' width='640' height='360' viewBox='0 0 640 360'>
+    <rect width='100%' height='100%' fill='#111' />
+    <text x='50%' y='45%' fill='#f55' font-family='monospace' font-size='16' text-anchor='middle'>Annotated video error</text>
+    <text x='50%' y='60%' fill='#888' font-family='monospace' font-size='11' text-anchor='middle'>{str(e)[:80]}</text>
+</svg>"""
+        return Response(content=svg, media_type="image/svg+xml")
+
 
 # ============================================================================
 # THERMAL HEATMAP STREAM (AMG8833)
@@ -699,14 +760,8 @@ async def websocket_endpoint(websocket: WebSocket):
 async def startup_event():
     """Load users on startup. Telemetry loop is NOT auto-started."""
     load_users()
-    try:
-        from backend.src.ia_detection import get_rgb_detection_worker
-        det = get_rgb_detection_worker()
-        if det.enabled:
-            det.start()
-            print(f"🤖 RF-DETR: worker started (interval {det.interval_s:.1f}s)")
-    except Exception as exc:
-        print(f"🤖 RF-DETR: not started ({exc})")
+    # IA RGB: démarrée à la demande (/api/detect/rgb ou /video), pas au boot (évite crash/lenteur login)
+    print("🤖 RF-DETR: lazy start (on first detect/video request)")
     # Log UART assignment (RPi 5: GPS = miniUART, FC = PL011)
     if GPS:
         print(f"GPS configured on {GPS['port']} (miniUART)")

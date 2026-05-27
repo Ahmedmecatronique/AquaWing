@@ -16,6 +16,7 @@ from pydantic import BaseModel
 from typing import Optional
 import json
 from datetime import datetime
+from typing import Any
 
 router = APIRouter()
 
@@ -83,6 +84,69 @@ class Mission(BaseModel):
 _drone_status = DroneStatus()
 _telemetry_data = TelemetryData()
 _missions = {}  # {mission_name: Mission}
+
+def _safe_import_cv2() -> Any:
+    """Import cv2 only when needed (keeps server lighter)."""
+    try:
+        import cv2  # type: ignore
+
+        return cv2
+    except Exception:
+        return None
+
+
+# ---------------------------------------------------------------------------
+# RGB AI detection (RF-DETR — personnes en mer) + Swimmer pipeline (ia_prediction)
+# ---------------------------------------------------------------------------
+
+@router.get("/detect/rgb")
+async def get_rgb_detections() -> dict[str, Any]:
+    """Dernières détections IA sur le flux RGB (personnes / nageurs).
+
+    Coordonnées normalisées 0–1 (pour overlay canvas côté dashboard).
+    """
+    try:
+        from backend.src.ia_detection import get_rgb_detection_worker, get_person_detector
+
+        worker = get_rgb_detection_worker()
+        result = worker.get_result()
+        if worker._running:
+            result["detector"] = get_person_detector().get_stats()
+        else:
+            result["detector"] = {"ready": False, "enabled": worker.enabled}
+        return result
+    except Exception as exc:
+        return {"detections": [], "count": 0, "error": str(exc), "enabled": False}
+
+
+@router.get("/detect/swimmers")
+async def get_swimmer_risk() -> dict[str, Any]:
+    """Run ia_prediction drowning-risk pipeline on the latest RGB frame.
+
+    Returns a light JSON payload with swimmers + alerts (no annotated frame).
+    """
+    try:
+        from backend.src.streaming.rgb_camera_stream import get_rgb_streamer
+        from ia_prediction.pipeline import process_frame
+
+        jpeg = get_rgb_streamer().get_jpeg(width=640, height=360)
+        cv2 = _safe_import_cv2()
+        if cv2 is None:
+            return {"error": "opencv (cv2) not installed", "swimmers": [], "alerts": []}
+
+        img = cv2.imdecode(
+            __import__("numpy").frombuffer(jpeg, dtype=__import__("numpy").uint8),
+            cv2.IMREAD_COLOR,
+        )
+        if img is None:
+            return {"error": "could not decode jpeg", "swimmers": [], "alerts": []}
+
+        result = process_frame(img, frame_id=0)
+        swimmers = [s.model_dump() for s in result.swimmers]
+        alerts = [s.model_dump() for s in result.alerts]
+        return {"swimmers": swimmers, "alerts": alerts, "processing_time_ms": result.processing_time_ms}
+    except Exception as exc:
+        return {"error": str(exc), "swimmers": [], "alerts": []}
 
 
 @router.get("/status", response_model=DroneStatus)
@@ -313,11 +377,11 @@ async def get_rgb_detections():
         from backend.src.ia_detection import get_rgb_detection_worker, get_person_detector
 
         worker = get_rgb_detection_worker()
-        if worker.enabled and not worker._running:
-            worker.start()
-
         result = worker.get_result()
-        result["detector"] = get_person_detector().get_stats()
+        if worker._running:
+            result["detector"] = get_person_detector().get_stats()
+        else:
+            result["detector"] = {"ready": False, "enabled": worker.enabled}
         return result
     except Exception as exc:
         return {
@@ -334,6 +398,8 @@ async def start_rgb_detection():
     from backend.src.ia_detection import get_rgb_detection_worker
 
     worker = get_rgb_detection_worker()
+    if not worker.enabled:
+        return {"success": False, "error": "detection disabled in config (system.yaml)", "running": False}
     worker.start()
     return {"success": True, "running": worker._running}
 

@@ -20,6 +20,8 @@ from typing import Optional, Tuple
 
 import yaml
 
+_RP_CAM_PROCS = ("rpicam-vid", "rpicam-still")
+
 _JPEG_SOI = b"\xff\xd8"
 _JPEG_EOI = b"\xff\xd9"
 _DEFAULT_WIDTH = 2304
@@ -38,6 +40,12 @@ def _load_rgb_config() -> dict:
         return data.get("cameras", {}).get("rgb", {}) or {}
     except Exception:
         return {}
+
+
+def _kill_stale_rpicam() -> None:
+    """Release the camera if a previous rpicam process was left running."""
+    for name in _RP_CAM_PROCS:
+        subprocess.run(["pkill", "-9", name], capture_output=True, timeout=3)
 
 
 def _parse_resolution(value: str) -> Tuple[int, int]:
@@ -70,6 +78,9 @@ class RgbCameraStreamer:
         self._latest_ts: float = 0.0
         self._error: Optional[str] = None
         self._running = False
+        self._last_request_ts: float = 0.0
+        self._reaper: Optional[threading.Thread] = None
+        self._idle_stop_s: float = 45.0  # stop rpicam-vid when UI stops polling
 
     @classmethod
     def from_config(cls) -> "RgbCameraStreamer":
@@ -106,6 +117,8 @@ class RgbCameraStreamer:
 
     def _capture_still(self) -> bytes:
         """Capture unique (secours si le flux vidéo n'est pas prêt)."""
+        _kill_stale_rpicam()
+        time.sleep(0.1)
         cmd = [
             "rpicam-still",
             "-n",
@@ -162,11 +175,13 @@ class RgbCameraStreamer:
                 return
             self._stop.clear()
             self._error = None
+            _kill_stale_rpicam()
+            time.sleep(0.15)
             try:
                 self._proc = subprocess.Popen(
                     self._build_cmd(),
                     stdout=subprocess.PIPE,
-                    stderr=subprocess.DEVNULL,
+                    stderr=subprocess.PIPE,
                     bufsize=0,
                 )
             except FileNotFoundError:
@@ -175,9 +190,20 @@ class RgbCameraStreamer:
             except Exception as exc:
                 self._error = str(exc)
                 return
+            time.sleep(0.2)
+            if self._proc.poll() is not None:
+                err = ""
+                if self._proc.stderr:
+                    err = self._proc.stderr.read().decode(errors="replace")[:300]
+                self._error = err or f"rpicam-vid exited (code {self._proc.returncode})"
+                self._proc = None
+                return
             self._reader = threading.Thread(target=self._reader_loop, daemon=True)
             self._reader.start()
             self._running = True
+            if self._reaper is None or not self._reaper.is_alive():
+                self._reaper = threading.Thread(target=self._reaper_loop, daemon=True)
+                self._reaper.start()
 
     def stop(self) -> None:
         self._stop.set()
@@ -194,6 +220,24 @@ class RgbCameraStreamer:
         self._proc = None
         self._reader = None
         self._running = False
+        # keep last_request_ts as-is for stats
+
+    def _reaper_loop(self) -> None:
+        """Stop the camera process after a short idle window.
+
+        Prevents the camera from being locked forever if the UI stops polling
+        or a request crashes mid-stream.
+        """
+        while True:
+            time.sleep(1.0)
+            with self._lock:
+                running = self._running
+                last = self._last_request_ts
+            if not running:
+                return
+            if last and (time.time() - last) > self._idle_stop_s:
+                self.stop()
+                return
 
     def ensure_resolution(self, width: int, height: int) -> None:
         if width == self.width and height == self.height:
@@ -211,6 +255,18 @@ class RgbCameraStreamer:
         height: Optional[int] = None,
         wait_s: float = 3.0,
     ) -> bytes:
+        """Get a JPEG frame from the camera.
+        
+        Args:
+            width: Target width (optional)
+            height: Target height (optional)
+            wait_s: Timeout in seconds
+            
+        Returns:
+            JPEG bytes or empty bytes if failed
+        """
+        with self._lock:
+            self._last_request_ts = time.time()
         if width and height:
             self.ensure_resolution(width, height)
 
@@ -230,7 +286,22 @@ class RgbCameraStreamer:
             if self._latest:
                 return self._latest
 
-        return self._capture_still()
+        err_msg = self._error or "no frame from rpicam-vid"
+        try:
+            return self._capture_still()
+        except Exception as still_exc:
+            raise RuntimeError(f"{err_msg}; still capture failed: {still_exc}") from still_exc
+
+    def restart(self) -> None:
+        """Force restart the camera capture process."""
+        self.stop()
+        _kill_stale_rpicam()
+        time.sleep(0.25)
+        with self._lock:
+            self._latest = None
+            self._latest_ts = 0.0
+            self._error = None
+        self.start()
 
     def get_stats(self) -> dict:
         with self._lock:
@@ -246,6 +317,9 @@ class RgbCameraStreamer:
                 else None,
                 "frame_bytes": len(self._latest) if self._latest else 0,
                 "error": self._error,
+                "last_request_age_s": round(time.time() - self._last_request_ts, 2)
+                if self._last_request_ts
+                else None,
             }
 
 
