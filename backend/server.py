@@ -13,9 +13,19 @@ This module creates and configures the FastAPI application with:
 import asyncio
 import json
 import math
+import os
+import sys
 import time
 from pathlib import Path
 from datetime import datetime
+
+# Project root + backend/ + backend/src on sys.path (ia_prediction lives under backend/src/)
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_backend_dir = os.path.dirname(os.path.abspath(__file__))
+_src_dir = os.path.join(_backend_dir, "src")
+for _p in (_backend_dir, _src_dir):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
 
 from fastapi import FastAPI, HTTPException, Cookie, Response, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles

@@ -3,6 +3,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, RedirectResponse, Response
 from pathlib import Path
+import os
+import sys
+
+# Project root + backend/ + backend/src on sys.path (ia_prediction lives under backend/src/)
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_backend_dir = os.path.dirname(os.path.abspath(__file__))
+_src_dir = os.path.join(_backend_dir, "src")
+for _p in (_backend_dir, _src_dir):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
 # Note: FastAPI Form parsing requires python-multipart
 # Install with: pip install python-multipart
 import json
