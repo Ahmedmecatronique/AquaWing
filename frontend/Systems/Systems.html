@@ -81,6 +81,11 @@
             <section class="sys-panel sys-panel--sensors">
                 <h2 class="sys-panel__title">SENSORS</h2>
                 <div class="sys-sensors-grid">
+                    <div class="sys-sensor-cell sys-sensor-cell--rpi" id="sys-rpi-cpu-card">
+                        <svg class="sys-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="7" y="7" width="10" height="10" rx="1"/><path d="M9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2"/></svg>
+                        <span class="sys-sensor-cell__lbl">RPI CPU</span>
+                        <span class="sys-sensor-cell__v sys-cyan" id="sys-rpi-cpu">--</span>
+                    </div>
                     <div class="sys-sensor-cell"><svg class="sys-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg><span class="sys-sensor-cell__lbl">IMU</span><span class="sys-sensor-cell__v sys-ok">OK</span></div>
                     <div class="sys-sensor-cell"><svg class="sys-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 21c4-4 7-8 7-12a7 7 0 10-14 0c0 4 3 8 7 12z"/><circle cx="12" cy="9" r="2.2"/></svg><span class="sys-sensor-cell__lbl">GPS</span><span class="sys-sensor-cell__v sys-ok">FIX (12 sats)</span></div>
                     <div class="sys-sensor-cell"><svg class="sys-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M4 18h16M6 14l3-6 4 4 3-6 2 8"/></svg><span class="sys-sensor-cell__lbl">BAROMETER</span><span class="sys-sensor-cell__v sys-cyan">1013 hPa</span></div>
@@ -110,7 +115,7 @@
                     <canvas id="sys-chart-thermal" aria-label="Températures"></canvas>
                 </div>
                 <div class="sys-thermal-readouts">
-                    <div class="sys-tr"><span>CPU</span><strong id="sys-t-cpu" class="sys-cyan">42°C</strong></div>
+                    <div class="sys-tr"><span>RPI CPU</span><strong id="sys-t-cpu" class="sys-cyan">--</strong></div>
                     <div class="sys-tr"><span>ESC AVG</span><strong id="sys-t-esc" class="sys-cyan">45°C</strong></div>
                     <div class="sys-tr"><span>BATTERY</span><strong id="sys-t-bat" class="sys-cyan">30°C</strong></div>
                     <div class="sys-tr"><span>AMBIENT</span><strong id="sys-t-amb" class="sys-cyan">24°C</strong></div>
@@ -159,6 +164,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <script src="/systems-page.js?v=4"></script>
+    <script src="/systems-page.js?v=6"></script>
 </body>
 </html>

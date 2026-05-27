@@ -1,10 +1,34 @@
 (function () {
     "use strict";
 
-    const RGB_RES = "1280x720";
-    const RGB_POLL_MS = 1800;
-    const RGB_AI_POLL_MS = 5000;
-    const ENABLE_AI_POLL = false; // true = charge RF-DETR (lourd, peut faire planter le Pi)
+    const RGB_CAMERA_MODES_FALLBACK = [
+        { resolution: "1536x864", max_fps: 120, label: "Très fluide, faible latence", fps_options: [15, 30, 60, 90, 120] },
+        { resolution: "2304x1296", max_fps: 56, label: "Équilibre qualité + fluidité", fps_options: [15, 24, 30, 40, 50, 56] },
+        { resolution: "1920x1080", max_fps: 50, label: "Live Full HD", fps_options: [15, 24, 30, 40, 50] },
+        { resolution: "4608x2592", max_fps: 14, label: "Qualité max (photo)", fps_options: [5, 10, 14] },
+    ];
+    const RGB_POLL_BY_RES = {
+        "1536x864": 1800,
+        "2304x1296": 2800,
+        "1920x1080": 2500,
+        "4608x2592": 5500,
+    };
+    const RGB_POLL_BY_FPS = {
+        5: 4500,
+        10: 4000,
+        14: 3800,
+        15: 3200,
+        24: 2800,
+        30: 2500,
+        40: 2200,
+        50: 2000,
+        56: 1900,
+        60: 1800,
+        90: 1600,
+        120: 1400,
+    };
+    const RGB_AI_POLL_MS = 4000;
+    const ENABLE_AI_POLL = true;
     const USE_ANNOTATED_STREAM = false;
 
     let videoOn = false;
@@ -14,6 +38,11 @@
     let rgbAiTimer = null;
     let useAnnotated = USE_ANNOTATED_STREAM;
     let recOn = true;
+    let rgbCameraModes = RGB_CAMERA_MODES_FALLBACK;
+    let rgbRes = localStorage.getItem("aquawing_rgb_res") || "2304x1296";
+    let rgbFps = parseInt(localStorage.getItem("aquawing_rgb_fps") || "30", 10) || 30;
+    let rgbPollMs = 3200;
+    let camChangeTimer = null;
 
     function setButtonText(id, on, label) {
         const el = document.getElementById(id);
@@ -71,7 +100,8 @@
             const y = Number(d.y ?? d.top ?? 0);
             const w = Number(d.w ?? d.width ?? 0);
             const h = Number(d.h ?? d.height ?? 0);
-            const conf = Math.round(Number(d.confidence ?? d.score ?? 0) * 100);
+            const rawConf = d.conf ?? d.confidence ?? d.score ?? 0;
+            const conf = rawConf <= 1 ? Math.round(Number(rawConf) * 100) : Math.round(Number(rawConf));
             const label = String(d.label ?? d.class ?? "person").toUpperCase();
             const box = document.createElement("div");
             box.className = "ov-box ov-box--cyan";
@@ -84,22 +114,62 @@
         });
     }
 
+    function updateAiStatus(data) {
+        const el = document.getElementById("status-ai-line");
+        if (!el) return;
+        if (!videoOn || !ENABLE_AI_POLL) {
+            el.textContent = "OFF";
+            el.classList.remove("status-ok");
+            return;
+        }
+        const n = data?.count ?? (data?.detections?.length || 0);
+        const running = data?.running || data?.detector?.ready;
+        if (data?.error && !n) {
+            el.textContent = `ERROR / ${String(data.error).slice(0, 24)}`;
+            el.classList.remove("status-ok");
+            return;
+        }
+        el.textContent = running ? `LIVE / ${n} object(s)` : `LOADING… / ${n} object(s)`;
+        el.classList.add("status-ok");
+    }
+
+    async function ensureAiWorker() {
+        if (!ENABLE_AI_POLL) return;
+        try {
+            await fetch("/api/detect/rgb/start", { method: "POST" });
+        } catch (_e) {
+            /* server may still return detections */
+        }
+    }
+
+    async function stopAiWorker() {
+        try {
+            await fetch("/api/detect/rgb/stop", { method: "POST" });
+        } catch (_e) {
+            /* ignore */
+        }
+    }
+
     async function pollRgbDetections() {
-        if (!videoOn) return;
+        if (!videoOn || !ENABLE_AI_POLL) return;
         try {
             const res = await fetch(`/api/detect/rgb?t=${Date.now()}`, { cache: "no-store" });
             if (!res.ok) return;
             const data = await res.json();
             renderRgbDetections(data);
+            updateAiStatus(data);
         } catch (_e) {
             /* overlay optional */
         }
     }
 
     function startRgbAiPolling() {
+        if (!ENABLE_AI_POLL) return;
         if (rgbAiTimer) clearInterval(rgbAiTimer);
-        pollRgbDetections();
-        rgbAiTimer = setInterval(pollRgbDetections, RGB_AI_POLL_MS);
+        ensureAiWorker().then(() => {
+            pollRgbDetections();
+            rgbAiTimer = setInterval(pollRgbDetections, RGB_AI_POLL_MS);
+        });
     }
 
     function stopRgbAiPolling() {
@@ -108,6 +178,219 @@
             rgbAiTimer = null;
         }
         clearRgbAiOverlay();
+        updateAiStatus(null);
+        stopAiWorker();
+    }
+
+    function formatResLabel(res) {
+        return String(res).replace(/x/gi, "×");
+    }
+
+    function modeForRes(res) {
+        return rgbCameraModes.find((m) => m.resolution === res);
+    }
+
+    function fpsOptionsForRes(res) {
+        const mode = modeForRes(res);
+        return mode && mode.fps_options ? mode.fps_options : [15, 30];
+    }
+
+    function formatResOptionLabel(mode) {
+        const [w, h] = mode.resolution.split("x");
+        const suffix = mode.label ? ` — ${mode.label}` : "";
+        return `${w}×${h}${suffix} (≤${mode.max_fps} FPS)`;
+    }
+
+    function populateResolutionSelect() {
+        const sel = document.getElementById("rgb-resolution");
+        if (!sel || !rgbCameraModes.length) return;
+        sel.innerHTML = "";
+        rgbCameraModes.forEach((m) => {
+            const opt = document.createElement("option");
+            opt.value = m.resolution;
+            opt.textContent = formatResOptionLabel(m);
+            sel.appendChild(opt);
+        });
+        if ([...sel.options].some((o) => o.value === rgbRes)) sel.value = rgbRes;
+    }
+
+    function pickValidFps(res, preferred) {
+        const opts = fpsOptionsForRes(res);
+        const want = Number(preferred);
+        if (opts.includes(want)) return want;
+        const lower = opts.filter((f) => f <= want);
+        return lower.length ? Math.max(...lower) : opts[opts.length - 1];
+    }
+
+    function populateFpsSelect(res, preferredFps) {
+        const sel = document.getElementById("rgb-fps");
+        if (!sel) return;
+        const opts = fpsOptionsForRes(res);
+        sel.innerHTML = "";
+        opts.forEach((f) => {
+            const opt = document.createElement("option");
+            opt.value = String(f);
+            opt.textContent = `${f} FPS`;
+            sel.appendChild(opt);
+        });
+        rgbFps = pickValidFps(res, preferredFps != null ? preferredFps : rgbFps);
+        sel.value = String(rgbFps);
+    }
+
+    function pollMsForMode() {
+        const byRes = RGB_POLL_BY_RES[rgbRes] || 3200;
+        const byFps = RGB_POLL_BY_FPS[rgbFps] || 3200;
+        return Math.max(byRes, byFps);
+    }
+
+    function updateResolutionUi() {
+        const meta = document.getElementById("rgb-meta-res");
+        if (meta) meta.textContent = `${formatResLabel(rgbRes)} @ ${rgbFps} FPS`;
+        const sel = document.getElementById("rgb-resolution");
+        if (sel && [...sel.options].some((o) => o.value === rgbRes)) sel.value = rgbRes;
+        const fpsSel = document.getElementById("rgb-fps");
+        if (fpsSel && [...fpsSel.options].some((o) => o.value === String(rgbFps))) {
+            fpsSel.value = String(rgbFps);
+        }
+        const hint = document.getElementById("rgb-resolution-hint");
+        if (hint) {
+            const mode = modeForRes(rgbRes);
+            const max = mode ? mode.max_fps : "?";
+            hint.textContent = mode
+                ? `${mode.label} — FPS max ~${max} à ${formatResLabel(rgbRes)} (source rpicam sur le Pi).`
+                : "Modes natifs caméra Pi — FPS limités selon la résolution.";
+        }
+    }
+
+    async function fetchRgbCameraConfig() {
+        try {
+            const r = await fetch("/api/camera/rgb/config", { cache: "no-store", credentials: "include" });
+            if (!r.ok) return null;
+            return await r.json();
+        } catch (_e) {
+            return null;
+        }
+    }
+
+    async function postRgbCameraConfig(body) {
+        const r = await fetch("/api/camera/rgb/config", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify(body),
+        });
+        if (!r.ok) {
+            const err = await r.json().catch(() => ({}));
+            throw new Error(err.detail || `HTTP ${r.status}`);
+        }
+        return r.json();
+    }
+
+    async function syncRgbCameraFromServer() {
+        const cfg = await fetchRgbCameraConfig();
+        if (!cfg) return;
+        if (cfg.options && cfg.options.modes && cfg.options.modes.length) {
+            rgbCameraModes = cfg.options.modes;
+            populateResolutionSelect();
+        }
+        if (cfg.resolution) rgbRes = cfg.resolution;
+        if (cfg.fps != null) rgbFps = Number(cfg.fps);
+        populateFpsSelect(rgbRes, rgbFps);
+        rgbFps = pickValidFps(rgbRes, rgbFps);
+        localStorage.setItem("aquawing_rgb_res", rgbRes);
+        localStorage.setItem("aquawing_rgb_fps", String(rgbFps));
+        rgbPollMs = pollMsForMode();
+        updateResolutionUi();
+    }
+
+    async function refreshRgbStatsMeta() {
+        try {
+            const r = await fetch("/video/stats", { cache: "no-store" });
+            if (!r.ok) return;
+            const s = await r.json();
+            const fpsLine = document.getElementById("status-fps-line");
+            if (fpsLine && videoOn) {
+                const measured = s.measured_fps != null ? ` (~${s.measured_fps} mesuré)` : "";
+                fpsLine.textContent = `${s.fps || rgbFps} FPS / rpicam${measured}`;
+                fpsLine.classList.add("status-ok");
+            }
+        } catch (_e) {
+            /* ignore */
+        }
+    }
+
+    function streamPath() {
+        const base = useAnnotated ? "/video/annotated" : "/video";
+        return `${base}?t=${Date.now()}`;
+    }
+
+    function restartRgbPolling() {
+        const img = document.getElementById("optical-video-stream");
+        if (!img || !videoOn) return;
+        const refresh = () => {
+            img.src = streamPath();
+        };
+        refresh();
+        if (rgbTimer) clearInterval(rgbTimer);
+        rgbTimer = setInterval(refresh, rgbPollMs);
+    }
+
+    async function applyRgbCaptureMode({ resolution, fps } = {}) {
+        const nextRes = resolution != null ? resolution : rgbRes;
+        const nextFps = fps != null ? Number(fps) : rgbFps;
+        if (nextRes === rgbRes && nextFps === rgbFps) return;
+
+        const statusRgb = document.querySelector(".optical-status-cards .status-card:nth-child(2) .status-val");
+        if (statusRgb && videoOn) {
+            statusRgb.textContent = `SWITCH / ${formatResLabel(nextRes)} @ ${nextFps}…`;
+        }
+
+        try {
+            const body = {};
+            if (resolution != null) body.resolution = resolution;
+            if (fps != null) body.fps = nextFps;
+            const cfg = await postRgbCameraConfig(body);
+            rgbRes = cfg.resolution || nextRes;
+            rgbFps = Number(cfg.fps != null ? cfg.fps : nextFps);
+        } catch (e) {
+            console.warn("RGB capture mode:", e);
+            return;
+        }
+
+        rgbPollMs = pollMsForMode();
+        localStorage.setItem("aquawing_rgb_res", rgbRes);
+        localStorage.setItem("aquawing_rgb_fps", String(rgbFps));
+        updateResolutionUi();
+        await refreshRgbStatsMeta();
+
+        if (!videoOn) return;
+        restartRgbPolling();
+        if (statusRgb) {
+            const aiTag = useAnnotated ? " + IA" : "";
+            statusRgb.textContent = `LIVE / ${formatResLabel(rgbRes)} @ ${rgbFps}${aiTag}`;
+            statusRgb.classList.add("status-ok");
+        }
+    }
+
+    function onRgbResolutionChange() {
+        const sel = document.getElementById("rgb-resolution");
+        if (!sel) return;
+        const next = sel.value;
+        populateFpsSelect(next, rgbFps);
+        const nextFps = parseInt(document.getElementById("rgb-fps")?.value || String(rgbFps), 10);
+        if (camChangeTimer) clearTimeout(camChangeTimer);
+        camChangeTimer = setTimeout(
+            () => applyRgbCaptureMode({ resolution: next, fps: nextFps }),
+            350
+        );
+    }
+
+    function onRgbFpsChange() {
+        const sel = document.getElementById("rgb-fps");
+        if (!sel) return;
+        const next = parseInt(sel.value, 10);
+        if (camChangeTimer) clearTimeout(camChangeTimer);
+        camChangeTimer = setTimeout(() => applyRgbCaptureMode({ fps: next }), 350);
     }
 
     function setVideo(on) {
@@ -138,8 +421,6 @@
         }
 
         useAnnotated = USE_ANNOTATED_STREAM;
-        const streamPath = () =>
-            (useAnnotated ? "/video/annotated" : "/video") + `?res=${RGB_RES}&t=${Date.now()}`;
 
         const refresh = () => {
             img.src = streamPath();
@@ -150,7 +431,7 @@
             applyRgbFilters();
             if (statusRgb) {
                 const aiTag = useAnnotated ? " + IA" : "";
-                statusRgb.textContent = `LIVE / ${RGB_RES}${aiTag}`;
+                statusRgb.textContent = `LIVE / ${formatResLabel(rgbRes)} @ ${rgbFps}${aiTag}`;
                 statusRgb.classList.add("status-ok");
             }
         };
@@ -174,7 +455,7 @@
         };
         refresh();
         if (rgbTimer) clearInterval(rgbTimer);
-        rgbTimer = setInterval(refresh, RGB_POLL_MS);
+        rgbTimer = setInterval(refresh, rgbPollMs);
         if (ENABLE_AI_POLL) startRgbAiPolling();
     }
 
@@ -329,7 +610,7 @@
             e.preventDefault();
             const img = document.getElementById("optical-video-stream");
             if (img?.src && videoOn) {
-                window.open(img.src.split("?")[0] + "?t=" + Date.now(), "_blank");
+                window.open(`/video?res=${encodeURIComponent(rgbRes)}&t=${Date.now()}`, "_blank");
             }
         });
     }
@@ -355,6 +636,23 @@
         });
         document.getElementById("thermal-palette")?.addEventListener("change", () => updateThermalMeta());
 
+        const rgbResSel = document.getElementById("rgb-resolution");
+        if (rgbResSel) {
+            if ([...rgbResSel.options].some((o) => o.value === rgbRes)) {
+                rgbResSel.value = rgbRes;
+            }
+            rgbResSel.addEventListener("change", onRgbResolutionChange);
+        }
+        const rgbFpsSel = document.getElementById("rgb-fps");
+        if (rgbFpsSel) {
+            if ([...rgbFpsSel.options].some((o) => o.value === String(rgbFps))) {
+                rgbFpsSel.value = String(rgbFps);
+            }
+            rgbFpsSel.addEventListener("change", onRgbFpsChange);
+        }
+        rgbPollMs = pollMsForMode();
+        updateResolutionUi();
+
         wirePresets();
         wireToolbar();
         syncSliderOutputs();
@@ -364,7 +662,10 @@
             vp.classList.add("tool-crosshair");
         }
 
-        setVideo(true);
+        syncRgbCameraFromServer().finally(() => {
+            setVideo(true);
+            refreshRgbStatsMeta();
+        });
         setThermal(false);
         tickTimestamp();
         setInterval(tickTimestamp, 1000);
@@ -380,6 +681,7 @@
         };
         jitterMs();
         setInterval(jitterMs, 1500);
+        setInterval(refreshRgbStatsMeta, 4000);
 
         document.querySelector(".oc-btn-calibrate")?.addEventListener("click", (e) => {
             e.preventDefault();

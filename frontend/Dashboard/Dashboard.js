@@ -36,7 +36,7 @@ const getWebSocketURL = () => {
 const WS_URL = getWebSocketURL();
 const VIDEO_URL = "/video";
 const DEFAULT_RGB_RES = "1280x720";
-const ENABLE_RGB_AI = false; // RF-DETR lourd sur Pi — POST /api/detect/rgb/start pour activer
+const ENABLE_RGB_AI = true;
 const THERMAL_URL = "/thermal";
 const API_BASE = ""; // Relative URLs work with any host
 
@@ -1712,37 +1712,45 @@ function syncResolutionSelects(value) {
     if (opticalRgbResolutionSelectMain) opticalRgbResolutionSelectMain.value = value;
 }
 
+async function postRgbCameraSourceConfig(body) {
+    try {
+        const r = await fetch('/api/camera/rgb/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(body),
+        });
+        if (!r.ok) return null;
+        return await r.json();
+    } catch (_) {
+        return null;
+    }
+}
+
+async function onRgbResolutionSelectChange(res) {
+    syncResolutionSelects(res);
+    const cfg = await postRgbCameraSourceConfig({ resolution: res });
+    const label = (cfg && cfg.resolution) ? cfg.resolution : res;
+    const elR = document.getElementById('rgb-res');
+    if (elR) elR.textContent = label;
+    if (videoOn) startRGBLoop(label);
+}
+
 if (rgbResolutionSelect) {
-    rgbResolutionSelect.addEventListener('change', (ev)=>{
-        const res = ev.target.value;
-        syncResolutionSelects(res);
-        // if streaming is active, restart loop with new resolution
-        if (videoOn) startRGBLoop(res);
-        else {
-            const elR = document.getElementById('rgb-res'); if (elR) elR.textContent = res;
-        }
+    rgbResolutionSelect.addEventListener('change', (ev) => {
+        onRgbResolutionSelectChange(ev.target.value);
     });
 }
 
 if (opticalRgbResolutionSelect) {
-    opticalRgbResolutionSelect.addEventListener('change', (ev)=>{
-        const res = ev.target.value;
-        syncResolutionSelects(res);
-        if (videoOn) startRGBLoop(res);
-        else {
-            const elR = document.getElementById('rgb-res'); if (elR) elR.textContent = res;
-        }
+    opticalRgbResolutionSelect.addEventListener('change', (ev) => {
+        onRgbResolutionSelectChange(ev.target.value);
     });
 }
 
 if (opticalRgbResolutionSelectMain) {
-    opticalRgbResolutionSelectMain.addEventListener('change', (ev)=>{
-        const res = ev.target.value;
-        syncResolutionSelects(res);
-        if (videoOn) startRGBLoop(res);
-        else {
-            const elR = document.getElementById('rgb-res'); if (elR) elR.textContent = res;
-        }
+    opticalRgbResolutionSelectMain.addEventListener('change', (ev) => {
+        onRgbResolutionSelectChange(ev.target.value);
     });
 }
 
@@ -1767,8 +1775,8 @@ function updateSamples(samples, size){
 
 async function fetchAndDisplayRGB(res){
     if (!videoImg) return;
-    const url = VIDEO_URL + '?res=' + encodeURIComponent(res) + '&_=' + Date.now();
-    // Light mode: update src directly (no blob/objectURL)
+    const url = VIDEO_URL + '?_=' + Date.now();
+    // Light mode: update src directly (no blob/objectURL); résolution = mode rpicam sur le Pi
     videoImg.src = url;
     const elR = document.getElementById('rgb-res'); if (elR) elR.textContent = res;
     const elB = document.getElementById('rgb-bitrate'); if (elB) elB.textContent = '--';
@@ -1873,8 +1881,21 @@ const DETECTION_TYPES = {
     ]
 };
 
+async function ensureRgbAiWorker() {
+    if (!ENABLE_RGB_AI) return;
+    try {
+        await fetch(API_BASE + '/api/detect/rgb/start', { method: 'POST', credentials: 'include' });
+    } catch (_e) { /* noop */ }
+}
+
+async function stopRgbAiWorker() {
+    try {
+        await fetch(API_BASE + '/api/detect/rgb/stop', { method: 'POST', credentials: 'include' });
+    } catch (_e) { /* noop */ }
+}
+
 async function fetchRGBDetections(){
-    if (!videoOn) return;
+    if (!videoOn || !ENABLE_RGB_AI) return;
     try {
         const res = await fetch(API_BASE + '/api/detect/rgb', { credentials: 'include' });
         if (!res.ok) return;
@@ -2077,11 +2098,13 @@ function startRGBLoop(res){
     rgbTimer = setInterval(()=> fetchAndDisplayRGB(res), RGB_INTERVAL);
     if (ENABLE_RGB_AI) {
         if (rgbAiTimer) clearInterval(rgbAiTimer);
-        rgbAiTimer = setInterval(fetchRGBDetections, 5000);
-        fetchRGBDetections();
+        ensureRgbAiWorker().then(() => {
+            fetchRGBDetections();
+            rgbAiTimer = setInterval(fetchRGBDetections, 4000);
+        });
     }
 }
-function stopRGBLoop(){ if (rgbTimer) { clearInterval(rgbTimer); rgbTimer = null; } try{ if (lastRGBObjectURL) { URL.revokeObjectURL(lastRGBObjectURL); lastRGBObjectURL = null; } }catch(e){} if (videoImg) videoImg.src = ''; const elB = document.getElementById('rgb-bitrate'); if (elB) elB.textContent = '0 kb/s'; const elR = document.getElementById('rgb-res'); if (elR) elR.textContent = '--'; if (videoStatus) videoStatus.className = 'status-dot off'; if (rgbAiTimer) { clearInterval(rgbAiTimer); rgbAiTimer = null; } clearOverlay('rgb-overlay'); document.getElementById('rgb-ai') && (document.getElementById('rgb-ai').textContent = ''); }
+function stopRGBLoop(){ if (rgbTimer) { clearInterval(rgbTimer); rgbTimer = null; } try{ if (lastRGBObjectURL) { URL.revokeObjectURL(lastRGBObjectURL); lastRGBObjectURL = null; } }catch(e){} if (videoImg) videoImg.src = ''; const elB = document.getElementById('rgb-bitrate'); if (elB) elB.textContent = '0 kb/s'; const elR = document.getElementById('rgb-res'); if (elR) elR.textContent = '--'; if (videoStatus) videoStatus.className = 'status-dot off'; if (rgbAiTimer) { clearInterval(rgbAiTimer); rgbAiTimer = null; } clearOverlay('rgb-overlay'); document.getElementById('rgb-ai') && (document.getElementById('rgb-ai').textContent = ''); if (ENABLE_RGB_AI) stopRgbAiWorker(); }
 
 // Thermal fetch (if backend exists)
 const thermalImg = document.getElementById('thermal-stream');

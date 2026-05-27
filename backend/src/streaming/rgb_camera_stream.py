@@ -7,7 +7,7 @@ image JPEG pour l'endpoint ``/video`` du dashboard.
 Usage :
     from backend.src.streaming.rgb_camera_stream import get_rgb_streamer
     streamer = get_rgb_streamer()
-    jpeg = streamer.get_jpeg(width=2304, height=1296)
+    jpeg = streamer.get_jpeg()
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ import subprocess
 import threading
 import time
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Any, Optional, Tuple
 
 import yaml
 
@@ -46,6 +46,118 @@ def _kill_stale_rpicam() -> None:
     """Release the camera if a previous rpicam process was left running."""
     for name in _RP_CAM_PROCS:
         subprocess.run(["pkill", "-9", name], capture_output=True, timeout=3)
+
+
+_DEFAULT_CAMERA_MODES: list[dict[str, Any]] = [
+    {
+        "resolution": "1536x864",
+        "max_fps": 120,
+        "label": "Très fluide, faible latence",
+        "fps_options": [15, 30, 60, 90, 120],
+    },
+    {
+        "resolution": "2304x1296",
+        "max_fps": 56,
+        "label": "Équilibre qualité + fluidité",
+        "fps_options": [15, 24, 30, 40, 50, 56],
+    },
+    {
+        "resolution": "1920x1080",
+        "max_fps": 50,
+        "label": "Live Full HD",
+        "fps_options": [15, 24, 30, 40, 50],
+    },
+    {
+        "resolution": "4608x2592",
+        "max_fps": 14,
+        "label": "Qualité max (photo / inspection)",
+        "fps_options": [5, 10, 14],
+    },
+]
+
+
+def _norm_resolution(value: str) -> str:
+    return str(value).strip().lower().replace("×", "x").replace(" ", "")
+
+
+def get_rgb_camera_modes() -> list[dict[str, Any]]:
+    """Modes caméra Pi (résolution + FPS max + liste FPS autorisés)."""
+    cfg = _load_rgb_config()
+    raw_modes = cfg.get("modes")
+    if raw_modes:
+        modes: list[dict[str, Any]] = []
+        for m in raw_modes:
+            res = _norm_resolution(m["resolution"])
+            fps_opts = [int(f) for f in m.get("fps_options") or []]
+            max_fps = int(m.get("max_fps", max(fps_opts) if fps_opts else 30))
+            modes.append(
+                {
+                    "resolution": res,
+                    "max_fps": max_fps,
+                    "label": str(m.get("label", "")),
+                    "fps_options": fps_opts or [max_fps],
+                }
+            )
+        return modes
+    # Ancien format resolutions / fps_options
+    resolutions = cfg.get("resolutions")
+    if resolutions:
+        global_fps = [int(f) for f in cfg.get("fps_options") or [15, 30]]
+        return [
+            {
+                "resolution": _norm_resolution(r),
+                "max_fps": max(global_fps),
+                "label": "",
+                "fps_options": global_fps,
+            }
+            for r in resolutions
+        ]
+    return [dict(m) for m in _DEFAULT_CAMERA_MODES]
+
+
+def get_rgb_camera_options() -> dict[str, Any]:
+    """Listes résolution / FPS (tous modes + union des FPS)."""
+    modes = get_rgb_camera_modes()
+    all_fps = sorted({f for m in modes for f in m["fps_options"]})
+    return {
+        "modes": modes,
+        "resolutions": [m["resolution"] for m in modes],
+        "fps_options": all_fps,
+    }
+
+
+def get_mode_for_resolution(resolution: str) -> Optional[dict[str, Any]]:
+    key = _norm_resolution(resolution)
+    for mode in get_rgb_camera_modes():
+        if mode["resolution"] == key:
+            return mode
+    return None
+
+
+def get_fps_options_for_resolution(resolution: str) -> list[int]:
+    mode = get_mode_for_resolution(resolution)
+    if mode:
+        return list(mode["fps_options"])
+    return [15, 30]
+
+
+def get_max_fps_for_resolution(resolution: str) -> int:
+    mode = get_mode_for_resolution(resolution)
+    if mode:
+        return int(mode["max_fps"])
+    opts = get_fps_options_for_resolution(resolution)
+    return max(opts) if opts else 30
+
+
+def normalize_fps_for_resolution(resolution: str, fps: int) -> int:
+    """Choisit un FPS valide pour la résolution (≤ max caméra)."""
+    opts = get_fps_options_for_resolution(resolution)
+    if not opts:
+        return max(1, int(fps))
+    if int(fps) in opts:
+        return int(fps)
+    valid = [f for f in opts if f <= int(fps)]
+    return max(valid) if valid else min(opts)
 
 
 def _parse_resolution(value: str) -> Tuple[int, int]:
@@ -239,36 +351,37 @@ class RgbCameraStreamer:
                 self.stop()
                 return
 
-    def ensure_resolution(self, width: int, height: int) -> None:
-        if width == self.width and height == self.height:
-            return
-        self.stop()
-        self.width = width
-        self.height = height
-        with self._lock:
-            self._latest = None
-            self._latest_ts = 0.0
-
-    def get_jpeg(
+    def set_capture_mode(
         self,
         width: Optional[int] = None,
         height: Optional[int] = None,
-        wait_s: float = 3.0,
-    ) -> bytes:
-        """Get a JPEG frame from the camera.
-        
-        Args:
-            width: Target width (optional)
-            height: Target height (optional)
-            wait_s: Timeout in seconds
-            
-        Returns:
-            JPEG bytes or empty bytes if failed
-        """
+        fps: Optional[int] = None,
+    ) -> bool:
+        """Change rpicam source resolution/FPS (restarts rpicam-vid, not a web resize)."""
+        new_w = int(width) if width is not None else self.width
+        new_h = int(height) if height is not None else self.height
+        new_fps = int(fps) if fps is not None else self.fps
+        if new_w == self.width and new_h == self.height and new_fps == self.fps:
+            return False
+        was_running = self._running
+        self.stop()
+        _kill_stale_rpicam()
+        time.sleep(0.12)
+        self.width = new_w
+        self.height = new_h
+        self.fps = new_fps
+        with self._lock:
+            self._latest = None
+            self._latest_ts = 0.0
+            self._error = None
+        if was_running:
+            self.start()
+        return True
+
+    def get_jpeg(self, wait_s: float = 3.0) -> bytes:
+        """Dernière frame JPEG à la résolution/FPS configurées sur rpicam."""
         with self._lock:
             self._last_request_ts = time.time()
-        if width and height:
-            self.ensure_resolution(width, height)
 
         if not self._running:
             self.start()
@@ -307,6 +420,7 @@ class RgbCameraStreamer:
         with self._lock:
             return {
                 "running": self._running,
+                "resolution": f"{self.width}x{self.height}",
                 "width": self.width,
                 "height": self.height,
                 "fps": self.fps,

@@ -64,7 +64,19 @@ html, body {
 }
 
 .sys-ok { color: var(--sys-green); font-weight: 700; }
+.sys-warn { color: #fb923c; font-weight: 700; }
+.sys-crit { color: #f87171; font-weight: 700; }
 .sys-cyan { color: var(--sys-cyan); font-weight: 700; }
+
+.sys-sensor-cell--rpi {
+    border-color: rgba(34, 211, 238, 0.35);
+    background: rgba(34, 211, 238, 0.06);
+}
+
+.sys-sensor-cell--rpi.sys-sensor-cell--hot {
+    border-color: rgba(251, 146, 60, 0.45);
+    background: rgba(251, 146, 60, 0.08);
+}
 
 /* ----- POWER ----- */
 .sys-power__body {

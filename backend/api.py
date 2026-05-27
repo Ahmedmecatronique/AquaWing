@@ -129,7 +129,7 @@ async def get_swimmer_risk() -> dict[str, Any]:
         from backend.src.streaming.rgb_camera_stream import get_rgb_streamer
         from ia_prediction.pipeline import process_frame
 
-        jpeg = get_rgb_streamer().get_jpeg(width=640, height=360)
+        jpeg = get_rgb_streamer().get_jpeg()
         cv2 = _safe_import_cv2()
         if cv2 is None:
             return {"error": "opencv (cv2) not installed", "swimmers": [], "alerts": []}
@@ -147,6 +147,111 @@ async def get_swimmer_risk() -> dict[str, Any]:
         return {"swimmers": swimmers, "alerts": alerts, "processing_time_ms": result.processing_time_ms}
     except Exception as exc:
         return {"error": str(exc), "swimmers": [], "alerts": []}
+
+
+class RgbCameraConfigBody(BaseModel):
+    """Applique résolution et/ou FPS sur rpicam-vid (source caméra Pi)."""
+    resolution: Optional[str] = None
+    fps: Optional[int] = None
+
+
+@router.get("/camera/rgb/config")
+async def get_rgb_camera_config() -> dict[str, Any]:
+    """Mode capture actuel + modes caméra Pi (résolution / FPS max par mode)."""
+    from backend.src.streaming.rgb_camera_stream import (
+        get_fps_options_for_resolution,
+        get_max_fps_for_resolution,
+        get_mode_for_resolution,
+        get_rgb_camera_options,
+        get_rgb_streamer,
+    )
+
+    streamer = get_rgb_streamer()
+    opts = get_rgb_camera_options()
+    res_key = f"{streamer.width}x{streamer.height}"
+    mode = get_mode_for_resolution(res_key)
+    return {
+        "resolution": res_key,
+        "width": streamer.width,
+        "height": streamer.height,
+        "fps": streamer.fps,
+        "quality": streamer.quality,
+        "running": streamer._running,
+        "max_fps": get_max_fps_for_resolution(res_key),
+        "fps_options": get_fps_options_for_resolution(res_key),
+        "mode": mode,
+        "options": opts,
+        "stats": streamer.get_stats(),
+    }
+
+
+@router.post("/camera/rgb/config")
+async def set_rgb_camera_config(body: RgbCameraConfigBody) -> dict[str, Any]:
+    """Change résolution et/ou FPS sur le Pi (redémarre rpicam-vid)."""
+    from backend.src.streaming.rgb_camera_stream import (
+        _parse_resolution,
+        get_fps_options_for_resolution,
+        get_max_fps_for_resolution,
+        get_rgb_camera_options,
+        get_rgb_streamer,
+        normalize_fps_for_resolution,
+    )
+
+    streamer = get_rgb_streamer()
+    opts = get_rgb_camera_options()
+    allowed_res = {str(r) for r in opts["resolutions"]}
+
+    new_w, new_h = streamer.width, streamer.height
+    new_fps = streamer.fps
+
+    if body.resolution is not None:
+        res_key = str(body.resolution).strip().lower().replace("×", "x")
+        if res_key not in allowed_res:
+            raise HTTPException(
+                status_code=400,
+                detail=f"resolution must be one of {sorted(allowed_res)}",
+            )
+        new_w, new_h = _parse_resolution(res_key)
+
+    if body.fps is not None:
+        new_fps = int(body.fps)
+
+    res_key = f"{new_w}x{new_h}"
+    allowed_fps = get_fps_options_for_resolution(res_key)
+    max_fps = get_max_fps_for_resolution(res_key)
+    if body.fps is not None and new_fps not in allowed_fps:
+        raise HTTPException(
+            status_code=400,
+            detail=f"fps must be one of {allowed_fps} (max {max_fps} for {res_key})",
+        )
+    new_fps = normalize_fps_for_resolution(res_key, new_fps)
+
+    changed = streamer.set_capture_mode(width=new_w, height=new_h, fps=new_fps)
+    return {
+        "ok": True,
+        "changed": changed,
+        "resolution": f"{streamer.width}x{streamer.height}",
+        "width": streamer.width,
+        "height": streamer.height,
+        "fps": streamer.fps,
+        "stats": streamer.get_stats(),
+    }
+
+
+@router.get("/system/rpi")
+async def get_rpi_system_stats() -> dict[str, Any]:
+    """Température CPU du Raspberry Pi (lecture /sys/class/thermal)."""
+    try:
+        from backend.src.system.rpi_stats import cpu_temp_level, read_rpi_cpu_temp_c
+
+        temp = read_rpi_cpu_temp_c()
+        return {
+            "cpu_temp_c": temp,
+            "status": cpu_temp_level(temp),
+            "ok": temp is not None,
+        }
+    except Exception as exc:
+        return {"cpu_temp_c": None, "status": "unknown", "ok": False, "error": str(exc)}
 
 
 @router.get("/status", response_model=DroneStatus)

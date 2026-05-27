@@ -219,6 +219,13 @@ html, body {
     color: var(--muted);
 }
 
+.oc-hint {
+    margin: 4px 0 8px;
+    font-size: 10px;
+    line-height: 1.35;
+    color: rgba(234, 242, 255, 0.45);
+}
+
 .oc-presets {
     display: grid;
     grid-template-columns: repeat(4, 1fr);

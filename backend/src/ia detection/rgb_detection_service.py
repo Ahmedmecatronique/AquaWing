@@ -85,7 +85,7 @@ class RgbDetectionWorker:
         
         while not self._stop.is_set():
             try:
-                jpeg = streamer.get_jpeg(width=640, height=360, wait_s=2.0)
+                jpeg = streamer.get_jpeg(wait_s=2.0)
                 if jpeg:
                     dets = detector.detect_jpeg(jpeg)
                     with self._lock:

@@ -25,6 +25,8 @@
         });
     }
 
+    let thermalChart = null;
+
     function initThermalChart() {
         const canvas = document.getElementById("sys-chart-thermal");
         if (!canvas || typeof Chart === "undefined") return;
@@ -37,7 +39,7 @@
                 return v + Math.sin(i * 0.9 + spread) * 1.2;
             });
 
-        new Chart(canvas.getContext("2d"), {
+        thermalChart = new Chart(canvas.getContext("2d"), {
             type: "line",
             data: {
                 labels,
@@ -112,6 +114,14 @@
         });
     }
 
+    function pushChartCpuTemp(tempC) {
+        if (!thermalChart || tempC == null || Number.isNaN(Number(tempC))) return;
+        const cpu = thermalChart.data.datasets && thermalChart.data.datasets[0];
+        if (!cpu || !Array.isArray(cpu.data) || cpu.data.length === 0) return;
+        cpu.data = cpu.data.slice(1).concat([Number(tempC)]);
+        thermalChart.update("none");
+    }
+
     function kickLightMotion() {
         const motors = document.querySelectorAll(".sys-motor");
         if (!motors.length) return;
@@ -125,10 +135,53 @@
         }, 2200);
     }
 
+    function tempClassForStatus(status) {
+        if (status === "critical") return "sys-crit";
+        if (status === "warn") return "sys-warn";
+        if (status === "ok") return "sys-ok";
+        return "sys-cyan";
+    }
+
+    function setCpuTempUi(temp, status) {
+        const text = temp == null ? "N/A" : `${Number(temp).toFixed(1)}°C`;
+        const cls = tempClassForStatus(status);
+        const card = document.getElementById("sys-rpi-cpu");
+        const thermal = document.getElementById("sys-t-cpu");
+        if (card) {
+            card.textContent = text;
+            card.className = "sys-sensor-cell__v " + cls;
+        }
+        if (thermal) {
+            thermal.textContent = text;
+            thermal.className = cls;
+        }
+        const shell = document.getElementById("sys-rpi-cpu-card");
+        if (shell) {
+            shell.classList.toggle("sys-sensor-cell--hot", status === "warn" || status === "critical");
+        }
+    }
+
+    async function fetchRpiCpuTemp() {
+        try {
+            const res = await fetch("/api/system/rpi?t=" + Date.now(), { cache: "no-store" });
+            if (!res.ok) {
+                setCpuTempUi(null, "unknown");
+                return;
+            }
+            const data = await res.json();
+            setCpuTempUi(data.cpu_temp_c, data.status || "unknown");
+            pushChartCpuTemp(data.cpu_temp_c);
+        } catch (_e) {
+            setCpuTempUi(null, "unknown");
+        }
+    }
+
     document.addEventListener("DOMContentLoaded", function () {
         setBatteryRing(87);
         buildSignalBars();
         initThermalChart();
         kickLightMotion();
+        fetchRpiCpuTemp();
+        setInterval(fetchRpiCpuTemp, 3000);
     });
 })();

@@ -60,6 +60,15 @@
                         <option>Tungsten</option>
                     </select>
                 </div>
+                <div class="oc-select-row">
+                    <label class="oc-select-label" for="rgb-resolution">Résolution source (rpicam)</label>
+                    <select id="rgb-resolution" class="oc-select" aria-label="Résolution caméra RGB sur le Pi"></select>
+                </div>
+                <div class="oc-select-row">
+                    <label class="oc-select-label" for="rgb-fps">FPS source (rpicam)</label>
+                    <select id="rgb-fps" class="oc-select" aria-label="Images par seconde caméra RGB sur le Pi"></select>
+                </div>
+                <p class="oc-hint" id="rgb-resolution-hint">Modes natifs caméra Pi — FPS limités selon la résolution (voir tableau fabricant).</p>
                 <p class="oc-presets-caption">PRÉRÉGLAGES</p>
                 <div class="oc-presets" role="group" aria-label="RGB presets">
                     <button type="button" class="oc-preset is-active" data-preset="auto">Auto</button>
@@ -128,7 +137,7 @@
         <!-- RGB flux -->
         <section class="optical-pane optical-pane--rgb" aria-label="RGB live feed">
             <header class="feed-meta feed-meta--rgb">
-                <span class="feed-meta-chip" id="rgb-meta-res">1280×720</span>
+                <span class="feed-meta-chip" id="rgb-meta-res">2304×1296</span>
                 <span class="feed-meta-chip feed-meta-accent">30 FPS</span>
                 <span class="feed-rec" id="feed-rec-indicator"><span class="feed-rec-dot"></span> REC</span>
                 <span class="feed-meta-chip">ZOOM 1.0×</span>
@@ -209,7 +218,7 @@
             </div>
             <div class="status-card">
                 <span class="status-ico" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="3" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="21"/><line x1="3" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="21" y2="12"/></svg></span>
-                <div class="status-text"><span class="status-name">AI DETECTION</span><span class="status-val status-ok">READY / 3 Objects</span></div>
+                <div class="status-text"><span class="status-name">AI DETECTION</span><span class="status-val" id="status-ai-line">OFF</span></div>
             </div>
             <div class="status-card">
                 <span class="status-ico" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 12c2-6 7-9 14-9"/><polyline points="18 15 21 18 18 21"/><polyline points="6 15 3 18 6 21"/></svg></span>
@@ -226,6 +235,6 @@
         </div>
     </section>
 </div>
-<script src="/optical-page.js?v=7"></script>
+<script src="/optical-page.js?v=11"></script>
 </body>
 </html>

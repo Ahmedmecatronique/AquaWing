@@ -70,6 +70,7 @@ class LoginRequest(BaseModel):
 
 ACTIVE_SESSIONS = {}
 USERS_FILE = Path(__file__).parent.parent / "users.json"  # AquaWing/users.json
+SESSIONS_FILE = Path(__file__).parent.parent / "sessions.json"
 
 # Default demo users; persisted users.json will be used/merged
 DEMO_USERS = {
@@ -107,6 +108,7 @@ def create_session(username: str) -> str:
         "username": username,
         "created_at": datetime.now(),
     }
+    _save_sessions()
     return session_id
 
 def validate_session(session_id: Optional[str]) -> Optional[str]:
@@ -119,6 +121,7 @@ def validate_session(session_id: Optional[str]) -> Optional[str]:
     
     if age.total_seconds() > SESSION_TIMEOUT:
         del ACTIVE_SESSIONS[session_id]
+        _save_sessions()
         return None
     
     return session["username"]
@@ -127,6 +130,47 @@ def destroy_session(session_id: str):
     """Destroy a session."""
     if session_id in ACTIVE_SESSIONS:
         del ACTIVE_SESSIONS[session_id]
+        _save_sessions()
+
+
+def _load_sessions() -> None:
+    """Load sessions from disk so restarts don't invalidate dashboard iframes."""
+    global ACTIVE_SESSIONS
+    try:
+        if not SESSIONS_FILE.exists():
+            return
+        with open(SESSIONS_FILE, "r", encoding="utf-8") as f:
+            raw = json.load(f) or {}
+        restored = {}
+        now = datetime.now()
+        for sid, sess in (raw.items() if isinstance(raw, dict) else []):
+            if not isinstance(sess, dict):
+                continue
+            username = sess.get("username")
+            created_at = sess.get("created_at")
+            if not username or not created_at:
+                continue
+            try:
+                dt = datetime.fromisoformat(created_at)
+            except Exception:
+                continue
+            if (now - dt).total_seconds() > SESSION_TIMEOUT:
+                continue
+            restored[str(sid)] = {"username": str(username), "created_at": dt}
+        ACTIVE_SESSIONS = restored
+    except Exception:
+        # if sessions file is corrupted, ignore and start fresh
+        ACTIVE_SESSIONS = {}
+
+
+def _save_sessions() -> None:
+    """Persist sessions to disk (best-effort)."""
+    try:
+        data = {sid: {"username": s["username"], "created_at": s["created_at"].isoformat()} for sid, s in ACTIVE_SESSIONS.items()}
+        with open(SESSIONS_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+    except Exception:
+        pass
 
 def authenticate_user(username: str, password: str) -> bool:
     """Authenticate a user with username/password."""
@@ -521,12 +565,11 @@ def settings_page_js():
 
 
 @app.get("/video")
-def video_endpoint(res: str = "1280x720"):
-        """Dernière image JPEG de la caméra RGB (rpicam-vid / rpicam-still)."""
-        from backend.src.streaming.rgb_camera_stream import get_rgb_streamer, _parse_resolution
+def video_endpoint():
+        """Dernière image JPEG (résolution/FPS = mode rpicam actuel sur le Pi)."""
+        from backend.src.streaming.rgb_camera_stream import get_rgb_streamer
         try:
-            width, height = _parse_resolution(res)
-            jpeg = get_rgb_streamer().get_jpeg(width=width, height=height, wait_s=6.0)
+            jpeg = get_rgb_streamer().get_jpeg(wait_s=6.0)
             if not jpeg or not jpeg.startswith(b"\xff\xd8"):
                 raise RuntimeError("invalid or empty JPEG from camera")
             return Response(
@@ -562,17 +605,16 @@ def video_restart_endpoint():
 
 
 @app.get("/video/annotated")
-def video_annotated_endpoint(res: str = "1280x720"):
-    """Dernière image RGB avec overlay IA (YOLO + risque noyade)."""
-    from backend.src.streaming.rgb_camera_stream import get_rgb_streamer, _parse_resolution
+def video_annotated_endpoint():
+    """Dernière image RGB avec overlay IA (mode capture rpicam actuel)."""
+    from backend.src.streaming.rgb_camera_stream import get_rgb_streamer
 
     try:
         import numpy as np
         import cv2
         from ia_prediction.pipeline import process_frame
 
-        width, height = _parse_resolution(res)
-        jpeg = get_rgb_streamer().get_jpeg(width=width, height=height)
+        jpeg = get_rgb_streamer().get_jpeg()
         img = cv2.imdecode(np.frombuffer(jpeg, dtype=np.uint8), cv2.IMREAD_COLOR)
         if img is None:
             raise RuntimeError("could not decode jpeg")
@@ -760,6 +802,7 @@ async def websocket_endpoint(websocket: WebSocket):
 async def startup_event():
     """Load users on startup. Telemetry loop is NOT auto-started."""
     load_users()
+    _load_sessions()
     # IA RGB: démarrée à la demande (/api/detect/rgb ou /video), pas au boot (évite crash/lenteur login)
     print("🤖 RF-DETR: lazy start (on first detect/video request)")
     # Log UART assignment (RPi 5: GPS = miniUART, FC = PL011)

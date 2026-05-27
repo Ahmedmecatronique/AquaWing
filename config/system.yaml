@@ -5,19 +5,37 @@ auth:
 cameras:
   rgb:
     enabled: true
-    fps: 15
+    fps: 30
     quality: 80
-    resolution: 1280x720
+    # Mode par défaut : bon équilibre qualité / fluidité (voir modes ci-dessous)
+    resolution: 2304x1296
+    # Modes natifs caméra Pi — FPS max par résolution (rpicam-vid)
+    modes:
+      - resolution: 1536x864
+        max_fps: 120
+        label: Très fluide, faible latence
+        fps_options: [15, 30, 60, 90, 120]
+      - resolution: 2304x1296
+        max_fps: 56
+        label: Équilibre qualité + fluidité
+        fps_options: [15, 24, 30, 40, 50, 56]
+      - resolution: 1920x1080
+        max_fps: 50
+        label: Live Full HD
+        fps_options: [15, 24, 30, 40, 50]
+      - resolution: 4608x2592
+        max_fps: 14
+        label: Qualité max (photo / inspection)
+        fps_options: [5, 10, 14]
   thermal:
     enabled: false
     fps: 30
     resolution: 640x512
 detection:
-  # false = stable sur Raspberry Pi (évite crash mémoire / torch). Activer via POST /api/detect/rgb/start
-  enabled: false
+  enabled: true
   threshold: 0.45
-  inference_size: 560
-  interval_ms: 2000
+  inference_size: 416
+  interval_ms: 3500
   weights: backend/src/ia detection/rf-detr-develop/rf-detr-nano.pth
   classes:
     - person
