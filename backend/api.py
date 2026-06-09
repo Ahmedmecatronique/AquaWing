@@ -210,6 +210,7 @@ async def get_swimmer_risk() -> dict[str, Any]:
     try:
         from backend.src.streaming.rgb_camera_stream import get_rgb_streamer
         from ia_prediction.pipeline import process_frame
+        from backend.src.ia_detection import swimmer_skill_fields
 
         jpeg = get_rgb_streamer().get_jpeg()
         cv2 = _safe_import_cv2()
@@ -224,8 +225,16 @@ async def get_swimmer_risk() -> dict[str, Any]:
             return {"error": "could not decode jpeg", "swimmers": [], "alerts": []}
 
         result = process_frame(img, frame_id=0)
-        swimmers = [s.model_dump() for s in result.swimmers]
-        alerts = [s.model_dump() for s in result.alerts]
+        swimmers = []
+        for s in result.swimmers:
+            row = s.model_dump()
+            row.update(swimmer_skill_fields(s.behavior, s.alert, s.risk_score))
+            swimmers.append(row)
+        alerts = []
+        for s in result.alerts:
+            row = s.model_dump()
+            row.update(swimmer_skill_fields(s.behavior, s.alert, s.risk_score))
+            alerts.append(row)
         return {"swimmers": swimmers, "alerts": alerts, "processing_time_ms": result.processing_time_ms}
     except Exception as exc:
         return {"error": str(exc), "swimmers": [], "alerts": []}

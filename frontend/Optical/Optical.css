@@ -226,6 +226,23 @@ html, body {
     color: rgba(234, 242, 255, 0.45);
 }
 
+.oc-hint--legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    margin-top: 0;
+}
+
+.ai-legend {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+.ai-legend--safe { color: #86efac; }
+.ai-legend--warn { color: #fcd34d; }
+.ai-legend--danger { color: #fca5a5; }
+
 .oc-presets {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -482,6 +499,13 @@ html, body {
 @keyframes ov-pulse-danger {
     0%, 100% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.45); }
     50% { box-shadow: 0 0 18px rgba(239, 68, 68, 0.85); }
+}
+
+.ov-box--warn {
+    border-color: #f59e0b;
+    color: #fde68a;
+    background: rgba(245, 158, 11, 0.15);
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
 }
 
 .ov-box--orange {

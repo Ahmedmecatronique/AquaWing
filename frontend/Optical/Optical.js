@@ -79,6 +79,30 @@
         if (layer) layer.innerHTML = "";
     }
 
+    function detectionBoxClass(d) {
+        const status = d.status || "";
+        if (status === "drowning" || d.alert === true || d.behavior === "drowning_risk") {
+            return "ov-box ov-box--danger";
+        }
+        if (status === "swimming" || d.can_swim === true || d.behavior === "normal_swimming") {
+            return "ov-box ov-box--safe";
+        }
+        if (status === "suspicious" || d.behavior === "suspicious") {
+            return "ov-box ov-box--warn";
+        }
+        return "ov-box ov-box--safe";
+    }
+
+    function detectionLabel(d) {
+        if (d.label) return String(d.label);
+        const status = d.status || "";
+        if (status === "drowning" || d.behavior === "drowning_risk") return "NE SAIT PAS NAGER";
+        if (status === "swimming" || d.behavior === "normal_swimming") return "SAIT NAGER";
+        if (status === "suspicious") return "INCERTAIN";
+        if (d.behavior === "detected_only") return "PERSONNE";
+        return "PERSONNE";
+    }
+
     function renderRgbDetections(data) {
         const layer = document.getElementById("rgb-ai-overlay");
         if (!layer || !videoOn) return;
@@ -92,17 +116,13 @@
             const h = Number(d.h ?? d.height ?? 0);
             const rawConf = d.conf ?? d.confidence ?? d.score ?? 0;
             const conf = rawConf <= 1 ? Math.round(Number(rawConf) * 100) : Math.round(Number(rawConf));
-            const isDrowning =
-                d.status === "drowning" ||
-                d.alert === true ||
-                d.behavior === "drowning_risk";
             const box = document.createElement("div");
-            box.className = isDrowning ? "ov-box ov-box--danger" : "ov-box ov-box--safe";
+            box.className = detectionBoxClass(d);
             box.style.left = `${x * 100}%`;
             box.style.top = `${y * 100}%`;
             box.style.width = `${w * 100}%`;
             box.style.height = `${h * 100}%`;
-            const label = isDrowning ? "NOYADE" : "PERSONNE";
+            const label = detectionLabel(d);
             box.textContent = `${label} (${conf}%)`;
             layer.appendChild(box);
         });
@@ -132,7 +152,10 @@
         const fb = data?.fallback_used;
         const fbReason = data?.fallback_reason;
         const err = data?.error;
-        let lines = [`Backend actif : ${backendDisplayName(active)}`];
+        let lines = [
+            `Backend actif : ${backendDisplayName(active)}`,
+            "IA 2 parties : 1) personne · 2) sait nager / incertain / ne sait pas",
+        ];
         if (req !== active) lines.push(`Demandé : ${backendDisplayName(req)}`);
         if (ms != null) lines.push(`Inférence : ${Math.round(ms)} ms`);
         if (fb) {
@@ -159,6 +182,12 @@
         const alerts = data?.alert_count ?? (data?.detections || []).filter(
             (d) => d.status === "drowning" || d.alert
         ).length;
+        const swimmers = data?.swim_count ?? (data?.detections || []).filter(
+            (d) => d.status === "swimming" || d.can_swim
+        ).length;
+        const unsure = data?.unsure_count ?? (data?.detections || []).filter(
+            (d) => d.status === "suspicious"
+        ).length;
         const persons = data?.person_count ?? Math.max(0, n - alerts);
         const running = data?.running;
         const ready = data?.ready || data?.detector?.ready;
@@ -173,8 +202,12 @@
         const backendTag = active ? ` ${backendDisplayName(active)}` : "";
         const msTag = ms != null ? ` · ${Math.round(ms)}ms` : "";
         if (running && ready) {
-            const alertTag = alerts > 0 ? ` · ${alerts} noyade` : "";
-            el.textContent = `LIVE / ${persons} pers.${alertTag}${backendTag}${msTag}`;
+            const parts = [];
+            if (swimmers > 0) parts.push(`${swimmers} sait nager`);
+            if (unsure > 0) parts.push(`${unsure} incertain`);
+            if (alerts > 0) parts.push(`${alerts} ne sait pas`);
+            const behaviorTag = parts.length ? ` · ${parts.join(", ")}` : "";
+            el.textContent = `LIVE / ${persons} pers.${behaviorTag}${backendTag}${msTag}`;
             el.classList.add("status-ok");
             if (alerts > 0) el.classList.remove("status-ok");
         } else if (running) {

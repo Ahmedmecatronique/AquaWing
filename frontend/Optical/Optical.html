@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>AquaWing — Optical</title>
-    <link rel="stylesheet" href="/optical-page.css?v=7">
+    <link rel="stylesheet" href="/optical-page.css?v=8">
 </head>
 <body class="optical-body">
 <div class="optical-shell">
@@ -74,6 +74,11 @@
                     </select>
                 </div>
                 <p class="oc-hint" id="rgb-ai-hint">Backend IA : chargement…</p>
+                <p class="oc-hint oc-hint--legend" aria-hidden="true">
+                    <span class="ai-legend ai-legend--safe">Vert — sait nager</span>
+                    <span class="ai-legend ai-legend--warn">Orange — incertain</span>
+                    <span class="ai-legend ai-legend--danger">Rouge — ne sait pas nager / noyade</span>
+                </p>
                 <p class="oc-presets-caption">PRÉRÉGLAGES</p>
                 <div class="oc-presets" role="group" aria-label="RGB presets">
                     <button type="button" class="oc-preset is-active" data-preset="auto">Auto</button>
@@ -240,6 +245,6 @@
         </div>
     </section>
 </div>
-<script src="/optical-page.js?v=15"></script>
+<script src="/optical-page.js?v=16"></script>
 </body>
 </html>

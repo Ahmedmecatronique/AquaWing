@@ -12624,3 +12624,376 @@ INFO:     172.20.10.5:53702 - "GET /api/detect/rgb/status?t=1779904216974 HTTP/1
 INFO:     127.0.0.1:44724 - "GET /api/system/rpi?t=1779904216975 HTTP/1.1" 200 OK
 INFO:     127.0.0.1:44714 - "GET /video/stats HTTP/1.1" 200 OK
 INFO:     172.20.10.5:56490 - "GET /video?t=1779904216974 HTTP/1.1" 200 OK
+--- 2026-05-31T22:04:12+01:00 starting ---
+INFO:     Started server process [2255]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+🤖 RF-DETR: lazy start (on first detect/video request)
+GPS configured on /dev/ttyS0 (miniUART)
+Flight Controller configured on /dev/ttyAMA0 (PL011)
+INFO:     172.20.10.5:56337 - "GET /login HTTP/1.1" 200 OK
+INFO:     172.20.10.5:56337 - "GET /login/login.css?v=1 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:57082 - "GET /static/aquawing-logo.png HTTP/1.1" 200 OK
+INFO:     172.20.10.5:57082 - "GET /static/bg_plane.jpg HTTP/1.1" 200 OK
+INFO:     172.20.10.5:57082 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     172.20.10.5:59109 - "POST /login HTTP/1.1" 401 Unauthorized
+INFO:     172.20.10.5:61945 - "POST /login HTTP/1.1" 200 OK
+INFO:     172.20.10.5:61945 - "GET /dashboard HTTP/1.1" 200 OK
+INFO:     172.20.10.5:51485 - "GET /dashboard.css?v=legacy-fullwidth-v2 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:61945 - "GET /dashboard-aquawing.css?v=12-mission-bar HTTP/1.1" 200 OK
+INFO:     172.20.10.5:51485 - "GET /dashboard.js?v=aqua-ai-v1 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:51485 - "POST /api/detect/rgb/stop HTTP/1.1" 200 OK
+INFO:     172.20.10.5:61156 - "GET /missions-page?ui=mis-sat-v2&t=1780261518614 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:61156 - "GET /missions-page.css?v=14 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:59332 - "GET /missions-page.js?v=14 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:63385 - "GET /systems-page?ui=sysdash-v4&t=1780261531009 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:63385 - "GET /systems-page.css?v=4 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:63385 - "GET /systems-page.js?v=6 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:63385 - "GET /api/system/rpi?t=1780261531328 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:63385 - "GET /api/system/rpi?t=1780261534330 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:63385 - "GET /api/system/rpi?t=1780261537833 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:63385 - "GET /api/system/rpi?t=1780261540334 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:63385 - "GET /optical-page?ui=optdash-v1&t=1780261541685 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:49901 - "GET /optical-page.css?v=8 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:49901 - "GET /optical-page.js?v=16 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:49901 - "GET /api/detect/rgb/backends HTTP/1.1" 200 OK
+INFO:     172.20.10.5:63385 - "GET /api/detect/rgb/status HTTP/1.1" 200 OK
+INFO:     172.20.10.5:53672 - "GET /api/camera/rgb/config HTTP/1.1" 200 OK
+INFO:     172.20.10.5:53672 - "POST /api/detect/rgb/start HTTP/1.1" 200 OK
+INFO:     172.20.10.5:53672 - "GET /api/detect/rgb/status?t=1780261542251 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:63385 - "GET /video/stats HTTP/1.1" 200 OK
+INFO:     172.20.10.5:63385 - "GET /api/system/rpi?t=1780261543329 HTTP/1.1" 200 OK
+RGB detection worker error: [0:04:41.754559847] [2889]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [0:04:42.209740673] [2900]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+
+INFO:     172.20.10.5:63385 - "GET /video?t=1780261544044 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:63385 - "GET /video/stats HTTP/1.1" 200 OK
+INFO:     172.20.10.5:53672 - "GET /api/system/rpi?t=1780261546335 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:63385 - "GET /video?t=1780261545949 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:63385 - "GET /api/detect/rgb/status?t=1780261547839 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:63385 - "GET /video?t=1780261548835 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:63385 - "GET /api/system/rpi?t=1780261549840 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:63385 - "GET /video/stats HTTP/1.1" 200 OK
+INFO:     172.20.10.5:53672 - "GET /video?t=1780261549841 HTTP/1.1" 200 OK
+RGB detection worker error: [0:04:47.981472626] [2970]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [0:04:48.395094914] [2982]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+
+INFO:     172.20.10.5:63385 - "GET /api/detect/rgb/status?t=1780261552255 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:63385 - "GET /api/system/rpi?t=1780261552329 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:53672 - "GET /video?t=1780261551838 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:53672 - "GET /pid-page?ui=piddash-v1&t=1780261553376 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:63385 - "GET /pid-page.css?v=2 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:53672 - "GET /pid-page.js?v=2 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:53672 - "GET /api/pid HTTP/1.1" 200 OK
+INFO:     172.20.10.5:53672 - "GET /video/stats HTTP/1.1" 200 OK
+INFO:     172.20.10.5:63385 - "GET /video?t=1780261553598 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:63385 - "GET /api/system/rpi?t=1780261555334 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:63385 - "GET /video?t=1780261555452 HTTP/1.1" 200 OK
+RGB detection worker error: [0:04:53.748206156] [3058]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [0:04:54.130480317] [3064]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+
+INFO:     172.20.10.5:63385 - "GET /api/detect/rgb/status?t=1780261557259 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:53672 - "GET /video/stats HTTP/1.1" 200 OK
+INFO:     172.20.10.5:63385 - "GET /video?t=1780261557348 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:63385 - "GET /api/system/rpi?t=1780261558333 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:63385 - "GET /video?t=1780261559827 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:63385 - "GET /api/system/rpi?t=1780261561827 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:63385 - "GET /video/stats HTTP/1.1" 200 OK
+INFO:     172.20.10.5:65020 - "GET /api/detect/rgb/status?t=1780261562843 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:53672 - "GET /video?t=1780261561827 HTTP/1.1" 200 OK
+RGB detection worker error: [0:04:59.879567411] [3141]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [0:05:00.297649230] [3150]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+
+INFO:     172.20.10.5:65020 - "GET /api/system/rpi?t=1780261564332 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:53672 - "GET /video?t=1780261563831 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:53672 - "GET /video?t=1780261564944 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:53672 - "GET /electrical-wiring?ui=ewdash-v2&t=1780261565820 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:53672 - "GET /electrical-wiring.css?v=2 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:65020 - "GET /electrical-wiring.js?v=2 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:65020 - "GET /video/stats HTTP/1.1" 200 OK
+INFO:     172.20.10.5:53672 - "GET /api/detect/rgb/status?t=1780261567257 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:53672 - "GET /api/system/rpi?t=1780261567330 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:65020 - "GET /video?t=1780261566844 HTTP/1.1" 200 OK
+RGB detection worker error: [0:05:05.629174438] [3238]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [0:05:06.005520417] [3244]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+
+INFO:     172.20.10.5:65020 - "GET /video?t=1780261568746 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:65020 - "GET /video/stats HTTP/1.1" 200 OK
+INFO:     172.20.10.5:65020 - "GET /api/system/rpi?t=1780261570332 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:65020 - "GET /video?t=1780261570644 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:65020 - "GET /api/detect/rgb/status?t=1780261572837 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:55488 - "GET /video?t=1780261572837 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:55488 - "GET /api/system/rpi?t=1780261573842 HTTP/1.1" 200 OK
+RGB detection worker error: [0:05:11.326078073] [3314]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [0:05:11.702196217] [3320]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+
+INFO:     172.20.10.5:55488 - "GET /video/stats HTTP/1.1" 200 OK
+INFO:     172.20.10.5:65020 - "GET /video?t=1780261574829 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:65020 - "GET /api/system/rpi?t=1780261576840 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:55488 - "GET /video?t=1780261576840 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:55488 - "GET /api/detect/rgb/status?t=1780261577834 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:55488 - "GET /video/stats HTTP/1.1" 200 OK
+INFO:     172.20.10.5:65020 - "GET /video?t=1780261578843 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:55488 - "GET /api/system/rpi?t=1780261579330 HTTP/1.1" 200 OK
+RGB detection worker error: [0:05:17.034976333] [3389]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [0:05:17.410339759] [3396]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+
+INFO:     172.20.10.5:65020 - "GET /heatmap-page?ui=hmap-v7&t=1780261580655 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:55488 - "GET /video?t=1780261580144 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:65020 - "GET /heatmap-page.js?v=7 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:55488 - "GET /heatmap-page.css?v=7 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:55488 - "GET /video/stats HTTP/1.1" 200 OK
+INFO:     172.20.10.5:65020 - "GET /api/detect/rgb/status?t=1780261582252 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:65020 - "GET /api/system/rpi?t=1780261582334 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:55488 - "GET /video?t=1780261582048 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:55488 - "GET /video?t=1780261583945 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:55488 - "GET /api/system/rpi?t=1780261585333 HTTP/1.1" 200 OK
+RGB detection worker error: [0:05:22.726611498] [3475]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [0:05:23.109734595] [3481]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+
+INFO:     172.20.10.5:65020 - "GET /video/stats HTTP/1.1" 200 OK
+INFO:     172.20.10.5:55488 - "GET /video?t=1780261585844 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:55488 - "GET /api/detect/rgb/status?t=1780261587253 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:55488 - "GET /video?t=1780261587745 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:55488 - "GET /api/system/rpi?t=1780261588830 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:55488 - "GET /video?t=1780261589841 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:55488 - "GET /video/stats HTTP/1.1" 200 OK
+RGB detection worker error: [0:05:28.422658355] [3550]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [0:05:28.811692896] [3556]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+
+INFO:     172.20.10.5:55488 - "GET /api/system/rpi?t=1780261591829 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:55433 - "GET /video?t=1780261591831 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:55433 - "GET /api/detect/rgb/status?t=1780261592833 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:55488 - "GET /video/stats HTTP/1.1" 200 OK
+INFO:     172.20.10.5:55433 - "GET /video?t=1780261593451 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:55433 - "GET /api/system/rpi?t=1780261594333 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:55433 - "GET /settings-page?ui=setdash-v2&t=1780261594607 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:55488 - "GET /settings-page.css?v=2 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:55488 - "GET /settings-page.js?v=2 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:55488 - "GET /video?t=1780261595352 HTTP/1.1" 200 OK
+RGB detection worker error: [0:05:34.129020318] [3626]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [0:05:34.525743889] [3638]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+
+INFO:     172.20.10.5:55433 - "GET /api/detect/rgb/status?t=1780261597252 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:55433 - "GET /api/system/rpi?t=1780261597330 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:55433 - "GET /video/stats HTTP/1.1" 200 OK
+INFO:     172.20.10.5:55488 - "GET /video?t=1780261597244 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:55488 - "GET /video?t=1780261599149 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:55488 - "GET /api/system/rpi?t=1780261600329 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:55488 - "GET /video?t=1780261601049 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:55488 - "GET /video/stats HTTP/1.1" 200 OK
+INFO:     172.20.10.5:55488 - "GET /api/detect/rgb/status?t=1780261602257 HTTP/1.1" 200 OK
+RGB detection worker error: [0:05:39.848834446] [3721]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [0:05:40.222057782] [3727]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+
+INFO:     172.20.10.5:53728 - "GET /api/system/rpi?t=1780261603329 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:55488 - "GET /video?t=1780261602945 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:55488 - "GET /video?t=1780261604852 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:53728 - "GET /api/system/rpi?t=1780261606843 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:55488 - "GET /video/stats HTTP/1.1" 200 OK
+INFO:     172.20.10.5:50293 - "GET /video?t=1780261606844 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:50293 - "GET /api/detect/rgb/status?t=1780261607834 HTTP/1.1" 200 OK
+RGB detection worker error: [0:05:45.543761374] [3796]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [0:05:45.917540979] [3811]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+
+INFO:     172.20.10.5:50293 - "GET /video?t=1780261608652 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:53728 - "GET /api/system/rpi?t=1780261609333 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:53728 - "GET /video/stats HTTP/1.1" 200 OK
+INFO:     172.20.10.5:53728 - "GET /video?t=1780261610546 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:53728 - "GET /api/detect/rgb/status?t=1780261612256 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:53728 - "GET /api/system/rpi?t=1780261612333 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:53728 - "GET /video?t=1780261612443 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:53728 - "GET /video/stats HTTP/1.1" 200 OK
+RGB detection worker error: [0:05:51.251227948] [3887]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [0:05:51.625934549] [3893]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+
+INFO:     172.20.10.5:53728 - "GET /video?t=1780261614346 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:53728 - "GET /api/system/rpi?t=1780261615332 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:53728 - "GET /video?t=1780261616249 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:53728 - "GET /api/detect/rgb/status?t=1780261617256 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:53728 - "GET /video/stats HTTP/1.1" 200 OK
+INFO:     172.20.10.5:53269 - "GET /api/system/rpi?t=1780261618332 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:53728 - "GET /video?t=1780261618144 HTTP/1.1" 200 OK
+RGB detection worker error: [0:05:56.946266721] [3962]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [0:05:57.313169454] [3968]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+
+INFO:     172.20.10.5:53728 - "GET /video?t=1780261620048 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:53728 - "GET /api/system/rpi?t=1780261621331 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:53728 - "GET /video/stats HTTP/1.1" 200 OK
+INFO:     172.20.10.5:53269 - "GET /api/detect/rgb/status?t=1780261622254 HTTP/1.1" 200 OK
+INFO:     172.20.10.5:53728 - "GET /video?t=1780261621944 HTTP/1.1" 200 OK
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              --- 2026-06-04T05:10:09+01:00 starting ---
+INFO:     Started server process [3505]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+🤖 RF-DETR: lazy start (on first detect/video request)
+GPS configured on /dev/ttyS0 (miniUART)
+Flight Controller configured on /dev/ttyAMA0 (PL011)
+INFO:     127.0.0.1:48206 - "GET / HTTP/1.1" 302 Found
+INFO:     127.0.0.1:48206 - "GET /login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48210 - "GET /static/aquawing-logo.png HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48206 - "GET /login/login.css?v=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48210 - "GET /static/bg_plane.jpg HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48210 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:52006 - "POST /login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52006 - "GET /dashboard HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52008 - "GET /dashboard.css?v=legacy-fullwidth-v2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52014 - "GET /dashboard-aquawing.css?v=12-mission-bar HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52014 - "GET /dashboard.js?v=aqua-ai-v1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52014 - "POST /api/detect/rgb/stop HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49690 - "GET /missions-page?ui=mis-sat-v2&t=1780546252251 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49690 - "GET /missions-page.css?v=14 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49692 - "GET /missions-page.js?v=14 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52448 - "GET /systems-page?ui=sysdash-v4&t=1780546265933 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52448 - "GET /systems-page.css?v=4 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52454 - "GET /systems-page.js?v=6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52454 - "GET /api/system/rpi?t=1780546266209 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52454 - "GET /api/system/rpi?t=1780546269210 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52454 - "GET /optical-page?ui=optdash-v1&t=1780546270692 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52454 - "GET /optical-page.css?v=8 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52448 - "GET /optical-page.js?v=16 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52448 - "GET /api/detect/rgb/backends HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52454 - "GET /api/detect/rgb/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52460 - "GET /api/camera/rgb/config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52460 - "POST /api/detect/rgb/start HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52460 - "GET /api/detect/rgb/status?t=1780546271037 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52454 - "GET /video/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52454 - "GET /api/system/rpi?t=1780546272210 HTTP/1.1" 200 OK
+RGB detection worker error: [0:06:29.907863382] [4050]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [0:06:30.349002987] [4060]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+
+INFO:     127.0.0.1:52454 - "GET /video?t=1780546272917 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37726 - "GET /api/system/rpi?t=1780546275217 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52460 - "GET /video/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52454 - "GET /video?t=1780546274817 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52454 - "GET /api/detect/rgb/status?t=1780546276041 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52454 - "GET /video?t=1780546276713 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52454 - "GET /api/system/rpi?t=1780546278213 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52460 - "GET /video/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52454 - "GET /video?t=1780546278609 HTTP/1.1" 200 OK
+RGB detection worker error: [0:06:36.075535197] [4139]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [0:06:36.447349673] [4145]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+
+INFO:     127.0.0.1:52460 - "GET /api/detect/rgb/status?t=1780546281039 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52454 - "GET /video?t=1780546280512 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52460 - "GET /api/system/rpi?t=1780546281213 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52454 - "GET /video/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52454 - "GET /pid-page?ui=piddash-v1&t=1780546282968 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52454 - "GET /pid-page.css?v=2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37742 - "GET /pid-page.js?v=2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52460 - "GET /video?t=1780546282410 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52460 - "GET /api/pid HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52460 - "GET /api/system/rpi?t=1780546284220 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52460 - "GET /video?t=1780546284314 HTTP/1.1" 200 OK
+RGB detection worker error: [0:06:41.782248070] [4221]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [0:06:42.156669263] [4227]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+
+INFO:     127.0.0.1:52460 - "GET /api/detect/rgb/status?t=1780546286039 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37742 - "GET /video/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52460 - "GET /video?t=1780546286213 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52460 - "GET /api/system/rpi?t=1780546287214 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52460 - "GET /video?t=1780546288109 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52460 - "GET /electrical-wiring?ui=ewdash-v2&t=1780546289030 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52460 - "GET /electrical-wiring.css?v=2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37742 - "GET /electrical-wiring.js?v=2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52460 - "GET /api/system/rpi?t=1780546290219 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37742 - "GET /video?t=1780546290013 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37742 - "GET /video/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37742 - "GET /api/detect/rgb/status?t=1780546291044 HTTP/1.1" 200 OK
+RGB detection worker error: [0:06:47.482940000] [4299]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [0:06:47.858851737] [4305]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+
+INFO:     127.0.0.1:37742 - "GET /video?t=1780546291911 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37742 - "GET /api/system/rpi?t=1780546293219 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37742 - "GET /video?t=1780546293809 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37742 - "GET /video/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37742 - "GET /heatmap-page?ui=hmap-v7&t=1780546294911 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37742 - "GET /heatmap-page.css?v=7 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52460 - "GET /heatmap-page.js?v=7 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37742 - "GET /api/detect/rgb/status?t=1780546296045 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37742 - "GET /api/system/rpi?t=1780546296214 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52460 - "GET /video?t=1780546295716 HTTP/1.1" 200 OK
+RGB detection worker error: [0:06:53.197950720] [4375]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [0:06:53.572261940] [4381]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+
+INFO:     127.0.0.1:52460 - "GET /video?t=1780546297609 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52460 - "GET /video/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52460 - "GET /api/system/rpi?t=1780546299216 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52460 - "GET /video?t=1780546299511 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52460 - "GET /api/detect/rgb/status?t=1780546301039 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52460 - "GET /video?t=1780546301409 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52460 - "GET /api/system/rpi?t=1780546302211 HTTP/1.1" 200 OK
+RGB detection worker error: [0:06:58.901419049] [4467]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [0:06:59.276972614] [4477]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+
+INFO:     127.0.0.1:52460 - "GET /video/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52460 - "GET /video?t=1780546303310 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52460 - "GET /api/system/rpi?t=1780546305213 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41570 - "GET /video?t=1780546305213 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41570 - "GET /api/detect/rgb/status?t=1780546306042 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41570 - "GET /video/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41570 - "GET /video?t=1780546307110 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41570 - "GET /api/system/rpi?t=1780546308214 HTTP/1.1" 200 OK
+RGB detection worker error: [0:07:04.601803154] [4550]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [0:07:04.981124302] [4565]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+
+INFO:     127.0.0.1:41570 - "GET /video?t=1780546309014 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41570 - "GET /video/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41570 - "GET /api/detect/rgb/status?t=1780546311042 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41570 - "GET /api/system/rpi?t=1780546311210 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41580 - "GET /video?t=1780546310910 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41570 - "GET /api/system/rpi?t=1780546314235 HTTP/1.1" 200 OK
+RGB detection worker error: [0:07:10.645683575] [4639]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [0:07:11.056803831] [4648]  INFO Camera camera_manager.cpp:340 libcamera v0.7.0+rpt20260205
+ERROR: *** no cameras available ***
+
+INFO:     127.0.0.1:41580 - "GET /video?t=1780546313226 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41580 - "GET /video/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41570 - "GET /video?t=1780546315229 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41570 - "GET /api/detect/rgb/status?t=1780546316223 HTTP/1.1" 200 OK
+                                                                                  

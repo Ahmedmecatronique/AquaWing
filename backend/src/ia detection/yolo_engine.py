@@ -119,11 +119,14 @@ class YoloPersonDetector:
                     "y": max(0.0, min(1.0, float(y1) / nh)),
                     "w": max(0.0, min(1.0, (float(x2) - float(x1)) / nw)),
                     "h": max(0.0, min(1.0, (float(y2) - float(y1)) / nh)),
-                    "label": "Personne en mer",
+                    "label": "PERSONNE",
                     "conf": round(conf * 100),
                     "color": "#22c55e",
                     "status": "person",
                     "alert": False,
+                    "can_swim": False,
+                    "swim_skill": "unknown",
+                    "behavior": "detected_only",
                     "class": "person",
                 }
             )

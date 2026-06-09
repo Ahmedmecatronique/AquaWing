@@ -64,6 +64,8 @@ class RgbDetectionWorker:
         self._error: Optional[str] = None
         self._frame_size = (0, 0)
         self._alert_count = 0
+        self._swim_count = 0
+        self._unsure_count = 0
 
     def start(self) -> None:
         if not self.enabled or self._running:
@@ -96,9 +98,13 @@ class RgbDetectionWorker:
                         detector = manager.get_detector()
                         dets = detector.detect_jpeg(jpeg)
                     alert_n = sum(1 for d in dets if d.get("status") == "drowning" or d.get("alert"))
+                    swim_n = sum(1 for d in dets if d.get("status") == "swimming" or d.get("can_swim"))
+                    unsure_n = sum(1 for d in dets if d.get("status") == "suspicious")
                     with self._lock:
                         self._detections = dets
                         self._alert_count = alert_n
+                        self._swim_count = swim_n
+                        self._unsure_count = unsure_n
                         self._updated_at = time.time()
                         self._frame_size = (fw, fh)
                         self._error = None
@@ -114,6 +120,8 @@ class RgbDetectionWorker:
                 "detections": list(self._detections),
                 "count": len(self._detections),
                 "alert_count": self._alert_count,
+                "swim_count": self._swim_count,
+                "unsure_count": self._unsure_count,
                 "person_count": max(0, len(self._detections) - self._alert_count),
                 "updated_at": self._updated_at,
                 "frame_width": self._frame_size[0],
@@ -134,6 +142,8 @@ class RgbDetectionWorker:
                 "frame_width": worker_part["frame_width"],
                 "frame_height": worker_part["frame_height"],
                 "alert_count": worker_part["alert_count"],
+                "swim_count": worker_part["swim_count"],
+                "unsure_count": worker_part["unsure_count"],
                 "person_count": worker_part["person_count"],
             }
         )

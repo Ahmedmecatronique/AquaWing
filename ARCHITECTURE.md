@@ -18,6 +18,7 @@ Ce document décrit l’architecture globale du projet **AquaWing** (backend, fr
 **IA (Swimmer/drowning)** :
 - Module autonome importable : `backend/src/ia_prediction/`
 - Détection nageurs, tracking, features, classification comportementale, score de risque LSTM, alertes, visualisation.
+- Intégré à l’UI Optical via un overlay “2 parties” : **détection personne** + **comportement (sait nager / incertain / ne sait pas nager)**.
 
 ---
 
@@ -585,6 +586,14 @@ PYTHONPATH=backend/src pytest backend/src/ia_prediction/tests/ -q
 ### `backend/src/ia detection/rgb_detection_service.py`
 - Service RGB detection : worker thread
 - Traite frames RGB, retourne detections
+- Enrichit le statut pour l’UI Optical : `swim_count`, `unsure_count`, `alert_count` + `detections[]` (boxes normalisées).
+
+### `backend/src/ia detection/drowning_overlay.py`
+- Adaptateur entre `ia_prediction` et l’overlay Optical.
+- Convertit les `swimmers` en boxes normalisées (`x,y,w,h`) + champs UI :
+  - `status`: `swimming` | `suspicious` | `drowning` | `person`
+  - `label`: **SAIT NAGER** | **INCERTAIN** | **NE SAIT PAS NAGER** | **PERSONNE**
+  - `can_swim`, `swim_skill`, `behavior`, `risk_score`, `track_id`
 
 ### `backend/src/ia detection/__init__.py`
 - IA detection package init
@@ -618,6 +627,16 @@ PYTHONPATH=backend/src pytest backend/src/ia_prediction/tests/ -q
 - **Optical.html** : viewer vidéo RGB
 - **Optical.js** : stream RGB video, contrôle zoom/pan
 - **Optical.css** : styles
+
+#### Overlay IA Optical (RGB)
+
+- **Source data** : `GET /api/detect/rgb/status`.
+- **Cadence** : analyse périodique (par défaut ~5s), pas chaque frame.
+- **Couleurs / signification** :
+  - **Vert** : **SAIT NAGER** (`status=swimming`, `behavior=normal_swimming`)
+  - **Orange** : **INCERTAIN** (`status=suspicious`, `behavior=suspicious`)
+  - **Rouge** : **NE SAIT PAS NAGER / NOYADE** (`status=drowning`, `behavior=drowning_risk` ou `risk_score` élevé)
+- **Fallback** : si `ia_prediction` indisponible → YOLO “person-only” (`status=person`, `behavior=detected_only`).
 
 ### `frontend/Settings/` — Paramètres
 - **Settings.html** : UI config système

@@ -125,6 +125,18 @@ python main.py
 
 The server will start on `http://localhost:8000`
 
+### Optical (RGB) + IA “2 parties” (sait nager / ne sait pas)
+
+Sur la page **Optical**, l’IA fonctionne en **2 parties** :
+
+- **Partie 1 (YOLO)** : détecte une **personne** (boîte “PERSONNE” si la partie 2 n’est pas disponible).
+- **Partie 2 (`ia_prediction`)** : analyse le comportement de nage et affiche :
+  - **Vert** : **SAIT NAGER** (`normal_swimming`)
+  - **Orange** : **INCERTAIN** (`suspicious`)
+  - **Rouge** : **NE SAIT PAS NAGER / NOYADE** (`drowning_risk` ou `risk_score` élevé)
+
+Important : l’analyse “comportement” nécessite plusieurs frames (poll toutes les ~5s par défaut), donc l’état peut mettre un peu de temps à se stabiliser.
+
 ### IA Swimmer / Drowning (module `ia_prediction`)
 
 Le module IA est dans `backend/src/ia_prediction/`. Pour l’importer depuis la racine :
@@ -185,7 +197,11 @@ Password: admin123
 
 * **RGB Camera**:
   * MJPEG streaming
-  * Resolution selection (640×480, 800×600, 1280×720)
+  * Pi native modes (résolution + FPS fixe par mode) :
+    * 1536×864 @ 120 FPS
+    * 2304×1296 @ 56 FPS
+    * 1920×1080 @ 50 FPS
+    * 4608×2592 @ 14 FPS
   * Brightness, contrast, saturation controls
   * Professional placeholder UI with animated loader
   * "Connecting to RGB Camera..." → "Awaiting video signal..." (after 5s)
@@ -201,6 +217,7 @@ Password: admin123
   * Confidence threshold adjustment
   * Bounding box visualization
   * Label display options
+  * “2 parties” overlay on Optical: **SAIT NAGER / INCERTAIN / NE SAIT PAS NAGER**
 
 ### 🤖 AI Detection Panel
 
@@ -351,6 +368,12 @@ Password: admin123
 | `/api/pid` | GET/POST | PID tuning (get/update) |
 | `/video` | GET | RGB camera MJPEG stream |
 | `/thermal` | GET | Thermal camera stream |
+| `/api/detect/rgb/status` | GET | RGB IA status + detections (overlay-ready) |
+| `/api/detect/rgb/start` | POST | Start RGB IA worker |
+| `/api/detect/rgb/stop` | POST | Stop RGB IA worker |
+| `/api/detect/rgb/backend` | POST | Set IA backend (auto/yolo/rfdetr) |
+| `/api/detect/rgb/backends` | GET | List available backends |
+| `/api/detect/swimmers` | GET | Raw `ia_prediction` swimmers + behaviors + risk |
 
 ### Command Types
 
