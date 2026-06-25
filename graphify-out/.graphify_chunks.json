@@ -1,0 +1,203 @@
+{
+  "total_chunks": 13,
+  "chunks": [
+    {
+      "chunk_num": 1,
+      "files": [
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/docs/assets/roboflow-logo.svg"
+      ],
+      "type": "image"
+    },
+    {
+      "chunk_num": 2,
+      "files": [
+        "/home/ahmed/drone/AquaWing/backend/src/ia_prediction/training/data/raw/SeaDronesSee-main/OD/visualize/drone_35.png"
+      ],
+      "type": "image"
+    },
+    {
+      "chunk_num": 3,
+      "files": [
+        "/home/ahmed/drone/AquaWing/backend/src/ia_prediction/training/data/raw/SeaDronesSee-main/OD/visualize/drone_35_65.png"
+      ],
+      "type": "image"
+    },
+    {
+      "chunk_num": 4,
+      "files": [
+        "/home/ahmed/drone/AquaWing/backend/src/ia_prediction/training/data/raw/SeaDronesSee-main/OD/visualize/drone_65.png"
+      ],
+      "type": "image"
+    },
+    {
+      "chunk_num": 5,
+      "files": [
+        "/home/ahmed/drone/AquaWing/backend/src/ia_prediction/training/data/raw/SeaDronesSee-main/cover.gif"
+      ],
+      "type": "image"
+    },
+    {
+      "chunk_num": 6,
+      "files": [
+        "/home/ahmed/drone/AquaWing/frontend/static/aquawing-logo.png"
+      ],
+      "type": "image"
+    },
+    {
+      "chunk_num": 7,
+      "files": [
+        "/home/ahmed/drone/AquaWing/frontend/static/bg_plane.jpg"
+      ],
+      "type": "image"
+    },
+    {
+      "chunk_num": 8,
+      "files": [
+        "/home/ahmed/drone/AquaWing/ANALYSE_COMPLETE.md",
+        "/home/ahmed/drone/AquaWing/ANALYSE_PROFONDE.md",
+        "/home/ahmed/drone/AquaWing/ARCHITECTURE.md",
+        "/home/ahmed/drone/AquaWing/DIAGNOSTIC_SYSTEME.md",
+        "/home/ahmed/drone/AquaWing/PROCHAINES_ETAPES.md",
+        "/home/ahmed/drone/AquaWing/RAPPORT_COMPLET_SITE.md",
+        "/home/ahmed/drone/AquaWing/README.md",
+        "/home/ahmed/drone/AquaWing/ROUTES_FRONTEND.md",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/.codecov.yml",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/.github/CONTRIBUTING.md",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/.github/ISSUE_TEMPLATE/bug-report.yml",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/.github/ISSUE_TEMPLATE/feature-request.yml",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/.github/LICENSE_HEADER.txt",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/.github/SECURITY.md",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/.github/copilot-instructions.md",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/.github/workflows/build-package.yml",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/.github/workflows/ci-build-docs.yml",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/.github/workflows/ci-integrations.yml",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/.github/workflows/ci-tests-cpu.yml",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/.github/workflows/ci-tests-gpu.yml",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/.github/workflows/ci-typing.yml",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/.github/workflows/pr-conflict-labeler.yml"
+      ],
+      "type": "doc"
+    },
+    {
+      "chunk_num": 9,
+      "files": [
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/.github/workflows/publish-docs.yml",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/.github/workflows/publish-pre-release.yml",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/.github/workflows/publish-release.yml",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/.pre-commit-config.yaml",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/AGENTS.md",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/CHANGELOG.md",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/CLAUDE.md",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/configs/rfdetr_base.yaml",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/configs/rfdetr_large.yaml",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/configs/rfdetr_medium.yaml",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/configs/rfdetr_nano.yaml",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/configs/rfdetr_seg_2xlarge.yaml",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/configs/rfdetr_seg_large.yaml",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/configs/rfdetr_seg_medium.yaml",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/configs/rfdetr_seg_nano.yaml",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/configs/rfdetr_seg_small.yaml",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/configs/rfdetr_seg_xlarge.yaml",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/configs/rfdetr_small.yaml",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/docs/changelog.md",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/docs/index.md",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/docs/learn/benchmarks.md",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/docs/learn/deploy.md"
+      ],
+      "type": "doc"
+    },
+    {
+      "chunk_num": 10,
+      "files": [
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/docs/learn/export.md",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/docs/learn/install.md",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/docs/learn/migration.md",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/docs/learn/pretrained.md",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/docs/learn/run/detection.md",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/docs/learn/run/segmentation.md",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/docs/learn/train/advanced.md",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/docs/learn/train/augmentations.md",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/docs/learn/train/customization.md",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/docs/learn/train/dataset-formats.md",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/docs/learn/train/index.md",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/docs/learn/train/loggers.md",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/docs/learn/train/training-parameters.md",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/docs/reference/2xlarge.md",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/docs/reference/large.md",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/docs/reference/medium.md",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/docs/reference/nano.md",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/docs/reference/rfdetr.md",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/docs/reference/seg_2xlarge.md",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/docs/reference/seg_large.md",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/docs/reference/seg_medium.md",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/docs/reference/seg_nano.md"
+      ],
+      "type": "doc"
+    },
+    {
+      "chunk_num": 11,
+      "files": [
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/docs/reference/seg_small.md",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/docs/reference/seg_xlarge.md",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/docs/reference/segmentation_train_config.md",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/docs/reference/small.md",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/docs/reference/train_config.md",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/docs/reference/training.md",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/docs/reference/xlarge.md",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/docs/root-static/cace9ef287cb8d641db90d4295fcb1e1.txt",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/docs/root-static/llms-full.txt",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/docs/root-static/llms.txt",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/docs/root-static/robots.txt",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/docs/theme/main.html",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/docs/theme/partials/header.html",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/docs/tutorials/index.md",
+        "/home/ahmed/drone/AquaWing/backend/src/ia detection/rf-detr-develop/mkdocs.yaml",
+        "/home/ahmed/drone/AquaWing/backend/src/ia_prediction/training/data/raw/SeaDronesSee-main/Boat_MNIST/50/REAMDE.MD",
+        "/home/ahmed/drone/AquaWing/backend/src/ia_prediction/training/data/raw/SeaDronesSee-main/OD/OD_Tut/Yolov7/SeaDronesSee.yaml",
+        "/home/ahmed/drone/AquaWing/backend/src/ia_prediction/training/data/raw/SeaDronesSee-main/OD/OD_Tut/Yolov7/yolov7_SeaDronesSee.yaml",
+        "/home/ahmed/drone/AquaWing/backend/src/ia_prediction/training/data/raw/SeaDronesSee-main/_layouts/default.html",
+        "/home/ahmed/drone/AquaWing/backend/src/ia_prediction/training/data/raw/SeaDronesSee-main/google8dfd6ce11b9b519f.html",
+        "/home/ahmed/drone/AquaWing/config/system.yaml",
+        "/home/ahmed/drone/AquaWing/deploy/cloudflare/README_CLOUDFLARE_TUNNEL.md"
+      ],
+      "type": "doc"
+    },
+    {
+      "chunk_num": 12,
+      "files": [
+        "/home/ahmed/drone/AquaWing/deploy/cloudflare/setup_tunnel_commands.txt",
+        "/home/ahmed/drone/AquaWing/docs/ARCHITECTURE.txt",
+        "/home/ahmed/drone/AquaWing/docs/CLOUDFLARE_TUNNEL.md",
+        "/home/ahmed/drone/AquaWing/docs/MAP_README.md",
+        "/home/ahmed/drone/AquaWing/frontend/Dashboard/Dashboard.html",
+        "/home/ahmed/drone/AquaWing/frontend/Electrical Wiring/Electrical Wiring.html",
+        "/home/ahmed/drone/AquaWing/frontend/Heatmap/Heatmap.html",
+        "/home/ahmed/drone/AquaWing/frontend/Missions/Missions.html",
+        "/home/ahmed/drone/AquaWing/frontend/Optical/Optical.html",
+        "/home/ahmed/drone/AquaWing/frontend/PID Settings/PID Settings.html",
+        "/home/ahmed/drone/AquaWing/frontend/Settings/Settings.html",
+        "/home/ahmed/drone/AquaWing/frontend/Systems/Systems.html",
+        "/home/ahmed/drone/AquaWing/frontend/login/login.html",
+        "/home/ahmed/drone/AquaWing/frontend/static/index.html",
+        "/home/ahmed/drone/AquaWing/requirements-ai.txt",
+        "/home/ahmed/drone/AquaWing/requirements.txt",
+        "/home/ahmed/drone/AquaWing/run_server.txt",
+        "/home/ahmed/drone/AquaWing/backend/src/ia_prediction/training/data/raw/SeaDronesSee-main/Boat_MNIST/10/AdemAtmaca_AdrianSauter_Challenge.pdf",
+        "/home/ahmed/drone/AquaWing/backend/src/ia_prediction/training/data/raw/SeaDronesSee-main/Boat_MNIST/106/documentation.pdf",
+        "/home/ahmed/drone/AquaWing/backend/src/ia_prediction/training/data/raw/SeaDronesSee-main/Boat_MNIST/107/Documentation.pdf",
+        "/home/ahmed/drone/AquaWing/backend/src/ia_prediction/training/data/raw/SeaDronesSee-main/Boat_MNIST/11/Anstett_Luebbing05.pdf",
+        "/home/ahmed/drone/AquaWing/backend/src/ia_prediction/training/data/raw/SeaDronesSee-main/Boat_MNIST/120/Challenge_Group120.pdf"
+      ],
+      "type": "doc"
+    },
+    {
+      "chunk_num": 13,
+      "files": [
+        "/home/ahmed/drone/AquaWing/backend/src/ia_prediction/training/data/raw/SeaDronesSee-main/Boat_MNIST/123/documentation.pdf",
+        "/home/ahmed/drone/AquaWing/backend/src/ia_prediction/training/data/raw/SeaDronesSee-main/Boat_MNIST/2/Assignment_5_Abaza_Räther.pdf",
+        "/home/ahmed/drone/AquaWing/backend/src/ia_prediction/training/data/raw/SeaDronesSee-main/Boat_MNIST/50/ARiedel_CHoffmann_Boats.pdf"
+      ],
+      "type": "doc"
+    }
+  ]
+}
