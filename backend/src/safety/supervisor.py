@@ -1,87 +1,131 @@
-"""
-Safety Supervisor - Safety-Critical System Monitoring
+from __future__ import annotations
+import math
+import threading
+import time
+from typing import List, Optional, Tuple
 
-Implements safety checks, failsafe logic, and emergency procedures.
 
-TODO: Implement watchdog timers
-TODO: Add safety constraint checking
-TODO: Implement emergency landing procedures
-"""
+def _point_in_polygon(lat: float, lon: float, polygon: List[Tuple[float, float]]) -> bool:
+    if len(polygon) < 3:
+        return True
+    inside = False
+    n = len(polygon)
+    j = n - 1
+    for i in range(n):
+        xi, yi = polygon[i]
+        xj, yj = polygon[j]
+        if ((yi > lon) != (yj > lon)) and (lat < (xj - xi) * (lon - yi) / (yj - yi) + xi):
+            inside = not inside
+        j = i
+    return inside
 
 
 class SafetySupervisor:
-    """
-    Safety monitoring and control system.
-    
-    Monitors system health and enforces safety constraints.
-    
-    TODO: Add configurable safety limits
-    TODO: Implement automatic failsafe transitions
-    """
-    
-    def __init__(self):
-        """Initialize safety supervisor."""
+    WATCHDOG_TIMEOUT_S = 5.0
+
+    def __init__(self) -> None:
         self.enabled = True
         self.constraints = {
-            "max_altitude_m": 100,
-            "max_speed_mps": 15,
-            "min_battery_percent": 15,
-            "max_time_airborne_seconds": 3600
+            "max_altitude_m":          100.0,
+            "max_speed_mps":           15.0,
+            "min_battery_percent":     15.0,
+            "max_time_airborne_s":     3600.0,
         }
-        self.violations = []
-    
-    def check_constraints(self, drone_state: dict) -> bool:
-        """
-        Check if drone state violates safety constraints.
-        
-        Args:
-            drone_state: Current drone state dictionary
-            
-        Returns:
-            True if safe, False if constraint violated
-            
-        TODO: Implement comprehensive constraint checking
-        TODO: Log violations
-        TODO: Trigger failsafe if needed
-        """
+        self.geofence: List[Tuple[float, float]] = []  # empty = disabled
+        self.violations: List[str] = []
+        self._watchdog_last = time.monotonic()
+        self._airborne_start: Optional[float] = None
+        self._lock = threading.Lock()
+        self._failsafe_sent = False
+        self._watchdog_thread = threading.Thread(target=self._watchdog_loop, daemon=True)
+        self._watchdog_thread.start()
+
+    def feed_watchdog(self) -> None:
+        with self._lock:
+            self._watchdog_last = time.monotonic()
+
+    def set_airborne(self, airborne: bool) -> None:
+        with self._lock:
+            if airborne and self._airborne_start is None:
+                self._airborne_start = time.monotonic()
+            elif not airborne:
+                self._airborne_start = None
+
+    def set_geofence(self, polygon: List[Tuple[float, float]]) -> None:
+        with self._lock:
+            self.geofence = polygon[:]
+
+    def set_constraint(self, name: str, value: float) -> bool:
+        if name in self.constraints:
+            self.constraints[name] = value
+            return True
+        return False
+
+    def check(self, drone_state: dict) -> str:
+        if not self.enabled:
+            return "ok"
+
         self.violations.clear()
-        
-        # Check altitude
-        if drone_state.get("altitude_m", 0) > self.constraints["max_altitude_m"]:
-            self.violations.append("Max altitude exceeded")
-        
-        # Check speed
-        if drone_state.get("speed_mps", 0) > self.constraints["max_speed_mps"]:
-            self.violations.append("Max speed exceeded")
-        
-        # Check battery
-        if drone_state.get("battery_percent", 100) < self.constraints["min_battery_percent"]:
-            self.violations.append("Low battery")
-        
+        alt = drone_state.get("altitude_m", drone_state.get("alt", 0.0))
+        speed = drone_state.get("speed_mps", drone_state.get("speed", 0.0))
+        battery = drone_state.get("battery_percent", drone_state.get("battery", 100.0))
+        lat = drone_state.get("lat", None)
+        lon = drone_state.get("lon", None)
+
+        if alt > self.constraints["max_altitude_m"]:
+            self.violations.append(f"Altitude {alt:.1f}m > max {self.constraints['max_altitude_m']}m")
+
+        if speed > self.constraints["max_speed_mps"]:
+            self.violations.append(f"Speed {speed:.1f}m/s > max {self.constraints['max_speed_mps']}m/s")
+
+        if battery < self.constraints["min_battery_percent"]:
+            self.violations.append(f"Battery {battery:.1f}% < min {self.constraints['min_battery_percent']}%")
+
+        with self._lock:
+            if self._airborne_start is not None:
+                elapsed = time.monotonic() - self._airborne_start
+                if elapsed > self.constraints["max_time_airborne_s"]:
+                    self.violations.append(f"Airborne {elapsed/60:.1f} min > max {self.constraints['max_time_airborne_s']/60:.0f} min")
+
+            if lat is not None and lon is not None and len(self.geofence) >= 3:
+                if not _point_in_polygon(lat, lon, self.geofence):
+                    self.violations.append("GEOFENCE BREACH")
+
+        self.feed_watchdog()
+
         if self.violations:
-            print(f"Safety violations: {self.violations}")
-            return False
-        return True
-    
+            print(f"[Safety] Violations: {self.violations}")
+            self.trigger_failsafe()
+            return "failsafe"
+        return "ok"
+
     def trigger_failsafe(self) -> bool:
-        """
-        Trigger failsafe procedure (e.g., emergency landing).
-        
-        Returns:
-            True if failsafe initiated
-            
-        TODO: Implement actual failsafe landing
-        """
-        print("TODO: Trigger failsafe emergency landing")
+        with self._lock:
+            if self._failsafe_sent:
+                return True
+            self._failsafe_sent = True
+        print("[Safety] FAILSAFE — triggering RTL")
+        try:
+            from backend.src.control.flight_controller import flight_controller
+            flight_controller.rtl()
+        except Exception as e:
+            print(f"[Safety] RTL command error: {e}")
         return True
-    
-    def set_constraint(self, constraint_name: str, value: float):
-        """
-        Update a safety constraint.
-        
-        Args:
-            constraint_name: Name of constraint to update
-            value: New constraint value
-        """
-        if constraint_name in self.constraints:
-            self.constraints[constraint_name] = value
+
+    def reset_failsafe(self) -> None:
+        with self._lock:
+            self._failsafe_sent = False
+
+    def _watchdog_loop(self) -> None:
+        while True:
+            time.sleep(1.0)
+            with self._lock:
+                elapsed = time.monotonic() - self._watchdog_last
+                airborne = self._airborne_start is not None
+            if airborne and elapsed > self.WATCHDOG_TIMEOUT_S and not self._failsafe_sent:
+                print(f"[Safety] Watchdog: no telemetry for {elapsed:.1f}s → FAILSAFE")
+                self.violations.append(f"Watchdog timeout {elapsed:.1f}s")
+                self.trigger_failsafe()
+
+
+safety_supervisor = SafetySupervisor()

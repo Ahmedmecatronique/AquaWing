@@ -1,90 +1,83 @@
-"""
-UART Protocol Definition
-
-Defines the wire protocol for communication with drone hardware.
-Includes message framing, checksums, and message types.
-
-TODO: Define real protocol based on hardware
-"""
-
-
+from __future__ import annotations
 import struct
 
 
 class MessageType:
-    """Message type constants."""
-    ARM = 0x01
-    DISARM = 0x02
-    TAKEOFF = 0x03
-    LAND = 0x04
-    MOVE = 0x05
-    STATUS_REQUEST = 0x10
-    TELEMETRY_DATA = 0x11
+    ARM        = 0x01
+    DISARM     = 0x02
+    TAKEOFF    = 0x03
+    LAND       = 0x04
+    MOVE       = 0x05
+    RTL        = 0x06
+    HEARTBEAT  = 0x07
+    STATUS_REQ = 0x10
+    TELEMETRY  = 0x11
     PID_UPDATE = 0x20
-    HEARTBEAT = 0xFF
+    SET_SPEED  = 0x30
 
 
-_AXIS_CODE = {
-    'pitch': 0x01,
-    'roll': 0x02,
-    'yaw': 0x03,
-    'altitude': 0x04,
-}
+_AXIS_CODE = {"pitch": 0x01, "roll": 0x02, "yaw": 0x03, "altitude": 0x04}
+
+_HEADER = 0xAA
+_FOOTER = 0x55
 
 
-def encode_message(msg_type: int, payload: bytes = b'') -> bytes:
-    """
-    Lightweight encoder for messages used in this project.
+def _checksum(data: bytes) -> int:
+    cs = 0
+    for b in data:
+        cs ^= b
+    return cs & 0xFF
 
-    Format (simple, for STM32 prototyping):
-      [msg_type:1][payload...]
 
-    Special handling for PID_UPDATE: payload = [axis_code:1][kp:4][ki:4][kd:4] (float32 LE)
-
-    Returns raw bytes suitable for UARTLink.send(). This is NOT a production
-    framing protocol (no CRC/ESCaping) — good enough for local prototyping.
-    """
+def encode_message(msg_type: int, payload=b"") -> bytes:
     try:
         if msg_type == MessageType.PID_UPDATE and isinstance(payload, dict):
-            axis = payload.get('axis')
-            kp = float(payload.get('kp', 0.0))
-            ki = float(payload.get('ki', 0.0))
-            kd = float(payload.get('kd', 0.0))
+            axis = payload.get("axis", "")
+            kp = float(payload.get("kp", 0.0))
+            ki = float(payload.get("ki", 0.0))
+            kd = float(payload.get("kd", 0.0))
             axis_code = _AXIS_CODE.get(axis, 0x00)
-            # pack: msg_type (B), axis_code (B), kp, ki, kd (3f little-endian)
-            return struct.pack('<B B f f f', msg_type, axis_code, kp, ki, kd)
-        # default: simple header + raw payload
-        if isinstance(payload, (bytes, bytearray)):
-            return bytes([msg_type]) + bytes(payload)
-        # if payload is str/dict/etc. convert to utf-8
-        return bytes([msg_type]) + str(payload).encode('utf-8')
+            body = struct.pack("<BBfff", msg_type, axis_code, kp, ki, kd)
+        elif msg_type == MessageType.MOVE and isinstance(payload, dict):
+            pitch    = float(payload.get("pitch", 0.0))
+            roll     = float(payload.get("roll", 0.0))
+            yaw      = float(payload.get("yaw", 0.0))
+            throttle = float(payload.get("throttle", 0.0))
+            body = struct.pack("<Bffff", msg_type, pitch, roll, yaw, throttle)
+        elif msg_type == MessageType.TAKEOFF and isinstance(payload, dict):
+            alt = float(payload.get("altitude", 10.0))
+            body = struct.pack("<Bf", msg_type, alt)
+        elif msg_type == MessageType.SET_SPEED and isinstance(payload, dict):
+            spd = float(payload.get("speed", 5.0))
+            body = struct.pack("<Bf", msg_type, spd)
+        elif isinstance(payload, (bytes, bytearray)):
+            body = bytes([msg_type]) + bytes(payload)
+        else:
+            body = bytes([msg_type])
+
+        length = len(body)
+        cs = _checksum(body)
+        return struct.pack("<BB", _HEADER, length) + body + struct.pack("<BB", cs, _FOOTER)
     except Exception as e:
         print(f"protocol.encode_message error: {e}")
-        return bytes([msg_type]) + b''
+        return bytes([_HEADER, 1, msg_type, 0x00, _FOOTER])
 
 
-def decode_message(data: bytes) -> tuple:
-    """
-    Minimal decoder — returns (msg_type, payload_bytes).
-    """
-    if not data:
-        return None, b''
-    msg_type = data[0]
-    return msg_type, data[1:]
-
-
-
-def decode_message(data: bytes) -> tuple:
-    """
-    Decode a received message.
-    
-    Args:
-        data: Raw message bytes
-        
-    Returns:
-        Tuple of (message_type, payload)
-        
-    TODO: Implement real protocol decoding
-    """
-    print(f"TODO: Implement protocol decoding for data: {data.hex()}")
-    return None, b''
+def decode_message(data: bytes):
+    if not data or len(data) < 5:
+        return None, b""
+    try:
+        if data[0] != _HEADER:
+            return None, b""
+        length = data[1]
+        if len(data) < 2 + length + 2:
+            return None, b""
+        body = data[2 : 2 + length]
+        cs_recv = data[2 + length]
+        footer  = data[2 + length + 1]
+        if footer != _FOOTER or cs_recv != _checksum(body):
+            return None, b""
+        msg_type = body[0]
+        return msg_type, body[1:]
+    except Exception:
+        return None, b""

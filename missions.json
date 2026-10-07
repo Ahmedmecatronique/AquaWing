@@ -1,0 +1,32 @@
+[
+  {
+    "name": "beach_patrol",
+    "waypoints": [
+      {
+        "lat": 36.81,
+        "lon": 10.182,
+        "altitude": 12.0,
+        "speed_mps": 5.0,
+        "hover_seconds": 0.0,
+        "action": "fly",
+        "completed": false
+      },
+      {
+        "lat": 36.812,
+        "lon": 10.184,
+        "altitude": 12.0,
+        "speed_mps": 5.0,
+        "hover_seconds": 0.0,
+        "action": "fly",
+        "completed": false
+      }
+    ],
+    "home_lat": 36.8065,
+    "home_lon": 10.1815,
+    "home_alt": 0.0,
+    "takeoff_alt": 12.0,
+    "created_at": 1782787470.882676,
+    "state": "idle",
+    "current_wp_index": 0
+  }
+]

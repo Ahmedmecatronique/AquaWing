@@ -16121,3 +16121,289 @@ INFO:     127.0.0.1:60570 - "GET /api/detect/rgb/status?t=1782779068238 HTTP/1.1
 INFO:     127.0.0.1:60574 - "GET /api/system/rpi?t=1782779068238 HTTP/1.1" 200 OK
 INFO:     127.0.0.1:60586 - "GET /video/stats HTTP/1.1" 200 OK
 INFO:     127.0.0.1:60566 - "GET /video?t=1782779068237 HTTP/1.1" 200 OK
+RGB detection worker error: [1:40:31.668456525] [24960]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:40:32.041190709] [24978]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:40:37.370213682] [25040]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:40:37.746780238] [25059]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:40:43.078996735] [25167]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:40:43.468385110] [25182]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:40:48.787844798] [25217]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:40:49.164220570] [25224]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:40:54.476051046] [25247]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:40:54.849885653] [25254]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:41:00.166887917] [25264]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:41:00.541211674] [25270]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:41:05.854288056] [25280]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:41:06.231133840] [25286]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:41:11.666955712] [25296]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:41:12.039906655] [25302]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:41:17.399397731] [25313]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:41:17.797098869] [25322]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:41:23.178240266] [25329]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:41:23.546269543] [25338]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:41:28.881570241] [25348]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:41:29.255452990] [25354]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+INFO:     127.0.0.1:59532 - "GET /api/detect/rgb/status?t=1782779128225 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59542 - "GET /api/system/rpi?t=1782779128226 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59552 - "GET /video/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59518 - "GET /video?t=1782779128224 HTTP/1.1" 200 OK
+RGB detection worker error: [1:41:34.567176137] [25408]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:41:34.940942558] [25414]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:41:40.257529562] [25446]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:41:40.630618363] [25452]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:41:45.941955597] [25462]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:41:46.314929569] [25468]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:41:51.626825184] [25479]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:41:52.000348140] [25485]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:41:57.312596598] [25495]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:41:57.686402761] [25501]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:42:02.996872594] [25511]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:42:03.372986859] [25517]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:42:08.684361438] [25527]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:42:09.058632145] [25533]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:42:14.369755847] [25544]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:42:14.745999084] [25550]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:42:20.056533319] [25560]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:42:20.431833621] [25566]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:42:25.742855491] [25576]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:42:26.122905345] [25582]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+INFO:     127.0.0.1:35876 - "GET /api/detect/rgb/status?t=1782779188230 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35914 - "GET /api/system/rpi?t=1782779188230 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35906 - "GET /video/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35890 - "GET /video?t=1782779188230 HTTP/1.1" 200 OK
+RGB detection worker error: [1:42:31.615117851] [25599]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:42:32.031418247] [25619]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:42:37.404778695] [25664]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:42:37.780506115] [25670]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:42:43.091296352] [25689]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:42:43.466122420] [25695]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:42:48.777051054] [25705]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:42:49.156912417] [25711]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:42:54.469437721] [25722]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:42:54.844211347] [25728]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:43:00.161927496] [25740]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:43:00.535534517] [25746]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:43:05.847428469] [25768]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:43:06.222126577] [25774]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:43:11.533044014] [25796]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:43:11.907012421] [25802]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:43:17.221393821] [25812]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:43:17.595728793] [25818]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:43:22.907394658] [25828]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:43:23.281250781] [25834]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:43:28.594736795] [25844]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:43:28.971458932] [25850]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+INFO:     127.0.0.1:37856 - "GET /api/system/rpi?t=1782779248233 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37854 - "GET /api/detect/rgb/status?t=1782779248233 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37870 - "GET /video/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37866 - "GET /video?t=1782779248233 HTTP/1.1" 200 OK
+RGB detection worker error: [1:43:34.284419487] [25900]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:43:34.658440749] [25907]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:43:39.972944012] [25938]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:43:40.376051207] [25944]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:43:45.762648316] [25954]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:43:46.148503871] [25960]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:43:51.535562683] [25970]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:43:51.913304644] [25979]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:43:57.286485378] [25989]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:43:57.660883848] [25995]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:44:02.975815459] [26005]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:44:03.346675215] [26011]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:44:08.658403581] [26021]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:44:09.034766491] [26027]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:44:14.346186930] [26038]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:44:14.720766948] [26044]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:44:20.032268258] [26054]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:44:20.406991558] [26060]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:44:25.718470727] [26074]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:44:26.098585576] [26080]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+INFO:     127.0.0.1:47922 - "GET /api/detect/rgb/status?t=1782779308230 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47934 - "GET /api/system/rpi?t=1782779308230 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47926 - "GET /video/stats HTTP/1.1" 200 OK
+RGB detection worker error: [1:44:31.618732264] [26097]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:44:32.031325735] [26118]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+INFO:     127.0.0.1:47920 - "GET /video?t=1782779308229 HTTP/1.1" 200 OK
+RGB detection worker error: [1:44:37.350212724] [26157]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:44:37.725912066] [26163]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:44:43.036269043] [26182]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:44:43.412523337] [26188]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:44:48.722352112] [26198]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:44:49.103746537] [26204]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:44:54.414521233] [26215]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:44:54.789991967] [26221]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:45:00.099885964] [26235]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:45:00.473871408] [26241]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:45:05.785785353] [26256]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:45:06.162742189] [26262]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:45:11.476318497] [26297]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:45:11.850509698] [26303]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:45:17.167414654] [26313]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:45:17.541433470] [26319]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:45:22.852603548] [26329]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:45:23.227258242] [26335]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+RGB detection worker error: [1:45:28.540366344] [26345]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+; still capture failed: rpicam-still failed: [1:45:28.917857509] [26352]  INFO Camera camera_manager.cpp:340 libcamera v0.7.1+rpt20260609
+ERROR: *** no cameras available ***
+
+INFO:     127.0.0.1:40520 - "GET /api/detect/rgb/status?t=1782779368235 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40526 - "GET /api/system/rpi?t=1782779368235 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40536 - "GET /video/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40524 - "GET /video?t=1782779368234 HTTP/1.1" 200 OK
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      

@@ -16,6 +16,7 @@ for _p in (_backend_dir, _src_dir):
 # Note: FastAPI Form parsing requires python-multipart
 # Install with: pip install python-multipart
 import json
+import bcrypt as _bcrypt
 import asyncio
 import time
 import secrets
@@ -73,12 +74,7 @@ USERS_FILE = Path(__file__).parent.parent / "users.json"  # AquaWing/users.json
 SESSIONS_FILE = Path(__file__).parent.parent / "sessions.json"
 
 # Default demo users; persisted users.json will be used/merged
-DEMO_USERS = {
-    "admin": "admin123",
-    "user": "password123",
-    "ahmed": "ahmed22k22",
-    "amin":"amin123"
-}
+DEMO_USERS = {}  # passwords managed via users.json (bcrypt hashed)
 
 USERS = {}
 
@@ -173,8 +169,14 @@ def _save_sessions() -> None:
         pass
 
 def authenticate_user(username: str, password: str) -> bool:
-    """Authenticate a user with username/password."""
-    return USERS.get(username) == password
+    """Authenticate a user with username/password (bcrypt)."""
+    stored = USERS.get(username)
+    if not stored:
+        return False
+    try:
+        return _bcrypt.checkpw(password.encode(), stored.encode())
+    except Exception:
+        return False
 
 # ============================================================================
 # FASTAPI APPLICATION
@@ -276,7 +278,7 @@ async def register_post(request: Request, username: str = Form(None), password: 
     if username in USERS:
         return RedirectResponse(url="/login?err=1", status_code=302)
 
-    USERS[username] = password
+    USERS[username] = _bcrypt.hashpw(password.encode(), _bcrypt.gensalt()).decode()
     save_users()
     return RedirectResponse(url="/login?registered=1", status_code=302)
 
@@ -755,11 +757,18 @@ async def websocket_endpoint(websocket: WebSocket):
                 points = msg.get("points", [])
                 name = msg.get("name", f"mission_{int(time.time())}")
                 print(f"  Route '{name}' with {len(points)} waypoints")
-                # TODO: forward to flight controller via UART
+                mission_ok = False
+                if _MM_OK and points:
+                    try:
+                        _mm.create(name, waypoints=points, takeoff_alt=15.0,
+                                   home_lat=BASE_LATITUDE, home_lon=BASE_LONGITUDE)
+                        mission_ok = True
+                    except Exception as e:
+                        print(f"Mission create error: {e}")
                 await websocket.send_json({
                     "type": "ack",
                     "cmd": "send_route",
-                    "status": "ok",
+                    "status": "ok" if mission_ok else "stored",
                     "name": name,
                     "count": len(points)
                 })
@@ -767,24 +776,59 @@ async def websocket_endpoint(websocket: WebSocket):
             elif cmd == "start_flight":
                 print(f"  ▶ START FLIGHT requested by {username}")
                 _flight_active = True
+                mission_name = msg.get("mission", None)
+                if _MM_OK and mission_name:
+                    try:
+                        _mm.start(mission_name)
+                    except Exception as e:
+                        print(f"Mission start error: {e}")
+                elif _FC_OK:
+                    try:
+                        _fc.arm()
+                        _fc.takeoff(float(msg.get("altitude", 15.0)))
+                    except Exception as e:
+                        print(f"FC arm/takeoff error: {e}")
                 asyncio.create_task(demo_telemetry_loop())
                 await websocket.send_json({"type": "ack", "cmd": "start_flight", "status": "ok"})
 
             elif cmd == "abort":
                 print(f"  ■ ABORT requested by {username}")
                 _flight_active = False
+                if _MM_OK:
+                    try:
+                        _mm.abort()
+                    except Exception:
+                        pass
+                if _FC_OK:
+                    try:
+                        _fc.rtl()
+                    except Exception:
+                        pass
                 await websocket.send_json({"type": "ack", "cmd": "abort", "status": "ok"})
 
             elif cmd == "rtl":
                 print(f"  ↩ RTL (Return To Launch) requested by {username}")
                 _flight_active = False
-                # TODO: forward to flight controller via UART
+                if _FC_OK:
+                    try:
+                        _fc.rtl()
+                    except Exception as e:
+                        print(f"RTL error: {e}")
+                if _MM_OK:
+                    try:
+                        _mm.abort()
+                    except Exception:
+                        pass
                 await websocket.send_json({"type": "ack", "cmd": "rtl", "status": "ok"})
 
             elif cmd == "set_speed":
                 value = msg.get("value", 0)
                 print(f"  Speed → {value} m/s")
-                # TODO: forward to flight controller
+                if _FC_OK:
+                    try:
+                        _fc.set_speed(float(value))
+                    except Exception as e:
+                        print(f"set_speed error: {e}")
                 await websocket.send_json({"type": "ack", "cmd": "set_speed", "value": value})
 
             else:
@@ -812,35 +856,351 @@ async def startup_event():
         print(f"Flight Controller configured on {_CABLAGE_FC['port']} (PL011)")
     # Demo telemetry loop is disabled by default.
     # It starts only when the frontend sends a 'start_flight' command.
+    if _GPS_MODULE_OK:
+        try:
+            _get_gps()
+            print("GPS module started (hardware or simulation)")
+        except Exception as e:
+            print(f"GPS start error: {e}")
+    if _SAFETY_OK:
+        print("Safety supervisor active")
+    if _FC_OK:
+        print("Flight controller ready")
+    if _MM_OK:
+        print(f"Mission manager ready ({len(_mm.list_missions())} missions loaded)")
+
+
+# ── Hardware modules (lazy: fall back to simulation if hardware absent) ──
+try:
+    from backend.src.navigation.gps import get_gps_module as _get_gps
+    _GPS_MODULE_OK = True
+except Exception:
+    _GPS_MODULE_OK = False
+
+try:
+    from backend.src.control.flight_controller import flight_controller as _fc
+    _FC_OK = True
+except Exception:
+    _FC_OK = False
+
+try:
+    from backend.src.mission.mission_manager import mission_manager as _mm, WayPoint, MissionState
+    _MM_OK = True
+except Exception:
+    _MM_OK = False
+
+try:
+    from backend.src.safety.supervisor import safety_supervisor as _safety
+    _SAFETY_OK = True
+except Exception:
+    _SAFETY_OK = False
 
 # Global flag to control backend telemetry broadcast
 _flight_active = False
 
 async def demo_telemetry_loop():
-    """Demo loop: broadcast telemetry every 0.5 seconds while flight is active."""
+    """Telemetry loop — uses real GPS when hardware present, simulation otherwise."""
     global _flight_active
     counter = 0
     radius = 0.005
-    
+
+    gps_mod = _get_gps() if _GPS_MODULE_OK else None
+    if _SAFETY_OK:
+        _safety.set_airborne(True)
+
     while _flight_active:
         counter += 1
-        angle = (counter * 2.0) % 360
-        
-        lat = BASE_LATITUDE + radius * math.cos(math.radians(angle))
-        lon = BASE_LONGITUDE + radius * math.sin(math.radians(angle))
-        
+
+        if gps_mod:
+            fix = gps_mod.get_fix()
+            lat, lon, alt = fix.lat, fix.lon, fix.altitude
+            heading, speed, gps_ok, sats = fix.heading, fix.speed_mps, fix.valid, fix.satellites
+        else:
+            angle = (counter * 2.0) % 360
+            lat = BASE_LATITUDE  + radius * math.cos(math.radians(angle))
+            lon = BASE_LONGITUDE + radius * math.sin(math.radians(angle))
+            alt     = 15.0 + 5.0 * math.sin(math.radians(counter))
+            heading = angle
+            speed   = 2.5
+            gps_ok  = False
+            sats    = 0
+
+        mission_status = None
+        if _MM_OK:
+            try:
+                mission_status = _mm.update(lat, lon, alt, heading)
+            except Exception:
+                pass
+
+        safety_state = "ok"
+        if _SAFETY_OK:
+            try:
+                safety_state = _safety.check({"lat": lat, "lon": lon, "alt": alt,
+                                               "speed": speed, "battery": 85.0})
+                if safety_state == "failsafe" and _flight_active:
+                    _flight_active = False
+            except Exception:
+                pass
+
+        if _FC_OK:
+            try:
+                _fc.send_heartbeat()
+            except Exception:
+                pass
+
         telemetry = {
-            "lat": lat,
-            "lon": lon,
-            "alt": 15.0 + 5.0 * math.sin(math.radians(counter)),
-            "heading": angle,
-            "speed": 2.5,
-            "battery": 85.0,
-            "ts": int(time.time())
+            "lat": lat, "lon": lon, "alt": round(alt, 2),
+            "heading": round(heading, 1), "speed": round(speed, 2),
+            "battery": 85.0, "ts": int(time.time()),
+            "gps_ok": gps_ok, "satellites": sats, "safety": safety_state,
         }
-        
+        if mission_status:
+            telemetry["mission"] = mission_status
+
         await manager.broadcast(telemetry)
         await asyncio.sleep(0.5)
+
+    if _SAFETY_OK:
+        _safety.set_airborne(False)
+
+
+
+# ============================================================================
+# MISSION API
+# ============================================================================
+
+@app.get("/api/missions")
+def api_list_missions(sid: str = Cookie(None)):
+    if not validate_session(sid):
+        raise HTTPException(status_code=401)
+    if not _MM_OK:
+        return JSONResponse({"missions": [], "error": "MissionManager unavailable"})
+    return JSONResponse({"missions": _mm.list_missions()})
+
+
+@app.post("/api/missions")
+async def api_create_mission(request: Request, sid: str = Cookie(None)):
+    if not validate_session(sid):
+        raise HTTPException(status_code=401)
+    body = await request.json()
+    name = body.get("name", f"mission_{int(time.time())}")
+    waypoints = body.get("waypoints", [])
+    takeoff_alt = float(body.get("takeoff_alt", 15.0))
+    if not _MM_OK:
+        return JSONResponse({"ok": False, "error": "MissionManager unavailable"})
+    m = _mm.create(name, waypoints=waypoints, takeoff_alt=takeoff_alt,
+                   home_lat=BASE_LATITUDE, home_lon=BASE_LONGITUDE)
+    return JSONResponse({"ok": True, "mission": m.to_dict()})
+
+
+@app.post("/api/missions/{name}/start")
+def api_start_mission(name: str, sid: str = Cookie(None)):
+    if not validate_session(sid):
+        raise HTTPException(status_code=401)
+    if not _MM_OK:
+        return JSONResponse({"ok": False, "error": "MissionManager unavailable"})
+    ok = _mm.start(name)
+    return JSONResponse({"ok": ok})
+
+
+@app.post("/api/missions/{name}/delete")
+def api_delete_mission(name: str, sid: str = Cookie(None)):
+    if not validate_session(sid):
+        raise HTTPException(status_code=401)
+    if not _MM_OK:
+        return JSONResponse({"ok": False})
+    ok = _mm.delete(name)
+    return JSONResponse({"ok": ok})
+
+
+@app.post("/api/missions/abort")
+def api_abort_mission(sid: str = Cookie(None)):
+    if not validate_session(sid):
+        raise HTTPException(status_code=401)
+    if _MM_OK:
+        _mm.abort()
+    if _FC_OK:
+        _fc.rtl()
+    return JSONResponse({"ok": True})
+
+
+@app.get("/api/missions/status")
+def api_mission_status(sid: str = Cookie(None)):
+    if not validate_session(sid):
+        raise HTTPException(status_code=401)
+    if not _MM_OK:
+        return JSONResponse({"active": False})
+    return JSONResponse(_mm.status())
+
+
+# ============================================================================
+# FLIGHT CONTROL API
+# ============================================================================
+
+@app.post("/api/drone/arm")
+def api_arm(sid: str = Cookie(None)):
+    if not validate_session(sid):
+        raise HTTPException(status_code=401)
+    if not _FC_OK:
+        return JSONResponse({"ok": False, "sim": True, "msg": "FC not available"})
+    ok = _fc.arm()
+    return JSONResponse({"ok": ok})
+
+
+@app.post("/api/drone/disarm")
+def api_disarm(sid: str = Cookie(None)):
+    if not validate_session(sid):
+        raise HTTPException(status_code=401)
+    if not _FC_OK:
+        return JSONResponse({"ok": False})
+    ok = _fc.disarm()
+    return JSONResponse({"ok": ok})
+
+
+@app.post("/api/drone/takeoff")
+async def api_takeoff(request: Request, sid: str = Cookie(None)):
+    if not validate_session(sid):
+        raise HTTPException(status_code=401)
+    body = await request.json()
+    alt = float(body.get("altitude", 10.0))
+    if not _FC_OK:
+        return JSONResponse({"ok": False, "sim": True})
+    ok = _fc.takeoff(alt)
+    return JSONResponse({"ok": ok, "altitude": alt})
+
+
+@app.post("/api/drone/land")
+def api_land(sid: str = Cookie(None)):
+    if not validate_session(sid):
+        raise HTTPException(status_code=401)
+    if not _FC_OK:
+        return JSONResponse({"ok": False})
+    ok = _fc.land()
+    return JSONResponse({"ok": ok})
+
+
+@app.post("/api/drone/rtl")
+def api_rtl(sid: str = Cookie(None)):
+    if not validate_session(sid):
+        raise HTTPException(status_code=401)
+    if _FC_OK:
+        _fc.rtl()
+    if _MM_OK:
+        _mm.abort()
+    return JSONResponse({"ok": True})
+
+
+@app.get("/api/drone/status")
+def api_drone_status(sid: str = Cookie(None)):
+    if not validate_session(sid):
+        raise HTTPException(status_code=401)
+    gps_fix = None
+    if _GPS_MODULE_OK:
+        try:
+            fix = _get_gps().get_fix()
+            gps_fix = {"lat": fix.lat, "lon": fix.lon, "alt": fix.altitude,
+                       "speed": fix.speed_mps, "heading": fix.heading,
+                       "sats": fix.satellites, "valid": fix.valid}
+        except Exception:
+            pass
+    fc_state = {}
+    if _FC_OK:
+        fc_state = {"armed": _fc.armed, "mode": _fc.mode, "setpoints": _fc.setpoints}
+    return JSONResponse({
+        "gps": gps_fix,
+        "fc": fc_state,
+        "safety": _safety.violations if _SAFETY_OK else [],
+        "flight_active": _flight_active,
+    })
+
+
+# ============================================================================
+# PID API
+# ============================================================================
+
+@app.get("/api/pid")
+def api_pid_get(sid: str = Cookie(None)):
+    if not validate_session(sid):
+        raise HTTPException(status_code=401)
+    if not _FC_OK:
+        return JSONResponse({"pid_gains": {}})
+    return JSONResponse({"pid_gains": _fc.pid_gains})
+
+
+@app.post("/api/pid/{axis}")
+async def api_pid_set(axis: str, request: Request, sid: str = Cookie(None)):
+    if not validate_session(sid):
+        raise HTTPException(status_code=401)
+    body = await request.json()
+    kp = float(body.get("kp", 1.0))
+    ki = float(body.get("ki", 0.0))
+    kd = float(body.get("kd", 0.0))
+    if not _FC_OK:
+        return JSONResponse({"ok": False})
+    ok = _fc.set_pid_gains(axis, kp, ki, kd)
+    return JSONResponse({"ok": ok, "axis": axis, "kp": kp, "ki": ki, "kd": kd})
+
+
+# ============================================================================
+# GPS API
+# ============================================================================
+
+@app.get("/api/gps")
+def api_gps(sid: str = Cookie(None)):
+    if not validate_session(sid):
+        raise HTTPException(status_code=401)
+    if not _GPS_MODULE_OK:
+        return JSONResponse({"valid": False, "sim": True,
+                             "lat": BASE_LATITUDE, "lon": BASE_LONGITUDE})
+    fix = _get_gps().get_fix()
+    return JSONResponse({
+        "valid": fix.valid, "lat": fix.lat, "lon": fix.lon,
+        "alt": fix.altitude, "speed": fix.speed_mps,
+        "heading": fix.heading, "satellites": fix.satellites,
+        "hdop": fix.hdop, "ts": fix.timestamp,
+    })
+
+
+# ============================================================================
+# SAFETY API
+# ============================================================================
+
+@app.get("/api/safety")
+def api_safety_status(sid: str = Cookie(None)):
+    if not validate_session(sid):
+        raise HTTPException(status_code=401)
+    if not _SAFETY_OK:
+        return JSONResponse({"ok": True, "violations": []})
+    return JSONResponse({
+        "violations": _safety.violations,
+        "constraints": _safety.constraints,
+        "geofence_points": len(_safety.geofence),
+    })
+
+
+@app.post("/api/safety/constraint")
+async def api_set_constraint(request: Request, sid: str = Cookie(None)):
+    if not validate_session(sid):
+        raise HTTPException(status_code=401)
+    body = await request.json()
+    name = body.get("name")
+    value = float(body.get("value", 0))
+    if not _SAFETY_OK:
+        return JSONResponse({"ok": False})
+    ok = _safety.set_constraint(name, value)
+    return JSONResponse({"ok": ok})
+
+
+@app.post("/api/safety/geofence")
+async def api_set_geofence(request: Request, sid: str = Cookie(None)):
+    if not validate_session(sid):
+        raise HTTPException(status_code=401)
+    body = await request.json()
+    points = [(float(p["lat"]), float(p["lon"])) for p in body.get("points", [])]
+    if not _SAFETY_OK:
+        return JSONResponse({"ok": False})
+    _safety.set_geofence(points)
+    return JSONResponse({"ok": True, "points": len(points)})
 
 if __name__ == "__main__":
     import uvicorn

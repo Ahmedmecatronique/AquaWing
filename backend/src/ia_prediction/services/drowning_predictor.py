@@ -1,5 +1,5 @@
 """
-LSTM-based drowning risk scoring with rule-based fallback for short tracks.
+LSTM-based drowning risk scoring with EMA smoothing and rule-based fallback.
 """
 
 from __future__ import annotations
@@ -20,7 +20,6 @@ _DrowningLSTMClass: Optional[Type[Any]] = None
 
 
 def _get_lstm_class() -> Type[Any]:
-    """Build DrowningLSTM nn.Module subclass (lazy torch import)."""
     global _DrowningLSTMClass
     if _DrowningLSTMClass is not None:
         return _DrowningLSTMClass
@@ -29,8 +28,6 @@ def _get_lstm_class() -> Type[Any]:
     import torch.nn as nn
 
     class DrowningLSTM(nn.Module):
-        """Two-layer LSTM + sigmoid head for binary drowning risk."""
-
         def __init__(
             self,
             input_size: int = config.FEATURE_SIZE,
@@ -49,7 +46,7 @@ def _get_lstm_class() -> Type[Any]:
             self.fc = nn.Linear(hidden_size, 1)
             self.sigmoid = nn.Sigmoid()
 
-        def forward(self, x: torch.Tensor) -> torch.Tensor:
+        def forward(self, x: "torch.Tensor") -> "torch.Tensor":
             out, _ = self.lstm(x)
             last = out[:, -1, :]
             return self.sigmoid(self.fc(last))
@@ -59,12 +56,11 @@ def _get_lstm_class() -> Type[Any]:
 
 
 def build_drowning_lstm() -> Any:
-    """Instantiate the LSTM module (used by train_lstm.py)."""
     return _get_lstm_class()()
 
 
 class DrowningPredictor:
-    """Singleton LSTM predictor with per-track sequence buffers."""
+    """Singleton LSTM predictor with per-track sequence buffers and EMA smoothing."""
 
     _instance: Optional["DrowningPredictor"] = None
 
@@ -72,9 +68,10 @@ class DrowningPredictor:
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance._model = None
-            cls._instance._buffers = defaultdict(
+            cls._instance._buffers: Dict[int, Deque] = defaultdict(
                 lambda: deque(maxlen=config.LSTM_SEQUENCE_LENGTH)
             )
+            cls._instance._ema_scores: Dict[int, float] = {}
             cls._instance._classifier = BehaviorClassifier()
             cls._instance._weights_loaded = False
         return cls._instance
@@ -99,26 +96,36 @@ class DrowningPredictor:
             except Exception as exc:
                 logger.warning("Could not load LSTM weights (%s); using random init", exc)
         else:
-            logger.warning("LSTM weights not found at %s; using random init", path)
+            logger.warning("LSTM weights not found at %s; using rule-based fallback", path)
         self._model.to(config.DEVICE)
         self._model.eval()
 
+    def _ema_update(self, track_id: int, raw_score: float) -> float:
+        alpha = config.RISK_EMA_ALPHA
+        prev = self._ema_scores.get(track_id, raw_score)
+        smoothed = alpha * raw_score + (1.0 - alpha) * prev
+        self._ema_scores[track_id] = smoothed
+        return max(0.0, min(1.0, smoothed))
+
     def predict(self, track_id: int, features_vector: np.ndarray) -> float:
-        """Append features and return drowning risk score in [0, 1]."""
         vec = np.asarray(features_vector, dtype=np.float32).reshape(-1)
-        if vec.shape[0] != config.FEATURE_SIZE:
-            vec = np.resize(vec, config.FEATURE_SIZE)
+        if vec.shape[0] < config.FEATURE_SIZE:
+            vec = np.concatenate([vec, np.zeros(config.FEATURE_SIZE - vec.shape[0])])
+        elif vec.shape[0] > config.FEATURE_SIZE:
+            vec = vec[:config.FEATURE_SIZE]
 
         self._buffers[track_id].append(vec)
         buffer = self._buffers[track_id]
 
         if len(buffer) < config.LSTM_SEQUENCE_LENGTH:
-            behavior, conf = self._classifier.classify(vec)
+            behavior, conf = self._classifier.classify(vec, track_id=track_id)
             if behavior == "drowning_risk":
-                return min(1.0, 0.5 + conf * 0.4)
-            if behavior == "normal_swimming":
-                return max(0.0, 0.2 - conf * 0.1)
-            return 0.45
+                raw = min(1.0, 0.55 + conf * 0.35)
+            elif behavior == "normal_swimming":
+                raw = max(0.0, 0.15 - conf * 0.08)
+            else:
+                raw = 0.42
+            return self._ema_update(track_id, raw)
 
         try:
             import torch
@@ -127,20 +134,18 @@ class DrowningPredictor:
             seq = np.stack(list(buffer), axis=0)
             tensor = torch.from_numpy(seq).unsqueeze(0).to(config.DEVICE)
             with torch.no_grad():
-                score = float(self._model(tensor).item())
-            return max(0.0, min(1.0, score))
+                raw = float(self._model(tensor).item())
+            return self._ema_update(track_id, max(0.0, min(1.0, raw)))
         except ImportError:
-            behavior, conf = self._classifier.classify(vec)
-            if behavior == "drowning_risk":
-                return min(1.0, 0.5 + conf * 0.4)
-            return 0.35
+            behavior, conf = self._classifier.classify(vec, track_id=track_id)
+            raw = min(1.0, 0.55 + conf * 0.35) if behavior == "drowning_risk" else 0.35
+            return self._ema_update(track_id, raw)
 
     def reset_track(self, track_id: int) -> None:
-        """Clear sequence buffer for a track."""
         if track_id in self._buffers:
             self._buffers[track_id].clear()
+        self._ema_scores.pop(track_id, None)
 
 
 def get_predictor() -> DrowningPredictor:
-    """Return shared drowning predictor singleton."""
     return DrowningPredictor()

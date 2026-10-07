@@ -6,57 +6,56 @@ cameras:
   rgb:
     enabled: true
     fps: 56
+    modes:
+    - fps: 120
+      label: "Tr\xE8s fluide, faible latence"
+      resolution: 1536x864
+    - fps: 56
+      label: "\xC9quilibre qualit\xE9 + fluidit\xE9"
+      resolution: 2304x1296
+    - fps: 50
+      label: Live Full HD
+      resolution: 1920x1080
+    - fps: 14
+      label: "Qualit\xE9 max (photo / inspection)"
+      resolution: 4608x2592
     quality: 80
     resolution: 2304x1296
-    # 4 modes natifs caméra Pi — FPS fixe par mode (rpicam-vid)
-    modes:
-      - resolution: 1536x864
-        fps: 120
-        label: Très fluide, faible latence
-      - resolution: 2304x1296
-        fps: 56
-        label: Équilibre qualité + fluidité
-      - resolution: 1920x1080
-        fps: 50
-        label: Live Full HD
-      - resolution: 4608x2592
-        fps: 14
-        label: Qualité max (photo / inspection)
   thermal:
     enabled: false
     fps: 30
     resolution: 640x512
-detection:
-  enabled: true
-  backend: auto
-  preferred_backend: yolo
-  fallback_backend: yolo
-  model: yolov8n.pt
-  imgsz: 320
-  confidence: 0.4
-  interval_ms: 5000
-  allow_rfdetr_on_pi: false
-  weights: backend/src/ia detection/rf-detr-develop/rf-detr-nano.pth
-  classes:
-    - person
 control:
   pid_gains:
     altitude:
-      kd: 0.0
-      ki: 0.0
-      kp: 1.0
+      kd: 0.01
+      ki: 0.05
+      kp: 2.5
     pitch:
       kd: 0.003
       ki: 0.02
       kp: 3.14
     roll:
-      kd: 0.0
-      ki: 100.0
-      kp: 1.0
+      kd: 0.003
+      ki: 0.02
+      kp: 3.0
     yaw:
-      kd: 0.0
-      ki: 0.0
-      kp: 1.0
+      kd: 0.001
+      ki: 0.01
+      kp: 2.0
+detection:
+  allow_rfdetr_on_pi: false
+  backend: auto
+  classes:
+  - person
+  confidence: 0.45
+  enabled: true
+  fallback_backend: yolo
+  imgsz: 640
+  interval_ms: 2000
+  model: yolov8n.pt
+  preferred_backend: yolo
+  weights: backend/src/ia detection/rf-detr-develop/rf-detr-nano.pth
 drone:
   max_altitude_m: 100
   max_speed_mps: 15

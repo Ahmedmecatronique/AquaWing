@@ -1,6 +1,6 @@
 {
-  "admin": "admin123",
-  "user": "password123",
-  "ahmed": "ahmed22k22",
-  "amin": "amin123"
+  "admin": "$2b$12$ucjuK43.EmdRFat0TE.1OuWyLhF4ybdNBWt4SnPLOqJlaMCfltPSO",
+  "user": "$2b$12$YzJaIDBGbzAPvnBP9yytfeR31WrWi1C.JoIVXZmp4v888GzR9H7iG",
+  "ahmed": "$2b$12$mEpGefX0Z1u977gGnxYYZOhbDgRgafZYGBD6R7v2hVt/psxiuL73G",
+  "amin": "$2b$12$JA8MSt5zlxswS1xr4cHYEe/zwGlp5TMOTZ7NM5UIv1Id1KnGj45VS"
 }

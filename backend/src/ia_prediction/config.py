@@ -1,7 +1,6 @@
 """
 Central configuration for the ia_prediction drowning-detection module.
-
-Paths are anchored under backend/src/ia_prediction/ via BASE_DIR (backend/src).
+Tuned for maritime / aquatic drone surveillance context.
 """
 
 from __future__ import annotations
@@ -12,7 +11,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# backend/src/ (parent of ia_prediction/)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _IA_ROOT = os.path.join(BASE_DIR, "ia_prediction")
 
@@ -34,16 +32,24 @@ MODEL_WEIGHTS = os.getenv(
     os.path.join(BASE_DIR, "ia_prediction", "models", "yolov8n.pt"),
 )
 
-CONFIDENCE_THRESHOLD = float(os.getenv("CONFIDENCE_THRESHOLD", "0.4"))
-RISK_ALERT_THRESHOLD = float(os.getenv("RISK_ALERT_THRESHOLD", "0.75"))
-TRACK_HISTORY_LENGTH = int(os.getenv("TRACK_HISTORY_LENGTH", "60"))
-LSTM_SEQUENCE_LENGTH = int(os.getenv("LSTM_SEQUENCE_LENGTH", "30"))
-STILLNESS_THRESHOLD = float(os.getenv("STILLNESS_THRESHOLD", "2.0"))
-FEATURE_SIZE = 7
+# Detection
+CONFIDENCE_THRESHOLD = float(os.getenv("CONFIDENCE_THRESHOLD", "0.45"))
+RISK_ALERT_THRESHOLD = float(os.getenv("RISK_ALERT_THRESHOLD", "0.72"))
 
+# Tracking
+TRACK_HISTORY_LENGTH = int(os.getenv("TRACK_HISTORY_LENGTH", "90"))
+LSTM_SEQUENCE_LENGTH = int(os.getenv("LSTM_SEQUENCE_LENGTH", "45"))
+
+# Feature extraction
+FEATURE_SIZE = 10  # extended from 7 to 10
+SPEED_WINDOW = int(os.getenv("SPEED_WINDOW", "8"))
+IRREGULARITY_WINDOW = int(os.getenv("IRREGULARITY_WINDOW", "20"))
+AREA_CHANGE_WINDOW = int(os.getenv("AREA_CHANGE_WINDOW", "8"))
+STILLNESS_THRESHOLD = float(os.getenv("STILLNESS_THRESHOLD", "1.5"))
+
+# Device
 try:
     import torch
-
     _device_env = os.getenv("DEVICE", "").strip().lower()
     if _device_env:
         DEVICE = _device_env
@@ -54,24 +60,24 @@ except ImportError:
 
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
-# Behavior classifier thresholds (rule-based)
-SWIM_SPEED_MIN = float(os.getenv("SWIM_SPEED_MIN", "3.0"))
-SWIM_IRREGULARITY_MAX = float(os.getenv("SWIM_IRREGULARITY_MAX", "4.0"))
-SWIM_STILLNESS_MAX_FRAMES = int(os.getenv("SWIM_STILLNESS_MAX_FRAMES", "10"))
-DROWN_STILLNESS_MIN_FRAMES = int(os.getenv("DROWN_STILLNESS_MIN_FRAMES", "25"))
-DROWN_ASPECT_RATIO_MIN = float(os.getenv("DROWN_ASPECT_RATIO_MIN", "2.5"))
-DROWN_SPEED_MAX = float(os.getenv("DROWN_SPEED_MAX", "1.5"))
+# Behavior classifier — tuned for aquatic environment
+SWIM_SPEED_MIN = float(os.getenv("SWIM_SPEED_MIN", "2.5"))
+SWIM_IRREGULARITY_MAX = float(os.getenv("SWIM_IRREGULARITY_MAX", "5.0"))
+SWIM_STILLNESS_MAX_FRAMES = int(os.getenv("SWIM_STILLNESS_MAX_FRAMES", "8"))
+DROWN_STILLNESS_MIN_FRAMES = int(os.getenv("DROWN_STILLNESS_MIN_FRAMES", "15"))
+DROWN_ASPECT_RATIO_MIN = float(os.getenv("DROWN_ASPECT_RATIO_MIN", "2.0"))
+DROWN_SPEED_MAX = float(os.getenv("DROWN_SPEED_MAX", "2.0"))
+DROWN_IRREGULARITY_MIN = float(os.getenv("DROWN_IRREGULARITY_MIN", "6.0"))
+DROWN_VERTICAL_RATIO_MIN = float(os.getenv("DROWN_VERTICAL_RATIO_MIN", "0.70"))
 
-# Feature extraction
-SPEED_WINDOW = int(os.getenv("SPEED_WINDOW", "5"))
-IRREGULARITY_WINDOW = int(os.getenv("IRREGULARITY_WINDOW", "15"))
-AREA_CHANGE_WINDOW = int(os.getenv("AREA_CHANGE_WINDOW", "5"))
+# Risk smoothing — EMA alpha (lower = smoother, higher = more reactive)
+RISK_EMA_ALPHA = float(os.getenv("RISK_EMA_ALPHA", "0.35"))
 
-# Training (Pi-friendly defaults: batch 16, 30 epochs, CPU)
-TRAIN_BATCH_SIZE = int(os.getenv("TRAIN_BATCH_SIZE", "16"))
-TRAIN_EPOCHS = int(os.getenv("TRAIN_EPOCHS", "30"))
-TRAIN_LR = float(os.getenv("TRAIN_LR", "1e-3"))
+# Training
+TRAIN_BATCH_SIZE = int(os.getenv("TRAIN_BATCH_SIZE", "32"))
+TRAIN_EPOCHS = int(os.getenv("TRAIN_EPOCHS", "50"))
+TRAIN_LR = float(os.getenv("TRAIN_LR", "5e-4"))
 TRAIN_VAL_SPLIT = float(os.getenv("TRAIN_VAL_SPLIT", "0.2"))
-LSTM_HIDDEN_SIZE = int(os.getenv("LSTM_HIDDEN_SIZE", "64"))
+LSTM_HIDDEN_SIZE = int(os.getenv("LSTM_HIDDEN_SIZE", "128"))
 LSTM_NUM_LAYERS = int(os.getenv("LSTM_NUM_LAYERS", "2"))
 LSTM_DROPOUT = float(os.getenv("LSTM_DROPOUT", "0.3"))

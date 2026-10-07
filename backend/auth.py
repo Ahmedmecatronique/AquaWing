@@ -30,14 +30,11 @@ COOKIE_NAME = "session_id"
 
 # In production, use a real database with password hashing (bcrypt, argon2, etc.)
 DEMO_USERS = {
-    "admin": "admin123",
-    "user": "password123",
-    "ahmed": "ahmed22k22",
-    "amin": "amin123",
-
+    "admin": "$2b$12$ntD6z173YsZaApEpg3g.Fe4vkmisMsV4aa0Q56a7Ek22CxRTuRwfO",
+    "user": "$2b$12$cdqm2wahMhFh.Hluc2fD4u5tQMnXxELs4QMs4yG5bpImSkJ2ARKAO",
+    "ahmed": "$2b$12$X9Y8n2hS4fKQQ.9hL86pqO.C0N9G01OC.MVsNz3ZGbXFd6L0IPbJG",
+    "amin": "$2b$12$sQhG0PwjUlZYa/5mG4qsOumzacLRamF5GXghV/m9mgYr38i3.IvI2",
 }
-print("✅ AUTH.PY LOADED - DEMO_USERS =", DEMO_USERS)
-print("✅ AUTH.PY FILE =", __file__)
 
 # ============================================================================
 # Session Management
@@ -118,16 +115,15 @@ def authenticate_user(username: str, password: str) -> bool:
     username = (username or "").strip()
     password = (password or "").strip()
 
-    print("LOGIN TRY:", repr(username), repr(password))
-    print("EXPECTED:", DEMO_USERS.get(username))
 
     if username not in DEMO_USERS:
-        print(f"❌ User not found: {username}")
         return False
-    if DEMO_USERS[username] != password:
-        print(f"❌ Invalid password for {username}")
+    import bcrypt as _bcrypt
+    try:
+        if not _bcrypt.checkpw(password.encode(), DEMO_USERS[username].encode()):
+            return False
+    except Exception:
         return False
-    print(f"✓ User authenticated: {username}")
     return True
 
 

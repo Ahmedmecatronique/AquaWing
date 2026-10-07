@@ -1,5 +1,11 @@
 """
-Détection personnes (COCO class 0) via Ultralytics YOLO — compatible Raspberry Pi 4.
+Detecteur personnes YOLOv8 optimise pour surveillance maritime drone.
+
+Ameliorations vs version initiale:
+- imgsz 320 -> 640 (bien meilleur pour petites personnes en mer)
+- Preprocessing CLAHE (rehaussement contraste pour eau)
+- NMS iou=0.45 (evite doublons sur corps semi-immerges)
+- Confidence 0.4 -> 0.45 (reduit faux positifs vagues)
 """
 
 from __future__ import annotations
@@ -31,8 +37,28 @@ def _load_detection_config() -> dict:
         return {}
 
 
+def _clahe_enhance(image: Image.Image) -> Image.Image:
+    """Apply CLAHE contrast enhancement for aquatic environment."""
+    try:
+        import cv2
+        import numpy as np
+
+        img_array = np.array(image)
+        img_bgr = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
+        lab = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2LAB)
+        l_ch, a_ch, b_ch = cv2.split(lab)
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+        l_ch = clahe.apply(l_ch)
+        lab = cv2.merge((l_ch, a_ch, b_ch))
+        enhanced_bgr = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
+        enhanced_rgb = cv2.cvtColor(enhanced_bgr, cv2.COLOR_BGR2RGB)
+        return Image.fromarray(enhanced_rgb)
+    except Exception:
+        return image
+
+
 class YoloPersonDetector:
-    """Détecteur personnes YOLOv8 (Ultralytics)."""
+    """Detecteur personnes YOLOv8 optimise milieu aquatique."""
 
     def __init__(
         self,
@@ -48,10 +74,11 @@ class YoloPersonDetector:
 
         self.weights_path = weights
         self.threshold = float(
-            threshold if threshold is not None else cfg.get("confidence", cfg.get("threshold", 0.4))
+            threshold if threshold is not None else cfg.get("confidence", cfg.get("threshold", 0.45))
         )
+        # imgsz 640 par defaut — bien meilleur pour detection en mer
         self.inference_size = int(
-            inference_size if inference_size is not None else cfg.get("imgsz", cfg.get("inference_size", 320))
+            inference_size if inference_size is not None else cfg.get("imgsz", cfg.get("inference_size", 640))
         )
         self._model = None
         self._lock = threading.Lock()
@@ -72,13 +99,13 @@ class YoloPersonDetector:
             self._model = YOLO(path)
             self._ready = True
             self._error = None
-            print(f"✓ YOLO loaded ({path}) imgsz={self.inference_size}")
+            print(f"YOLO loaded ({path}) imgsz={self.inference_size}")
         except Exception as exc:
             self._error = str(exc)
             self._ready = False
             raise
 
-    def detect_jpeg(self, jpeg_bytes: bytes, image_width: int = 0, image_height: int = 0) -> list[dict[str, Any]]:
+    def detect_jpeg(self, jpeg_bytes: bytes, image_width: int = 0, image_height: int = 0) -> list:
         with self._lock:
             self._load_model()
 
@@ -89,16 +116,21 @@ class YoloPersonDetector:
         image = Image.open(io.BytesIO(jpeg_bytes)).convert("RGB")
         src_w, src_h = image.size
 
+        # CLAHE preprocessing for aquatic environment
+        image = _clahe_enhance(image)
+
         results = self._model.predict(
             source=image,
             imgsz=self.inference_size,
             conf=self.threshold,
+            iou=0.45,
             classes=[_COCO_PERSON_ID],
             verbose=False,
+            augment=False,
         )
         self._last_inference_ms = round((time.perf_counter() - t0) * 1000, 1)
 
-        out: list[dict[str, Any]] = []
+        out = []
         if not results:
             return out
 

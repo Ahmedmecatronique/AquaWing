@@ -59,17 +59,21 @@ def process_frame(frame: np.ndarray, frame_id: int = 0) -> FrameResult:
         bbox = (track["x1"], track["y1"], track["x2"], track["y2"])
         history = _tracker.get_history(track_id)
         feat_vec = _feature_extractor.extract(track_id, history)
-        behavior, behavior_conf = _behavior_classifier.classify(feat_vec)
+        behavior, behavior_conf = _behavior_classifier.classify(feat_vec, track_id=track_id)
         risk_score = _drowning_predictor.predict(track_id, feat_vec)
 
+        _fv = feat_vec
         features_model = SwimmerFeatures(
-            speed=float(feat_vec[0]),
-            acceleration=float(feat_vec[1]),
-            bbox_aspect_ratio=float(feat_vec[2]),
-            stillness_duration=float(feat_vec[3]),
-            motion_irregularity=float(feat_vec[4]),
-            displacement_from_start=float(feat_vec[5]),
-            bbox_area_change=float(feat_vec[6]),
+            speed=float(_fv[0]) if len(_fv) > 0 else 0.0,
+            acceleration=float(_fv[1]) if len(_fv) > 1 else 0.0,
+            bbox_aspect_ratio=float(_fv[2]) if len(_fv) > 2 else 0.0,
+            stillness_duration=float(_fv[3]) if len(_fv) > 3 else 0.0,
+            motion_irregularity=float(_fv[4]) if len(_fv) > 4 else 0.0,
+            displacement_from_start=float(_fv[5]) if len(_fv) > 5 else 0.0,
+            bbox_area_change=float(_fv[6]) if len(_fv) > 6 else 0.0,
+            vertical_centroid_ratio=float(_fv[7]) if len(_fv) > 7 else 0.0,
+            bbox_stability_variance=float(_fv[8]) if len(_fv) > 8 else 0.0,
+            motion_entropy=float(_fv[9]) if len(_fv) > 9 else 0.0,
         )
 
         alert_triggered = risk_score > config.RISK_ALERT_THRESHOLD

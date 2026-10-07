@@ -1,34 +1,15 @@
-"""
-UART Link - Serial Port Communication
-
-Handles opening, closing, and communication over a serial UART connection.
-Configuration from config/cablage.py:
-  - FLIGHT_CONTROLLER (default): PID and flight commands → /dev/ttyAMA0 (PL011)
-  - GPS: GPS-related communication only → /dev/ttyS0 (miniUART)
-
-Serial instances are separate; no shared UART between GPS and STM32.
-
-TODO: Implement real serial communication
-"""
-
+from __future__ import annotations
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
 from config.cablage import FLIGHT_CONTROLLER, GPS
 
 import serial
-from typing import Optional, Dict, Any
+import threading
+import time
+from typing import Optional, Dict, Any, Callable
 
 
 class UARTLink:
-    """
-    UART serial communication interface.
-    Default config: FLIGHT_CONTROLLER (PID, commands). For GPS use config=GPS.
-    
-    TODO: Add connection state management
-    TODO: Add automatic reconnection logic
-    TODO: Add message queuing and retry logic
-    """
-    
     def __init__(
         self,
         config: Optional[Dict[str, Any]] = None,
@@ -36,104 +17,96 @@ class UARTLink:
         baudrate: Optional[int] = None,
         timeout: Optional[float] = None,
     ):
-        """
-        Initialize UART link (without opening).
-        Default: FLIGHT_CONTROLLER (ttyAMA0). For GPS use config=GPS.
-        
-        Args:
-            config: Cabling config dict (FLIGHT_CONTROLLER or GPS). None => FLIGHT_CONTROLLER.
-            port: Override port (optional)
-            baudrate: Override baudrate (optional)
-            timeout: Override timeout in seconds (optional)
-        """
         cfg = config if config is not None else FLIGHT_CONTROLLER
         self.port = port or cfg["port"]
         self.baudrate = baudrate or cfg["baudrate"]
         self.timeout = timeout if timeout is not None else cfg.get("timeout_s", 1.0)
         self.label = cfg.get("label", "UART")
-        self.serial = None
-    
-    def open(self) -> bool:
-        """
-        Open the serial connection.
+        self.serial: Optional[serial.Serial] = None
+        self._lock = threading.Lock()
+        self._rx_callback: Optional[Callable[[bytes], None]] = None
+        self._rx_thread: Optional[threading.Thread] = None
+        self._running = False
 
-        Attempts to open the configured serial port. If the port cannot be
-        opened this returns False (caller can fallback to simulated mode).
-        """
+    def open(self) -> bool:
         try:
-            self.serial = serial.Serial(self.port, self.baudrate, timeout=self.timeout)
-            if getattr(self.serial, 'is_open', False):
-                print(f"{self.label} connected on {self.port}")
+            with self._lock:
+                self.serial = serial.Serial(
+                    port=self.port,
+                    baudrate=self.baudrate,
+                    timeout=self.timeout,
+                )
+            if self.serial.is_open:
+                print(f"[{self.label}] Connected on {self.port} @ {self.baudrate} baud")
+                self._running = True
                 return True
-            # unexpected state
-            print(f"UART could not be opened (unknown state)")
             self.serial = None
             return False
         except Exception as e:
-            print(f"Error opening {self.port} ({self.label}): {e}")
+            print(f"[{self.label}] Cannot open {self.port}: {e} — simulation mode")
             self.serial = None
             return False
-    
-    def close(self):
-        """Close the serial connection."""
-        if self.serial:
-            try:
-                self.serial.close()
-            except Exception as e:
-                print(f"Error closing UART: {e}")
-        self.serial = None
-    
-    def send(self, data: bytes) -> bool:
-        """
-        Send data over UART.
 
-        If the serial device is not available this method will *simulate*
-        sending (log the encoded message) so higher layers can be tested on
-        the Raspberry Pi without hardware connected.
-        """
-        if not self.serial or not getattr(self.serial, 'is_open', False):
-            # Simulated send for development / unit tests
+    def close(self) -> None:
+        self._running = False
+        with self._lock:
+            if self.serial:
+                try:
+                    self.serial.close()
+                except Exception:
+                    pass
+                self.serial = None
+
+    def send(self, data: bytes) -> bool:
+        with self._lock:
+            if not self.serial or not self.serial.is_open:
+                print(f"[{self.label}][SIM] TX {len(data)}B: {data.hex()}")
+                return True
             try:
-                print(f"[UART SIM] send {len(data)} bytes: {data.hex()}")
+                self.serial.write(data)
+                self.serial.flush()
                 return True
             except Exception as e:
-                print(f"UART simulated send failed: {e}")
+                print(f"[{self.label}] send error: {e}")
                 return False
 
-        try:
-            # real serial write (not yet implemented in this repo)
-            print(f"TODO: Send {len(data)} bytes over UART: {data.hex()}")
-            # self.serial.write(data)
-            return True
-        except Exception as e:
-            print(f"Error sending over UART: {e}")
-            return False
-    
-    def receive(self, size: int = 1024) -> Optional[bytes]:
-        """
-        Receive data from UART.
-        
-        Args:
-            size: Maximum number of bytes to read
-            
-        Returns:
-            Bytes received, or None if timeout/error
-            
-        TODO: Implement actual serial reception
-        """
-        if not self.serial or not self.serial.is_open:
-            print("TODO: Serial port not open, cannot receive")
-            return None
-        
-        try:
-            print(f"TODO: Receive up to {size} bytes from UART")
-            # data = self.serial.read(size)
-            # return data if data else None
-            return None
-        except Exception as e:
-            print(f"Error receiving from UART: {e}")
-            return None
-    
+    def receive(self, size: int = 256) -> Optional[bytes]:
+        with self._lock:
+            if not self.serial or not self.serial.is_open:
+                return None
+            try:
+                if self.serial.in_waiting > 0:
+                    return self.serial.read(min(size, self.serial.in_waiting))
+                return None
+            except Exception as e:
+                print(f"[{self.label}] receive error: {e}")
+                return None
+
+    def readline(self) -> Optional[bytes]:
+        with self._lock:
+            if not self.serial or not self.serial.is_open:
+                return None
+            try:
+                return self.serial.readline()
+            except Exception as e:
+                print(f"[{self.label}] readline error: {e}")
+                return None
+
+    def start_rx_thread(self, callback: Callable[[bytes], None]) -> None:
+        self._rx_callback = callback
+        self._rx_thread = threading.Thread(target=self._rx_loop, daemon=True)
+        self._rx_thread.start()
+
+    def _rx_loop(self) -> None:
+        while self._running:
+            data = self.receive()
+            if data and self._rx_callback:
+                try:
+                    self._rx_callback(data)
+                except Exception as e:
+                    print(f"[{self.label}] RX callback error: {e}")
+            else:
+                time.sleep(0.01)
+
     def is_open(self) -> bool:
-        """Check if connection is open."""
         return self.serial is not None and self.serial.is_open

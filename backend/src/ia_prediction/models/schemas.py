@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 
 
 class SwimmerFeatures(BaseModel):
-    """Seven-dimensional kinematic feature vector per tracked swimmer."""
+    """Ten-dimensional kinematic feature vector per tracked swimmer."""
 
     speed: float = 0.0
     acceleration: float = 0.0
@@ -19,6 +19,9 @@ class SwimmerFeatures(BaseModel):
     motion_irregularity: float = 0.0
     displacement_from_start: float = 0.0
     bbox_area_change: float = 0.0
+    vertical_centroid_ratio: float = 0.0
+    bbox_stability_variance: float = 0.0
+    motion_entropy: float = 0.0
 
 
 class DetectedSwimmer(BaseModel):

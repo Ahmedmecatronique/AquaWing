@@ -1,142 +1,248 @@
-"""
-Flight Control Module
+from __future__ import annotations
+import time
+import threading
+from pathlib import Path
+from typing import Dict, Optional
 
-Implements PID controllers, motor mixing, and flight stabilization.
+import yaml
 
-TODO: Implement PID controllers for pitch, roll, yaw, altitude
-TODO: Implement motor mixing table
-TODO: Add flight mode switching logic
-"""
+
+class PIDController:
+    def __init__(
+        self,
+        kp: float = 1.0,
+        ki: float = 0.0,
+        kd: float = 0.0,
+        output_min: float = -1.0,
+        output_max: float = 1.0,
+        integral_limit: float = 10.0,
+    ) -> None:
+        self.kp = kp
+        self.ki = ki
+        self.kd = kd
+        self.output_min = output_min
+        self.output_max = output_max
+        self.integral_limit = integral_limit
+        self._integral = 0.0
+        self._last_error = 0.0
+        self._last_time: Optional[float] = None
+
+    def compute(self, setpoint: float, measurement: float, dt: Optional[float] = None) -> float:
+        now = time.monotonic()
+        if dt is None:
+            dt = (now - self._last_time) if self._last_time else 0.02
+        self._last_time = now
+        dt = max(dt, 1e-4)
+
+        error = setpoint - measurement
+        self._integral += error * dt
+        self._integral = max(-self.integral_limit, min(self.integral_limit, self._integral))
+        derivative = (error - self._last_error) / dt
+        self._last_error = error
+
+        output = self.kp * error + self.ki * self._integral + self.kd * derivative
+        return max(self.output_min, min(self.output_max, output))
+
+    def reset(self) -> None:
+        self._integral = 0.0
+        self._last_error = 0.0
+        self._last_time = None
+
+    def set_gains(self, kp: float, ki: float, kd: float) -> None:
+        self.kp = kp
+        self.ki = ki
+        self.kd = kd
+        self.reset()
 
 
 class FlightController:
-    """
-    Flight controller with PID-based stabilization.
-
-    TODO: Implement real PID loops
-    TODO: Add motor output mixing
-    """
-
-    def __init__(self):
-        """Initialize flight controller and load persisted PID gains if present."""
+    def __init__(self) -> None:
         self.armed = False
         self.mode = "STABILIZE"
-        # defaults
-        self.pid_gains = {
-            "pitch": {"kp": 1.0, "ki": 0.0, "kd": 0.0},
-            "roll": {"kp": 1.0, "ki": 0.0, "kd": 0.0},
-            "yaw": {"kp": 1.0, "ki": 0.0, "kd": 0.0},
-            "altitude": {"kp": 1.0, "ki": 0.0, "kd": 0.0},
+        self._lock = threading.Lock()
+
+        # Default gains — overridden by system.yaml
+        default_gains = {
+            "pitch":    {"kp": 3.0, "ki": 0.02, "kd": 0.003},
+            "roll":     {"kp": 3.0, "ki": 0.02, "kd": 0.003},
+            "yaw":      {"kp": 2.0, "ki": 0.01, "kd": 0.001},
+            "altitude": {"kp": 2.5, "ki": 0.05, "kd": 0.01},
         }
-        # attempt to load persisted gains from config/system.yaml
+        self.pid_gains = default_gains.copy()
+        self._load_gains_from_yaml()
+
+        self._pids: Dict[str, PIDController] = {
+            axis: PIDController(
+                kp=g["kp"], ki=g["ki"], kd=g["kd"],
+                output_min=-1.0, output_max=1.0,
+            )
+            for axis, g in self.pid_gains.items()
+        }
+        # Separate altitude PID with positive-only output for throttle
+        self._pids["altitude"].output_min = 0.0
+        self._pids["altitude"].output_max = 1.0
+
+        # Setpoints (filled by GuidanceController or manual commands)
+        self.setpoints = {"pitch": 0.0, "roll": 0.0, "yaw": 0.0, "altitude": 0.0}
+        # Current measurements (filled by IMU/telemetry from STM32)
+        self.measurements = {"pitch": 0.0, "roll": 0.0, "yaw": 0.0, "altitude": 0.0}
+        # Base throttle 0..1
+        self.throttle_base = 0.55
+
+        # UART link (lazy init)
+        self._uart = None
+
+    def _load_gains_from_yaml(self) -> None:
         try:
-            from pathlib import Path
-            import yaml
-            cfg_path = Path(__file__).parent.parent.parent.parent / 'config' / 'system.yaml'
-            if cfg_path.exists():
-                with open(cfg_path, 'r') as f:
-                    cfg = yaml.safe_load(f) or {}
-                persisted = cfg.get('control', {}).get('pid_gains', {})
-                for axis, gains in persisted.items():
-                    if axis in self.pid_gains and isinstance(gains, dict):
-                        self.pid_gains[axis].update({k: float(gains.get(k, self.pid_gains[axis].get(k, 0.0))) for k in ('kp','ki','kd')})
+            cfg_path = Path(__file__).parents[3] / "config" / "system.yaml"
+            if not cfg_path.exists():
+                return
+            with open(cfg_path) as f:
+                cfg = yaml.safe_load(f) or {}
+            persisted = cfg.get("control", {}).get("pid_gains", {})
+            for axis, gains in persisted.items():
+                if axis in self.pid_gains and isinstance(gains, dict):
+                    for k in ("kp", "ki", "kd"):
+                        if k in gains:
+                            self.pid_gains[axis][k] = float(gains[k])
         except Exception as e:
-            print(f"Warning: failed to load persisted PID gains: {e}")
+            print(f"[FC] Failed to load PID gains: {e}")
+
+    def _get_uart(self):
+        if self._uart is None:
+            try:
+                from backend.src.uart.uart_link import UARTLink
+                self._uart = UARTLink()
+                self._uart.open()
+            except Exception as e:
+                print(f"[FC] UART init error: {e}")
+        return self._uart
+
+    def _send(self, msg_type: int, payload=b"") -> bool:
+        try:
+            from backend.src.uart.protocol import encode_message
+            data = encode_message(msg_type, payload)
+            uart = self._get_uart()
+            if uart:
+                return uart.send(data)
+        except Exception as e:
+            print(f"[FC] send error: {e}")
+        return False
 
     def arm(self) -> bool:
-        """
-        Arm the flight controller.
-
-        Returns:
-            True if armed successfully
-
-        TODO: Implement safety pre-arm checks
-        """
-        print("TODO: Implement arm with safety checks")
-        self.armed = True
-        return True
+        from backend.src.uart.protocol import MessageType
+        ok = self._send(MessageType.ARM)
+        if ok:
+            self.armed = True
+            print("[FC] Armed")
+        return ok
 
     def disarm(self) -> bool:
-        """
-        Disarm the flight controller.
-
-        Returns:
-            True if disarmed successfully
-        """
-        print("TODO: Implement disarm")
+        from backend.src.uart.protocol import MessageType
+        for pid in self._pids.values():
+            pid.reset()
+        ok = self._send(MessageType.DISARM)
         self.armed = False
-        return True
+        print("[FC] Disarmed")
+        return ok
 
-    def set_mode(self, mode: str) -> bool:
-        """
-        Switch flight mode.
+    def takeoff(self, altitude: float = 10.0) -> bool:
+        from backend.src.uart.protocol import MessageType
+        self.setpoints["altitude"] = altitude
+        ok = self._send(MessageType.TAKEOFF, {"altitude": altitude})
+        if ok:
+            self.mode = "GUIDED"
+            print(f"[FC] Takeoff → {altitude}m")
+        return ok
 
-        Args:
-            mode: Flight mode (STABILIZE, GUIDED, AUTO, RTL)
+    def land(self) -> bool:
+        from backend.src.uart.protocol import MessageType
+        self.setpoints["altitude"] = 0.0
+        ok = self._send(MessageType.LAND)
+        if ok:
+            self.mode = "LAND"
+        return ok
 
-        Returns:
-            True if mode changed successfully
-        """
-        valid_modes = ["STABILIZE", "GUIDED", "AUTO", "RTL", "LOITER", "LAND"]
-        if mode in valid_modes:
-            self.mode = mode
-            return True
-        return False
+    def rtl(self) -> bool:
+        from backend.src.uart.protocol import MessageType
+        ok = self._send(MessageType.RTL)
+        if ok:
+            self.mode = "RTL"
+        return ok
 
-    def compute_motor_outputs(self, imu_data: dict) -> dict:
-        """
-        Compute motor outputs from sensor data.
+    def set_speed(self, speed_mps: float) -> bool:
+        from backend.src.uart.protocol import MessageType
+        return self._send(MessageType.SET_SPEED, {"speed": speed_mps})
 
-        Args:
-            imu_data: IMU sensor readings (pitch, roll, yaw, altitude)
+    def update_imu(self, pitch: float, roll: float, yaw: float, altitude: float) -> None:
+        with self._lock:
+            self.measurements["pitch"] = pitch
+            self.measurements["roll"] = roll
+            self.measurements["yaw"] = yaw
+            self.measurements["altitude"] = altitude
 
-        Returns:
-            Dict with motor power values (0-100%)
+    def compute_motor_outputs(self, imu_data: Optional[dict] = None) -> dict:
+        if imu_data:
+            self.update_imu(
+                imu_data.get("pitch", 0.0),
+                imu_data.get("roll", 0.0),
+                imu_data.get("yaw", 0.0),
+                imu_data.get("altitude", 0.0),
+            )
 
-        TODO: Implement PID computation
-        TODO: Implement motor mixing
-        """
-        print("TODO: Implement PID + motor mixing")
-        return {
-            "motor1": 0.0,
-            "motor2": 0.0,
-            "motor3": 0.0,
-        }
+        with self._lock:
+            sp = self.setpoints.copy()
+            ms = self.measurements.copy()
+
+        pitch_out = self._pids["pitch"].compute(sp["pitch"], ms["pitch"])
+        roll_out  = self._pids["roll"].compute(sp["roll"], ms["roll"])
+        yaw_out   = self._pids["yaw"].compute(sp["yaw"], ms["yaw"])
+        alt_out   = self._pids["altitude"].compute(sp["altitude"], ms["altitude"])
+        throttle  = self.throttle_base + (alt_out - 0.5) * 0.4
+
+        # X-frame motor mixing (0..1)
+        def _clamp(v):
+            return max(0.0, min(1.0, v))
+
+        m1 = _clamp(throttle + pitch_out + roll_out - yaw_out)  # front-right CW
+        m2 = _clamp(throttle - pitch_out - roll_out - yaw_out)  # rear-left  CW
+        m3 = _clamp(throttle + pitch_out - roll_out + yaw_out)  # front-left CCW
+        m4 = _clamp(throttle - pitch_out + roll_out + yaw_out)  # rear-right CCW
+
+        outputs = {"m1": round(m1, 4), "m2": round(m2, 4), "m3": round(m3, 4), "m4": round(m4, 4)}
+
+        # Send MOVE command to STM32
+        from backend.src.uart.protocol import MessageType
+        self._send(MessageType.MOVE, {
+            "pitch": pitch_out, "roll": roll_out,
+            "yaw": yaw_out, "throttle": throttle,
+        })
+        return outputs
+
+    def send_heartbeat(self) -> None:
+        from backend.src.uart.protocol import MessageType
+        self._send(MessageType.HEARTBEAT)
 
     def set_pid_gains(self, axis: str, kp: float, ki: float, kd: float) -> bool:
-        """
-        Update PID gains for a specific axis.
+        if axis not in self._pids:
+            return False
+        self._pids[axis].set_gains(kp, ki, kd)
+        self.pid_gains[axis] = {"kp": kp, "ki": ki, "kd": kd}
+        self._persist_gains()
+        return True
 
-        Args:
-            axis: Control axis (pitch, roll, yaw, altitude)
-            kp: Proportional gain
-            ki: Integral gain
-            kd: Derivative gain
-
-        Returns:
-            True if the axis existed and was updated, False otherwise.
-        """
-        if axis in self.pid_gains:
-            self.pid_gains[axis] = {"kp": float(kp), "ki": float(ki), "kd": float(kd)}
-            print(f"PID gains updated: {axis} -> {self.pid_gains[axis]}")
-            # persist to config/system.yaml
-            try:
-                from pathlib import Path
-                import yaml
-                cfg_path = Path(__file__).parent.parent.parent.parent / 'config' / 'system.yaml'
-                cfg = {}
-                if cfg_path.exists():
-                    with open(cfg_path, 'r') as f:
-                        cfg = yaml.safe_load(f) or {}
-                cfg.setdefault('control', {})['pid_gains'] = cfg.get('control', {}).get('pid_gains', {})
-                cfg['control']['pid_gains'][axis] = { 'kp': float(kp), 'ki': float(ki), 'kd': float(kd) }
-                with open(cfg_path, 'w') as f:
-                    yaml.safe_dump(cfg, f)
-            except Exception as e:
-                print(f"Warning: failed to persist PID gains: {e}")
-            return True
-        return False
+    def _persist_gains(self) -> None:
+        try:
+            cfg_path = Path(__file__).parents[3] / "config" / "system.yaml"
+            cfg = {}
+            if cfg_path.exists():
+                with open(cfg_path) as f:
+                    cfg = yaml.safe_load(f) or {}
+            cfg.setdefault("control", {})["pid_gains"] = self.pid_gains
+            with open(cfg_path, "w") as f:
+                yaml.safe_dump(cfg, f)
+        except Exception as e:
+            print(f"[FC] Failed to persist PID gains: {e}")
 
 
-# Module-level flight controller instance (useful for API / single-process runtime)
 flight_controller = FlightController()

@@ -20,3 +20,5 @@ torchvision
 ultralytics
 boxmot
 pytest
+bcrypt
+passlib[bcrypt]
